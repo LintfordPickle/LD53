@@ -1,0 +1,190 @@
+<!-- ====================================================================== 
+     29.04.2023
+
+     Project     : Delivery (Mailtrain)	
+     Description : LD53 Jam Entry
+     
+====================================================================== -->
+
+<project name="Mailtrain" basedir="." default="main">
+
+	<!-- External dependency directories -->
+	<property name="LDLibrary.dir">d:/dist/libs/LDLibrary</property>
+	
+	<property name="JavaLauncher.dir">d:/dist/tools/build/launcher</property>
+	<property name="JDK.input.dir">D:/IDE/java/jdk-17</property>
+	<property name="jre.output.dir">jre</property>
+
+	<!-- Porject variables -->
+	<property name="build-drive">d:</property>
+	<property name="project.name">Mailtrain</property>
+
+	<property name="main-class">lintfordpickle.mailtrain.GameWindow</property>
+
+	<!-- Input directories -->
+	<property name="input.src.dir" value="src" />
+	<property name="input.lib.dir" value="libs" />
+	<property name="input.res.dir" value="res" />
+
+	<!-- Output directories -->
+	<property name="base.output.dir" value="${build-drive}/dist/games/${project.name}" />
+
+	<property name="build.dir" value="${base.output.dir}/build" />
+	<property name="dist.dir" value="${base.output.dir}/dist" />
+
+	<property name="dist.jar" value="${dist.dir}/" />
+	<property name="dist.lib" value="${dist.dir}/libs/" />
+	<property name="dist.doc" value="${dist.dir}/docs/" />
+	<property name="dist.res" value="${dist.dir}/res/" />
+	<property name="dist.jre" value="${dist.dir}/${jre.output.dir}/"/>
+
+	<!-- clean build -->
+	<target name="clean">
+		<delete dir="${build.dir}" />
+		<!-- <delete dir="${base.output.dir}" /> -->
+		<delete dir="${dist.res}" />
+		<delete dir="${dist.lib}" />
+		<!-- <delete dir="${dist.doc}" /> -->
+		<!-- <delete dir="${dist.jre}" /> -->
+	</target>
+
+	<!-- Create the output destination folders -->
+	<target name="init">
+		<mkdir dir="${base.output.dir}" />
+		<mkdir dir="${build.dir}/classes" />
+		<mkdir dir="${dist.jar}" />
+		<mkdir dir="${dist.lib}" />
+		<mkdir dir="${dist.doc}" />
+		<mkdir dir="${dist.res}" />
+	</target>
+
+	<!-- Copy dependency files -->
+	<target name="copy.dep">
+		<!-- Copy the LDLibrary class files into the game build directory so the sources are avaiable during compilation -->
+		<!-- This step actually copies both the *.class files as well as the res/ directory from LDLibrary-->
+		<copy todir="${build.dir}">
+			<fileset dir="${LDLibrary.dir}/build">
+				<include name="**/*.*" />
+			</fileset>
+		</copy>
+
+		<!-- Copy LDLibrary external dependencies (JARs) into the game distribution directory. -->
+		<copy todir="${dist.dir}/">
+			<fileset dir="${LDLibrary.dir}/bin">
+				<include name="**/*.jar" />
+				<exclude name="**/*javadoc*"/>
+				<exclude name="**/*sources*"/>
+				<exclude name="**/*linux*"/>
+				<exclude name="**/*macos*"/>
+				<exclude name="LDLibrary.jar"/>
+			</fileset>
+		</copy>
+
+		<!-- Copy the resource files the game needs to load next to the game's JAR file. -->
+		<copy todir="${dist.res}">
+			<fileset dir="${basedir}/${input.res.dir}">
+				<include name="**/*.*" />
+			</fileset>
+		</copy>
+
+		<!-- Copy any other JAR dependency files declared by the game. -->
+		<copy todir="${dist.lib}">
+			<fileset dir="${basedir}/${input.lib.dir}">
+				<exclude name="**/*javadoc*"/>
+				<exclude name="**/*src*"/>
+				<exclude name="**/*linux*"/>
+				<exclude name="**/*macos*"/>
+				<include name="**/*.*" />
+			</fileset>
+		</copy>
+	</target>
+
+	<!-- Define the set of .jar files in the input lib dir as the classpath -->
+	<path id="build.class.path">
+		<fileset dir="${input.lib.dir}" includes="**/*.jar" />
+		<fileset dir="${LDLibrary.dir}/bin" includes="**/*.jar" />
+	</path>
+
+	<!-- We will add this jar files to the manifests classpath -->
+	<pathconvert property="manifest.classpath" pathsep=" ">
+		<path refid="build.class.path" />
+		<mapper>
+			<chainedmapper>
+				<flattenmapper />
+				<globmapper from="*.jar" to="${input.lib.dir}/*.jar" />
+			</chainedmapper>
+		</mapper>
+	</pathconvert>
+
+	<!-- compile source -->
+	<target name="compile">
+		<javac srcdir="${input.src.dir}" destdir="${build.dir}/classes" classpathref="build.class.path" includeantruntime="false" />
+	</target>
+
+	<!-- create jar -->
+	<target name="createjar" depends="compile">
+		<echo message="createjar" />
+		<jar destfile="${dist.jar}/Core.jar" basedir="${build.dir}/classes">
+			<!-- include the res folder from within the build dir (which contains res from the LDLibrary to embed in JAR) -->
+			<fileset dir="${build.dir}/res" />
+			<manifest>
+				<attribute name="Main-Class" value="${main-class}" />
+				<attribute name="Class-Path" value="${manifest.classpath}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<!-- 
+		Dependencies list is based on the output of:
+		jdeps -multi-release base -class-path "lib/*" -recursive -s Excavation.jar
+	 -->
+
+	<!-- bundle the JRE in the output folder -->
+	<target name="bundle.jre" depends="check.jre" unless="jre.dir.exists">
+		<echo message="Bundling JRE" />
+		<echo message='${JDK.input.dir}/bin/jlink --module-path "${JDK.input.dir}/jmods" --add-modules java.base,java.sql,java.desktop,java.management,java.instrument,java.xml,jdk.unsupported,jdk.management --output ${dist.jre} --strip-debug --compress 2 --no-header-files --no-man-pages' />
+		<exec executable="cmd">
+			<arg value="/c" />
+			<arg value='${JDK.input.dir}/bin/jlink --module-path ${JDK.input.dir}/jmods --add-modules java.base,java.sql,java.desktop,java.management,java.instrument,java.xml,jdk.unsupported,jdk.management --output ${dist.jre} --strip-debug --compress 2 --no-header-files --no-man-pages' />
+		</exec>
+	</target>
+	
+	<target name="help">
+	  <exec executable="java">
+	    <arg value="--list-modules"/>
+	  </exec>
+	</target>
+
+	<target name="check.jre">
+		<condition property="jre.dir.exists">
+			<available file="${dist.jre}" type="dir"/>
+		</condition>
+	</target>
+	
+	<target name="notify.jre" depends="check.jre" if="jre.dir.exists">
+		<echo message="${dist.jre} exists. Not copying JRE" />
+	</target>
+
+	<!-- copy the custom launcher -->
+	<target name="copy.launcher">
+		<!-- Copy the JavaLauncher -->
+		<echo message="Copying JavaLauncher to dist directory" />
+		<copy todir="${dist.dir}">
+			<fileset dir="${JavaLauncher.dir}">
+				<include name="**/*.exe" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="config.launcher">
+		<!-- Configure the JavaLauncher -->
+		<echo message="Bundling JRE" />
+		<exec executable="cmd">
+			<arg value="/c" />
+			<arg value='${dist.dir}/JavaLauncher -c  -jre ${jre.output.dir} -n ${project.name} -j core -p "debug=info" -w https://lintfordpickleld.itch.io/' />
+		</exec>
+	</target>
+
+	<target name="main" depends="help, clean, init, copy.dep, compile, createjar, notify.jre, bundle.jre, copy.launcher, config.launcher" />
+
+</project>
