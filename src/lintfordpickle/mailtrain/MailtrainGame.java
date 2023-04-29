@@ -1,10 +1,12 @@
 package lintfordpickle.mailtrain;
 
-import org.lwjgl.opengl.GL11;
-
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 import static org.lwjgl.opengl.GL11.glClearColor;
 
+import org.lwjgl.opengl.GL11;
+
+import lintfordpickle.mailtrain.screens.MainMenu;
+import lintfordpickle.mailtrain.screens.MenuBackgroundScreen;
 import net.lintford.library.GameInfo;
 import net.lintford.library.ResourceLoader;
 import net.lintford.library.core.LintfordCore;
@@ -50,5 +52,60 @@ public class MailtrainGame extends LintfordCore {
 
 		glfwSwapBuffers(pWindowHandle);
 	}
-	
+
+	@Override
+	protected void onInitializeApp() {
+		super.onInitializeApp();
+
+		if (ConstantsGame.SKIP_MAIN_MENU_ON_STARTUP) {
+
+		}
+
+		mScreenManager.addScreen(new MenuBackgroundScreen(mScreenManager));
+		mScreenManager.addScreen(new MainMenu(mScreenManager));
+		mScreenManager.initialize();
+	}
+
+	@Override
+	protected void onLoadResources() {
+		super.onLoadResources();
+
+		mGameResourceLoader = new GameResourceLoader(mResourceManager, config().display());
+
+		mGameResourceLoader.loadResources(mResourceManager);
+		mGameResourceLoader.setMinimumTimeToShowLogosMs(ConstantsGame.IS_DEBUG_MODE ? 0 : 1000);
+		mGameResourceLoader.loadResourcesInBackground(this);
+
+		mScreenManager.loadResources(mResourceManager);
+	}
+
+	@Override
+	protected void onUnloadResources() {
+		super.onUnloadResources();
+
+		mScreenManager.unloadResources();
+	}
+
+	@Override
+	protected void onHandleInput() {
+		super.onHandleInput();
+
+		gameCamera().handleInput(this);
+		mScreenManager.handleInput(this);
+	}
+
+	@Override
+	protected void onUpdate() {
+		super.onUpdate();
+
+		mScreenManager.update(this);
+	}
+
+	@Override
+	protected void onDraw() {
+		super.onDraw();
+
+		mScreenManager.draw(this);
+	}
+
 }

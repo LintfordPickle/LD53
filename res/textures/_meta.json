@@ -1,0 +1,11 @@
+{
+	"textureDefinitions" : [
+		{
+			"textureName":"TEXTURE_CORE",
+			"filepath":"res/textures/textureCore.png",
+			"filterIndex":1,
+			"wrapSIndex":1,
+			"wrapTIndex":1
+		}
+	]
+}
