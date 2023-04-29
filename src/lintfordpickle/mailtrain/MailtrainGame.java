@@ -9,6 +9,8 @@ import lintfordpickle.mailtrain.screens.MainMenu;
 import lintfordpickle.mailtrain.screens.MenuBackgroundScreen;
 import net.lintford.library.GameInfo;
 import net.lintford.library.ResourceLoader;
+import net.lintford.library.controllers.core.MouseCursorController;
+import net.lintford.library.controllers.core.ResourceController;
 import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.maths.RandomNumbers;
 import net.lintford.library.screenmanager.ScreenManager;
@@ -56,6 +58,13 @@ public class MailtrainGame extends LintfordCore {
 	@Override
 	protected void onInitializeApp() {
 		super.onInitializeApp();
+
+		// Custom mouse
+		var lMouseController = new MouseCursorController(mControllerManager, CORE_ENTITY_GROUP_ID);
+		lMouseController.initialize(this);
+
+		var lResourceController = new ResourceController(mControllerManager, mResourceManager, CORE_ENTITY_GROUP_ID);
+		lResourceController.initialize(this);
 
 		if (ConstantsGame.SKIP_MAIN_MENU_ON_STARTUP) {
 

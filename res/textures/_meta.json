@@ -6,6 +6,27 @@
 			"filterIndex":1,
 			"wrapSIndex":1,
 			"wrapTIndex":1
+		},
+		{
+			"textureName":"TEXTURE_HUD",
+			"filepath":"res/textures/textureHud.png",
+			"filterIndex":1,
+			"wrapSIndex":1,
+			"wrapTIndex":1
+		},
+		{
+			"textureName":"TEXTURE_TRAINS",
+			"filepath":"res/textures/textureTrains.png",
+			"filterIndex":1,
+			"wrapSIndex":1,
+			"wrapTIndex":1
+		},
+		{
+			"textureName":"TEXTURE_ENVIRONMENT",
+			"filepath":"res/textures/textureEnvironment.png",
+			"filterIndex":1,
+			"wrapSIndex":1,
+			"wrapTIndex":1
 		}
 	]
 }

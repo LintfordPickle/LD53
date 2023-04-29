@@ -1,0 +1,55 @@
+{
+  "spriteSheetName": "SPRITESHEET_TRAINS",
+  "textureName": "TEXTURE_TRAINS",
+  "spriteFrames": [
+    {
+      "name": "TEXTURECARRIAGE",
+      "x": 0,
+      "y": 0,
+      "w": 64,
+      "h": 32,
+      "pivotX": 0,
+      "pivotY": 0,
+      "scaleX": 1.0,
+      "scaleY": 1.0,
+      "anchorPoints": []
+    },
+    {
+      "name": "TEXTURECARRIAGEEMPTY",
+      "x": 64,
+      "y": 0,
+      "w": 64,
+      "h": 32,
+      "pivotX": 0,
+      "pivotY": 0,
+      "scaleX": 1.0,
+      "scaleY": 1.0,
+      "anchorPoints": []
+    },
+    {
+      "name": "TEXTUREENGINE00",
+      "x": 128,
+      "y": 0,
+      "w": 64,
+      "h": 32,
+      "pivotX": 0,
+      "pivotY": 0,
+      "scaleX": 1.0,
+      "scaleY": 1.0,
+      "anchorPoints": []
+    },
+    {
+      "name": "TEXTUREQUARTERS",
+      "x": 192,
+      "y": 0,
+      "w": 64,
+      "h": 32,
+      "pivotX": 0,
+      "pivotY": 0,
+      "scaleX": 1.0,
+      "scaleY": 1.0,
+      "anchorPoints": []
+    }
+  ],
+  "animationFramesMap": {}
+}

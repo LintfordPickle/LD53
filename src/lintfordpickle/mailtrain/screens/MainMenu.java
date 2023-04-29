@@ -1,6 +1,7 @@
 package lintfordpickle.mailtrain.screens;
 
-import lintfordpickle.mailtrain.screens.game.GameScreen;
+import lintfordpickle.mailtrain.screens.editor.EditorTrackSelectionScreen;
+import lintfordpickle.mailtrain.screens.game.LevelSelectionScreen;
 import lintfordpickle.mailtrain.screens.menu.HelpScreen;
 import lintfordpickle.mailtrain.screens.menu.OptionsScreen;
 import net.lintford.library.core.LintfordCore;
@@ -14,7 +15,6 @@ import net.lintford.library.screenmanager.ScreenManagerConstants.FILLTYPE;
 import net.lintford.library.screenmanager.ScreenManagerConstants.LAYOUT_ALIGNMENT;
 import net.lintford.library.screenmanager.ScreenManagerConstants.LAYOUT_WIDTH;
 import net.lintford.library.screenmanager.layouts.ListLayout;
-import net.lintford.library.screenmanager.screens.LoadingScreen;
 
 public class MainMenu extends MenuScreen {
 
@@ -25,6 +25,7 @@ public class MainMenu extends MenuScreen {
 	private static final String TITLE = null;
 
 	private static final int SCREEN_BUTTON_PLAY = 11;
+	private static final int SCREEN_BUTTON_EDITOR = 20;
 	private static final int SCREEN_BUTTON_HELP = 12;
 	private static final int SCREEN_BUTTON_OPTIONS = 13;
 	private static final int SCREEN_BUTTON_EXIT = 15;
@@ -56,6 +57,11 @@ public class MainMenu extends MenuScreen {
 		lPlayEntry.registerClickListener(this, SCREEN_BUTTON_PLAY);
 		lPlayEntry.setToolTip("Starts a new game.");
 
+		final var lEditorEntry = new MenuEntry(mScreenManager, this, "Editor");
+		lEditorEntry.horizontalFillType(FILLTYPE.FILL_CONTAINER);
+		lEditorEntry.registerClickListener(this, SCREEN_BUTTON_EDITOR);
+		lEditorEntry.setToolTip("Launches the track and world editor");
+
 		final var lHelpButton = new MenuEntry(mScreenManager, this, "Instructions");
 		lHelpButton.horizontalFillType(FILLTYPE.FILL_CONTAINER);
 		lHelpButton.registerClickListener(this, SCREEN_BUTTON_HELP);
@@ -69,6 +75,8 @@ public class MainMenu extends MenuScreen {
 		lExitEntry.registerClickListener(this, SCREEN_BUTTON_EXIT);
 
 		mMainMenuListBox.addMenuEntry(lPlayEntry);
+		mMainMenuListBox.addMenuEntry(MenuEntry.menuSeparator());
+		mMainMenuListBox.addMenuEntry(lEditorEntry);
 		mMainMenuListBox.addMenuEntry(MenuEntry.menuSeparator());
 		mMainMenuListBox.addMenuEntry(lHelpButton);
 		mMainMenuListBox.addMenuEntry(lOptionsEntry);
@@ -118,7 +126,13 @@ public class MainMenu extends MenuScreen {
 
 		switch (mClickAction.consume()) {
 		case SCREEN_BUTTON_PLAY: {
-			screenManager().createLoadingScreen(new LoadingScreen(screenManager(), true, new GameScreen(screenManager())));
+			screenManager().addScreen(new LevelSelectionScreen(mScreenManager));
+			//screenManager().createLoadingScreen(new LoadingScreen(screenManager(), true, new GameScreen(screenManager())));
+			break;
+		}
+
+		case SCREEN_BUTTON_EDITOR: {
+			screenManager().addScreen(new EditorTrackSelectionScreen(mScreenManager));
 			break;
 		}
 

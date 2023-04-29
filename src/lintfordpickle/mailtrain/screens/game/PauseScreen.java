@@ -1,5 +1,6 @@
 package lintfordpickle.mailtrain.screens.game;
 
+import lintfordpickle.mailtrain.data.GameWorldHeader;
 import lintfordpickle.mailtrain.screens.MainMenu;
 import lintfordpickle.mailtrain.screens.MenuBackgroundScreen;
 import net.lintford.library.core.graphics.ColorConstants;
@@ -24,12 +25,16 @@ public class PauseScreen extends MenuScreen {
 	// Variables
 	// ---------------------------------------------
 
+	private GameWorldHeader mGameWorldHeader;
+
 	// ---------------------------------------------
 	// Constructor
 	// ---------------------------------------------
 
-	public PauseScreen(ScreenManager screenManager) {
+	public PauseScreen(ScreenManager screenManager, GameWorldHeader gameWorldHeader) {
 		super(screenManager, null);
+
+		mGameWorldHeader = gameWorldHeader;
 
 		final var lLayout = new ListLayout(this);
 		lLayout.layoutFillType(FILLTYPE.TAKE_WHATS_NEEDED);
@@ -72,7 +77,7 @@ public class PauseScreen extends MenuScreen {
 			return;
 
 		case SCREEN_BUTTON_RESTART:
-			final var lLoadingScreen = new LoadingScreen(screenManager(), true, new GameScreen(screenManager()));
+			final var lLoadingScreen = new LoadingScreen(screenManager(), true, new GameScreen(screenManager(), mGameWorldHeader));
 			screenManager().createLoadingScreen(new LoadingScreen(screenManager(), true, lLoadingScreen));
 			break;
 

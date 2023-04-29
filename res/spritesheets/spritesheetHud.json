@@ -1,0 +1,55 @@
+{
+  "spriteSheetName": "SPRITESHEET_HUD",
+  "textureName": "TEXTURE_HUD",
+  "spriteFrames": [
+    {
+      "name": "TEXTURE_HIDE_LAYER",
+      "x": 0,
+      "y": 0,
+      "w": 32,
+      "h": 32,
+      "pivotX": 0,
+      "pivotY": 0,
+      "scaleX": 1.0,
+      "scaleY": 1.0,
+      "anchorPoints": []
+    },
+    {
+      "name": "TEXTURE_SET_LAYER_OFF",
+      "x": 34,
+      "y": 0,
+      "w": 32,
+      "h": 32,
+      "pivotX": 0,
+      "pivotY": 0,
+      "scaleX": 1.0,
+      "scaleY": 1.0,
+      "anchorPoints": []
+    },
+    {
+      "name": "TEXTURE_SET_LAYER_ON",
+      "x": 68,
+      "y": 0,
+      "w": 32,
+      "h": 32,
+      "pivotX": 0,
+      "pivotY": 0,
+      "scaleX": 1.0,
+      "scaleY": 1.0,
+      "anchorPoints": []
+    },
+    {
+      "name": "TEXTURE_SHOW_LAYER",
+      "x": 102,
+      "y": 0,
+      "w": 32,
+      "h": 32,
+      "pivotX": 0,
+      "pivotY": 0,
+      "scaleX": 1.0,
+      "scaleY": 1.0,
+      "anchorPoints": []
+    }
+  ],
+  "animationFramesMap": {}
+}

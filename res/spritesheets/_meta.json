@@ -1,0 +1,9 @@
+{
+	"spriteSheetLocations" : [
+		"res/spritesheets/spritesheetCore.json",
+		"res/spritesheets/spritesheetHud.json",
+
+		"res/spritesheets/spritesheetEnvironment.json",
+		"res/spritesheets/spritesheetTrains.json"
+	]
+}
