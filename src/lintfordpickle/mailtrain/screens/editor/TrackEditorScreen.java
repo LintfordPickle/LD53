@@ -5,7 +5,6 @@ import org.lwjgl.glfw.GLFW;
 import lintfordpickle.mailtrain.controllers.TrackEditorController;
 import lintfordpickle.mailtrain.controllers.core.GameCameraMovementController;
 import lintfordpickle.mailtrain.controllers.core.GameCameraZoomController;
-import lintfordpickle.mailtrain.controllers.world.GameWorldController;
 import lintfordpickle.mailtrain.controllers.world.SceneryController;
 import lintfordpickle.mailtrain.data.GameWorldHeader;
 import lintfordpickle.mailtrain.renderers.EditorSignalRenderer;
@@ -16,16 +15,19 @@ import lintfordpickle.mailtrain.screens.MainMenu;
 import lintfordpickle.mailtrain.screens.MenuBackgroundScreen;
 import lintfordpickle.mailtrain.screens.dialogs.SaveTrackDialog;
 import net.lintford.library.controllers.core.ControllerManager;
+import net.lintford.library.controllers.core.GameRendererController;
 import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.ResourceManager;
+import net.lintford.library.core.camera.ICamera;
 import net.lintford.library.core.input.InputManager;
+import net.lintford.library.core.time.LogicialCounter;
 import net.lintford.library.screenmanager.ClickAction;
+import net.lintford.library.screenmanager.MenuScreen;
 import net.lintford.library.screenmanager.ScreenManager;
 import net.lintford.library.screenmanager.entries.EntryInteractions;
-import net.lintford.library.screenmanager.screens.BaseGameScreen;
 import net.lintford.library.screenmanager.screens.LoadingScreen;
 
-public class TrackEditorScreen extends BaseGameScreen implements EntryInteractions {
+public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
 
 	// ---------------------------------------------
 	// Constants
@@ -39,6 +41,11 @@ public class TrackEditorScreen extends BaseGameScreen implements EntryInteractio
 	// ---------------------------------------------
 	// Variables
 	// ---------------------------------------------
+
+	protected ICamera mGameCamera;
+	protected LogicialCounter mGameInputLogicalCounter;
+	protected LogicialCounter mGameDrawLogicalCounter;
+	protected ResourceManager mResourceManager;
 
 	// Data
 	private GameWorldHeader mTrackHeader;
@@ -65,7 +72,7 @@ public class TrackEditorScreen extends BaseGameScreen implements EntryInteractio
 	// ---------------------------------------------
 
 	public TrackEditorScreen(ScreenManager pScreenManager, GameWorldHeader pTrackHeader) {
-		super(pScreenManager);
+		super(pScreenManager, "");
 
 		mTrackHeader = pTrackHeader;
 
@@ -74,7 +81,10 @@ public class TrackEditorScreen extends BaseGameScreen implements EntryInteractio
 		mSaveTrackDialog.cancelEntry().registerClickListener(this, BUTTON_DIALOG_SAVE_CANCEL);
 
 		mClickAction = new ClickAction();
-		mShowBackgroundScreens = true;
+
+		mGameInputLogicalCounter = new LogicialCounter();
+		mGameDrawLogicalCounter = new LogicialCounter();
+
 	}
 
 	// ---------------------------------------------
@@ -85,6 +95,19 @@ public class TrackEditorScreen extends BaseGameScreen implements EntryInteractio
 	public void initialize() {
 		super.initialize();
 
+		final var lCore = screenManager().core();
+		final var lControllerManager = lCore.controllerManager();
+
+		new GameRendererController(lControllerManager, mRendererManager, entityGroupUid());
+		mGameCamera = mScreenManager.core().setNewGameCamera(mGameCamera);
+
+		createControllers(lControllerManager);
+		createRenderers(lCore);
+
+		initializeControllers(lCore);
+
+		initializeRenderers(lCore);
+
 		if (mTrackHeader.trackFilename() == null) {
 			mTrackEditorController.setNewScene();
 		} else {
@@ -92,14 +115,17 @@ public class TrackEditorScreen extends BaseGameScreen implements EntryInteractio
 		}
 
 		if (mTrackHeader.sceneryFilename() == null) {
+
 		}
 	}
 
 	@Override
-	public void loadResources(ResourceManager pResourceManager) {
-		super.loadResources(pResourceManager);
+	public void loadResources(ResourceManager resourceManager) {
+		super.loadResources(resourceManager);
 
-		pResourceManager.spriteSheetManager().loadSpriteSheet("res/spritesheets/spritesheetTracks.json", entityGroupUid());
+		loadRendererResources(resourceManager);
+
+		resourceManager.spriteSheetManager().loadSpriteSheet("res/spritesheets/spritesheetTracks.json", entityGroupUid());
 	}
 
 	@Override
@@ -174,7 +200,6 @@ public class TrackEditorScreen extends BaseGameScreen implements EntryInteractio
 
 	}
 
-	@Override
 	protected void initializeRenderers(LintfordCore core) {
 		mTrackEditorRenderer.initialize(core);
 		mGridRenderer.initialize(core);
@@ -183,7 +208,6 @@ public class TrackEditorScreen extends BaseGameScreen implements EntryInteractio
 
 	}
 
-	@Override
 	protected void loadRendererResources(ResourceManager resourceManager) {
 		mTrackEditorRenderer.loadResources(resourceManager);
 		mGridRenderer.loadResources(resourceManager);

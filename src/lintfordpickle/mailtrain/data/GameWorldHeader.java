@@ -2,6 +2,8 @@ package lintfordpickle.mailtrain.data;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GameWorldHeader {
 
@@ -25,8 +27,9 @@ public class GameWorldHeader {
 
 	private String mTrackFilename;
 	private String mSceneryFilename;
-	
-	
+
+	private List<String> mEntryPointNames;
+
 	private boolean mIsValidated;
 
 	// ---------------------------------------------
@@ -56,15 +59,35 @@ public class GameWorldHeader {
 
 	}
 
+	public void addEntryPointName(String name) {
+		if (mEntryPointNames.contains(name) == false)
+			mEntryPointNames.add(name);
+	}
+
+	public List<String> entryPointNames() {
+		return mEntryPointNames;
+	}
+
+	public boolean containsEntryPoint(String name) {
+		final int lNumEntries = mEntryPointNames.size();
+		for (int i = 0; i < lNumEntries; i++) {
+			if (mEntryPointNames.get(i).equals(name))
+				return true;
+		}
+		return false;
+	}
+
 	// ---------------------------------------------
 	// Constructor
 	// ---------------------------------------------
 
 	public GameWorldHeader() {
-
+		mEntryPointNames = new ArrayList<>();
 	}
 
 	public GameWorldHeader(String pTrackFilename, String pSceneryFilename) {
+		this();
+
 		mTrackFilename = pTrackFilename;
 		mTrackFilename = pTrackFilename;
 

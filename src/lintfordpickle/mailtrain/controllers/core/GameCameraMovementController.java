@@ -97,6 +97,7 @@ public class GameCameraMovementController extends BaseController {
 
 		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL))
 			return false; // editor controls
+		
 		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_A)) {
 			mVelocity.x -= speed * lElapsed;
 			mFollowTrain = null; // stop auto follow

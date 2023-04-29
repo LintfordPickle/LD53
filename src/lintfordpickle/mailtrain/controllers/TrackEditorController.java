@@ -17,12 +17,13 @@ import lintfordpickle.mailtrain.data.track.TrackSegment;
 import net.lintford.library.controllers.BaseController;
 import net.lintford.library.controllers.core.ControllerManager;
 import net.lintford.library.core.LintfordCore;
+import net.lintford.library.core.input.keyboard.IBufferedTextInputCallback;
 import net.lintford.library.core.input.mouse.IInputProcessor;
 import net.lintford.library.core.maths.MathHelper;
 import net.lintford.library.core.maths.Vector2f;
 import net.lintford.library.screenmanager.ScreenManager;
 
-public class TrackEditorController extends BaseController implements IInputProcessor {
+public class TrackEditorController extends BaseController implements IInputProcessor, IBufferedTextInputCallback {
 
 	// ---------------------------------------------
 	// Constants
@@ -50,6 +51,15 @@ public class TrackEditorController extends BaseController implements IInputProce
 	private float mMouseGridPositionY;
 
 	private int mLogicalUpdateCounter;
+
+	// TODO: refactor out
+	private boolean mIsCapturedTextInput;
+	private boolean mIsCapturingName;
+	public TrackSegment mSelectedEdge;
+	private String mTempString;
+	private final StringBuilder mInputField = new StringBuilder();
+	private float mCaretFlashTimer;
+	//
 
 	// ---------------------------------------------
 	// Properties
@@ -719,10 +729,26 @@ public class TrackEditorController extends BaseController implements IInputProce
 
 		final var lActiveEdge = mSelectedNodeA.getEdgeByIndex(activeEdgeLocalIndex);
 
-		// Reset the edge's special flags
+		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_2, this)) {
+			System.out.println("Setting edge name");
+			mScreenManager.toastManager().addMessage("Editor", "Setting edge name", 1500);
+			mSelectedEdge = lActiveEdge;
+			mIsCapturedTextInput = true;
+			mIsCapturingName = true;
+			mInputField.setLength(0);
+			pCore.input().keyboard().startBufferedTextCapture(this);
+
+			return true;
+		}
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_3, this)) {
-			System.out.println("Resetting edge's special flags");
-			lActiveEdge.setEdgeBitFlag(0);
+			System.out.println("Setting edge special name");
+			mScreenManager.toastManager().addMessage("Editor", "Setting edge special name", 1500);
+			mSelectedEdge = lActiveEdge;
+			mInputField.setLength(0);
+			mIsCapturedTextInput = true;
+			mIsCapturingName = false;
+			pCore.input().keyboard().startBufferedTextCapture(this);
+
 			return true;
 		}
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_4, this)) {
@@ -748,6 +774,13 @@ public class TrackEditorController extends BaseController implements IInputProce
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_8, this)) {
 			System.out.println("Setting enemy spawn edge");
 			lActiveEdge.setEdgeWithType(TrackSegment.EDGE_SPECIAL_TYPE_ENEMY_SPAWN);
+			return true;
+		}
+
+		// Reset the edge's special flags
+		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_0, this)) {
+			System.out.println("Resetting edge's special flags");
+			lActiveEdge.setEdgeBitFlag(0);
 			return true;
 		}
 		return false;
@@ -787,7 +820,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 	}
 
 	// ---------------------------------------------
-
+	// Input Callbacks
 	// ---------------------------------------------
 
 	private void clearTrackEditor(LintfordCore pCore) {
@@ -805,8 +838,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 
 	@Override
 	public boolean allowKeyboardInput() {
-		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	@Override
@@ -817,8 +849,65 @@ public class TrackEditorController extends BaseController implements IInputProce
 
 	@Override
 	public boolean allowMouseInput() {
-		// TODO Auto-generated method stub
+		return true;
+	}
+
+	// ---------------------------------------------
+	// Buffered Text Input
+	// ---------------------------------------------
+
+	public void onDeselection() {
+
+	}
+
+	@Override
+	public void onKeyPressed(int codePoint) {
+		if (mIsCapturingName)
+			mSelectedEdge.segmentName = mInputField.toString();
+		else
+			mSelectedEdge.specialName = mInputField.toString();
+	}
+
+	@Override
+	public boolean onEscapePressed() {
+		if (mIsCapturingName)
+			mSelectedEdge.segmentName = mInputField.toString();
+		else
+			mSelectedEdge.specialName = mInputField.toString();
+
 		return false;
+	}
+
+	@Override
+	public boolean onEnterPressed() {
+		if (mIsCapturingName)
+			mSelectedEdge.segmentName = mInputField.toString();
+		else
+			mSelectedEdge.specialName = mInputField.toString();
+
+		return false;
+	}
+
+	@Override
+	public StringBuilder getStringBuilder() {
+		return mInputField;
+	}
+
+	@Override
+	public boolean getEnterFinishesInput() {
+		return true;
+	}
+
+	@Override
+	public boolean getEscapeFinishesInput() {
+		return true;
+	}
+
+	@Override
+	public void captureStopped() {
+		IBufferedTextInputCallback.super.captureStopped();
+		mIsCapturedTextInput = false;
+
 	}
 
 }

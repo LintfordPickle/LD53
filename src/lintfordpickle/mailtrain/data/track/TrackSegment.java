@@ -149,8 +149,8 @@ public class TrackSegment extends TrackEdge {
 	public static final int EDGE_TYPE_CURVE = 1;
 
 	public static final int EDGE_SPECIAL_TYPE_UNASSIGNED = 0; // nothing
-	public static final int EDGE_SPECIAL_TYPE_MAP_SPAWN = 1; // player map spawn
-	public static final int EDGE_SPECIAL_TYPE_MAP_EXIT = 2; // player map exit point
+	public static final int EDGE_SPECIAL_TYPE_MAP_SPAWN = 1; // player map spawn (edge needs name)
+	public static final int EDGE_SPECIAL_TYPE_MAP_EXIT = 2; // player map exit point (edge needs special name)
 	public static final int EDGE_SPECIAL_TYPE_MAP_EDGE = 4; // edge of map (enemy spawn / leave)
 	public static final int EDGE_SPECIAL_TYPE_STATION = 8; // station / town for trading
 	public static final int EDGE_SPECIAL_TYPE_ENEMY_SPAWN = 16; // station / town for trading
@@ -166,6 +166,9 @@ public class TrackSegment extends TrackEdge {
 
 	public float edgeAngle;
 	public transient boolean isSelected;
+
+	public String segmentName;
+	public String specialName;
 
 	public final TrackJunction trackJunction = new TrackJunction();
 

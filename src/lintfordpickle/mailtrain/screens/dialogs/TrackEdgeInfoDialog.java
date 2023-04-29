@@ -6,7 +6,7 @@ import net.lintford.library.screenmanager.dialogs.ConfirmationDialog;
 import net.lintford.library.screenmanager.entries.MenuInputEntry;
 import net.lintford.library.screenmanager.layouts.BaseLayout;
 
-public class SaveTrackDialog extends ConfirmationDialog {
+public class TrackEdgeInfoDialog extends ConfirmationDialog {
 
 	// --------------------------------------
 	// Constants
@@ -19,25 +19,26 @@ public class SaveTrackDialog extends ConfirmationDialog {
 	// Variables
 	// --------------------------------------
 
-	private MenuInputEntry mFilenameInputEntry;
+	private MenuInputEntry mSegmentNameInputEntry;
+	private MenuInputEntry mSegmentSpecialNameInputEntry;
 
 	// --------------------------------------
 	// Properties
 	// --------------------------------------
 
-	public void trackFilename(String pFilename) {
-		mFilenameInputEntry.inputString(pFilename);
+	public String segmentName() {
+		return mSegmentNameInputEntry.inputString();
 	}
 
-	public String trackFilename() {
-		return mFilenameInputEntry.inputString();
+	public String segmentSpecialName() {
+		return mSegmentSpecialNameInputEntry.inputString();
 	}
 
 	// --------------------------------------
 	// Constructor
 	// --------------------------------------
 
-	public SaveTrackDialog(ScreenManager pScreenManager, MenuScreen pParentScreen) {
+	public TrackEdgeInfoDialog(ScreenManager pScreenManager, MenuScreen pParentScreen) {
 		super(pScreenManager, pParentScreen, DIALOG_TITLE, DIALOG_MESSAGE, true);
 	}
 
@@ -49,10 +50,14 @@ public class SaveTrackDialog extends ConfirmationDialog {
 	protected void createMenuEntries(BaseLayout pLayout) {
 		super.createMenuEntries(pLayout);
 
-		// TODO: need to pass the parent screen and not null
-		mFilenameInputEntry = new MenuInputEntry(screenManager(), mParentScreen);
-		mFilenameInputEntry.label("Filename");
-		pLayout.addMenuEntry(mFilenameInputEntry);
+		mSegmentNameInputEntry = new MenuInputEntry(screenManager(), mParentScreen);
+		mSegmentNameInputEntry.label("Name");
+
+		mSegmentSpecialNameInputEntry = new MenuInputEntry(screenManager(), mParentScreen);
+		mSegmentSpecialNameInputEntry.label("Special");
+
+		pLayout.addMenuEntry(mSegmentNameInputEntry);
+		pLayout.addMenuEntry(mSegmentSpecialNameInputEntry);
 	}
 
 	@Override

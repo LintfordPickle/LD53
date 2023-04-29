@@ -134,7 +134,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		if (!mTrackEditorController.isInitialized())
 			return;
 
-		// drawMesh(pCore, mTextureStonebed);
+//		drawMesh(pCore, mTextureStonebed);
 		drawMesh(pCore, mTextureSleepers);
 		drawMesh(pCore, mTextureBackplate);
 		drawMesh(pCore, mTextureMetal);
@@ -449,25 +449,43 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 
 			mGameTextFont.drawText(String.format("%.1fm", lEdgeLength), lCenterX, lCenterY + mGameTextFont.fontHeight() * mGameTextScale, -0.01f, ColorConstants.WHITE, mGameTextScale, -1);
 		}
+
 		if (pActiveEdge.specialEdgeType != TrackSegment.EDGE_SPECIAL_TYPE_UNASSIGNED) {
 			String lSpecialType = "";
 			if (pActiveEdge.isEdgeOfType(TrackSegment.EDGE_SPECIAL_TYPE_MAP_SPAWN)) {
 				lSpecialType += "PLAYER SPAWN";
 			}
+
 			if (pActiveEdge.isEdgeOfType(TrackSegment.EDGE_SPECIAL_TYPE_MAP_EXIT)) {
 				lSpecialType += "  PLAYER EXIT";
 			}
+
 			if (pActiveEdge.isEdgeOfType(TrackSegment.EDGE_SPECIAL_TYPE_MAP_EDGE)) {
 				lSpecialType += "  MAP EDGE";
 			}
+
 			if (pActiveEdge.isEdgeOfType(TrackSegment.EDGE_SPECIAL_TYPE_STATION)) {
 				lSpecialType += "  STATION";
 			}
+
 			final float lTextWidthHalf = mGameTextFont.getStringWidth(lSpecialType, mGameTextScale) * .5f;
 			final float lTextHeight = mGameTextFont.getStringHeight(lSpecialType, mGameTextScale);
 
 			mGameTextFont.drawText(lSpecialType, lCenterX - lTextWidthHalf, lCenterY - lTextHeight, -0.01f, ColorConstants.WHITE, mGameTextScale, -1);
+		}
 
+		if (pActiveEdge.segmentName != null && pActiveEdge.segmentName.length() > 0) {
+			final float lTextWidthHalf = mGameTextFont.getStringWidth(pActiveEdge.segmentName, mGameTextScale) * .5f;
+			final float lTextHeight = mGameTextFont.getStringHeight(pActiveEdge.segmentName, mGameTextScale);
+
+			mGameTextFont.drawText(pActiveEdge.segmentName, lCenterX - lTextWidthHalf, lCenterY - lTextHeight * 2, -0.01f, ColorConstants.RED, mGameTextScale, -1);
+		}
+
+		if (pActiveEdge.specialName != null && pActiveEdge.specialName.length() > 0) {
+			final float lTextWidthHalf = mGameTextFont.getStringWidth(pActiveEdge.specialName, mGameTextScale) * .5f;
+			final float lTextHeight = mGameTextFont.getStringHeight(pActiveEdge.specialName, mGameTextScale);
+
+			mGameTextFont.drawText(pActiveEdge.specialName, lCenterX - lTextWidthHalf, lCenterY - lTextHeight * 3, -0.01f, ColorConstants.GREEN, mGameTextScale, -1);
 		}
 	}
 
