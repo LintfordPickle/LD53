@@ -2,9 +2,10 @@ package lintfordpickle.mailtrain.renderers.hud;
 
 import lintfordpickle.mailtrain.ConstantsGame;
 import lintfordpickle.mailtrain.controllers.GameStateController;
-import lintfordpickle.mailtrain.controllers.TrainController;
 import lintfordpickle.mailtrain.controllers.core.GameCameraMovementController;
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
+import lintfordpickle.mailtrain.controllers.trains.PlayerTrainController;
+import lintfordpickle.mailtrain.controllers.trains.TrainController;
 import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.ResourceManager;
 import net.lintford.library.core.graphics.sprites.spritesheet.SpriteSheetDefinition;
@@ -33,7 +34,7 @@ public class PlayerControlsRenderer extends UiWindow implements IInputProcessor,
 	private SpriteSheetDefinition mHudSpriteSheet;
 	private GameStateController mGameStateController;
 	private GameCameraMovementController mCameraMovementController;
-	private TrainController mTrainController;
+	private PlayerTrainController mPlayerTrainController;
 	private TrackController mTrackController;
 
 	private UiIconButton mFollowTrainToggleButton;
@@ -93,7 +94,7 @@ public class PlayerControlsRenderer extends UiWindow implements IInputProcessor,
 		mGameStateController = (GameStateController) pCore.controllerManager().getControllerByNameRequired(GameStateController.CONTROLLER_NAME, entityGroupID());
 		mCameraMovementController = (GameCameraMovementController) pCore.controllerManager().getControllerByNameRequired(GameCameraMovementController.CONTROLLER_NAME, entityGroupID());
 		mTrackController = (TrackController) pCore.controllerManager().getControllerByNameRequired(TrackController.CONTROLLER_NAME, entityGroupID());
-		mTrainController = (TrainController) pCore.controllerManager().getControllerByNameRequired(TrainController.CONTROLLER_NAME, entityGroupID());
+		mPlayerTrainController = (PlayerTrainController) pCore.controllerManager().getControllerByNameRequired(PlayerTrainController.CONTROLLER_NAME, entityGroupID());
 	}
 
 	@Override
@@ -102,6 +103,7 @@ public class PlayerControlsRenderer extends UiWindow implements IInputProcessor,
 
 		mHudSpriteSheet = pResourceManager.spriteSheetManager().getSpriteSheet("SPRITESHEET_HUD", ConstantsGame.GAME_RESOURCE_GROUP_ID);
 
+		// TOOD: Make proper controller Ui
 		mFollowTrainToggleButton.setTextureSource(mHudSpriteSheet, mHudSpriteSheet.getSpriteFrameIndexByName("TEXTUREBUTTONFOLLOW"));
 		mStopTrainToggleButton.setTextureSource(mHudSpriteSheet, mHudSpriteSheet.getSpriteFrameIndexByName("TEXTUREBUTTONSTOP"));
 	}
@@ -149,17 +151,16 @@ public class PlayerControlsRenderer extends UiWindow implements IInputProcessor,
 				mCameraMovementController.setFollowTrain(null);
 
 			} else {
-				final var lMainTrain = mTrainController.mainTrain();
-				mCameraMovementController.setFollowTrain(lMainTrain);
+				final var lPlayerLoc = mPlayerTrainController.playerLocomotive();
+				mCameraMovementController.setFollowTrain(lPlayerLoc);
 
 			}
 		}
+
 		if (pEntryID == BUTTON_ID_STOP_TRAIN) {
 //			final var lMainTrain = mTrainController.mainTrain();
 //			lMainTrain.targetSpeedInMetersPerSecond = 0.f;
 
 		}
 	}
-
-
 }

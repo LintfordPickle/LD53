@@ -1,6 +1,5 @@
 package lintfordpickle.mailtrain.controllers.world;
 
-import lintfordpickle.mailtrain.controllers.TrainController;
 import lintfordpickle.mailtrain.data.world.scenes.GameScene;
 import net.lintford.library.controllers.BaseController;
 import net.lintford.library.controllers.core.ControllerManager;
@@ -17,8 +16,6 @@ public class GameWorldController extends BaseController {
 	// ---------------------------------------------
 	// Variables
 	// ---------------------------------------------
-
-	private TrainController mTrainController;
 
 	private boolean mIsGameLoaded;
 	private GameScene mGameWorld;
@@ -57,7 +54,7 @@ public class GameWorldController extends BaseController {
 
 	@Override
 	public void initialize(LintfordCore pCore) {
-		mTrainController = (TrainController) pCore.controllerManager().getControllerByNameRequired(TrainController.CONTROLLER_NAME, entityGroupUid());
+
 	}
 
 	// ---------------------------------------------
@@ -65,9 +62,6 @@ public class GameWorldController extends BaseController {
 	// ---------------------------------------------
 
 	public void startNewGame() {
-		final var lPlayerTrain = mTrainController.addNewMainTrain();
-		lPlayerTrain.isPlayerControlled(true);
-
 		mIsGameLoaded = true;
 	}
 }

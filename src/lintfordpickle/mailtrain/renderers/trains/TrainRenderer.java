@@ -3,8 +3,9 @@ package lintfordpickle.mailtrain.renderers.trains;
 import org.lwjgl.opengl.GL11;
 
 import lintfordpickle.mailtrain.ConstantsGame;
-import lintfordpickle.mailtrain.controllers.TrainController;
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
+import lintfordpickle.mailtrain.controllers.trains.PlayerTrainController;
+import lintfordpickle.mailtrain.controllers.trains.TrainController;
 import lintfordpickle.mailtrain.data.track.Track;
 import lintfordpickle.mailtrain.data.trains.Train;
 import lintfordpickle.mailtrain.data.trains.TrainCar;
@@ -30,6 +31,7 @@ public class TrainRenderer extends BaseRenderer {
 
 	private TrackController mTrackController;
 	private TrainController mTrainController;
+	private PlayerTrainController mPlayerTrainController;
 
 	private SpriteSheetDefinition mTrainsSpriteSheet;
 
@@ -62,6 +64,8 @@ public class TrainRenderer extends BaseRenderer {
 	@Override
 	public void initialize(LintfordCore pCore) {
 		mTrainController = (TrainController) pCore.controllerManager().getControllerByNameRequired(TrainController.CONTROLLER_NAME, entityGroupID());
+		mPlayerTrainController = (PlayerTrainController) pCore.controllerManager().getControllerByNameRequired(PlayerTrainController.CONTROLLER_NAME, entityGroupID());
+
 		mTrackController = (TrackController) pCore.controllerManager().getControllerByNameRequired(TrackController.CONTROLLER_NAME, entityGroupID());
 	}
 
@@ -91,13 +95,12 @@ public class TrainRenderer extends BaseRenderer {
 			final var lTrain = lActiveTrains.get(i);
 
 			drawTrain(pCore, lTrack, lTrain);
-
 		}
 
-		debugDrawTrainInformation(pCore, mTrainController.mainTrain());
-
-		debugDrawTrainSpeedInformation(pCore, lTrack, mTrainController.mainTrain());
-
+		if (ConstantsGame.DEBUG_DRAW_PLAYER_TRAIN_STATS) {
+			debugDrawTrainInformation(pCore, mPlayerTrainController.playerLocomotive());
+			debugDrawTrainSpeedInformation(pCore, lTrack, mPlayerTrainController.playerLocomotive());
+		}
 	}
 
 	// ---------------------------------------------
@@ -194,9 +197,10 @@ public class TrainRenderer extends BaseRenderer {
 		lFontUnit.drawText("current segment: " + lDestinationNode.uid, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
 		lFontUnit.drawText("segment length: " + lLeadAxle.currentEdge.edgeLengthInMeters + "m", lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
 		lFontUnit.drawText("acceleration: " + String.format("%.2f", pTrain.acceleration() * lDelta) + "m/s^2", lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
-		lFontUnit.drawText("target speed: " + String.format("%.2f", pTrain.targetSpeedInMetersPerSecond * 64.f) + "m/s", lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
+		lFontUnit.drawText("target speed: " + String.format("%.2f", pTrain.targetSpeedInMetersPerSecond) + "m/s", lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
 		lFontUnit.drawText("actual speed: " + String.format("%.2f", pTrain.getSpeed()) + "m/s", lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
-		lFontUnit.drawText("max speed: 50km/h", lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
+		lFontUnit.drawText("max speed: " + pTrain.leadCar.topSpeed() + "km/h", lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
+		lFontUnit.drawText("drive forward " + pTrain.drivingForward(), lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
 
 		lFontUnit.end();
 	}

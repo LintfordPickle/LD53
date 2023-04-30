@@ -43,6 +43,18 @@ public class TrainCar extends IndexedPooledBaseData {
 		return mCarDefinition.isLocomotive;
 	}
 
+	public float topSpeed() {
+		return mCarDefinition.topSpeed;
+	}
+
+	public float maxAccel() {
+		return mCarDefinition.maxAccel;
+	}
+
+	public float maxBrake() {
+		return mCarDefinition.maxBrake;
+	}
+
 	public void setHasHadCollision() {
 		if (!mHasHadCollision) { // don't keep resetting the timer on collisions, or trains never leave
 			mHasHadCollision = true;

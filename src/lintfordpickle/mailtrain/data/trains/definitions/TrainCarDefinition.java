@@ -9,4 +9,8 @@ public class TrainCarDefinition {
 	public float maxForce;
 	public float maxRevForce;
 
+	public float topSpeed = 88;
+	public float maxAccel = 100;
+	public float maxBrake = 150;
+
 }

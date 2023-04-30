@@ -97,23 +97,23 @@ public class GameCameraMovementController extends BaseController {
 
 		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL))
 			return false; // editor controls
-		
-		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_A)) {
+
+		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_LEFT)) {
 			mVelocity.x -= speed * lElapsed;
 			mFollowTrain = null; // stop auto follow
 
 		}
-		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_D)) {
+		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_RIGHT)) {
 			mVelocity.x += speed * lElapsed;
 			mFollowTrain = null; // stop auto follow
 
 		}
-		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_S)) {
+		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_DOWN)) {
 			mVelocity.y += speed * lElapsed;
 			mFollowTrain = null; // stop auto follow
 
 		}
-		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_W)) {
+		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_UP)) {
 			mVelocity.y -= speed * lElapsed;
 			mFollowTrain = null; // stop auto follow
 
@@ -148,25 +148,27 @@ public class GameCameraMovementController extends BaseController {
 			// Apply
 			float lCurX = mGameCamera.getPosition().x;
 			float lCurY = mGameCamera.getPosition().y;
+
+			// FIXME: Why is this double??
 			if (!ConstantsGame.CAMERA_DEBUG_MODE && mPlayArea != null && !mPlayArea.isEmpty()) {
 				if (lCurX - mGameCamera.getWidth() * .5f < mPlayArea.left()) {
 					lCurX = mPlayArea.left() + mGameCamera.getWidth() * .5f;
-					if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_A)) // kill velocity
+					if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_LEFT)) // kill velocity
 						mVelocity.x = 0;
 				}
 				if (lCurX + mGameCamera.getWidth() * .5f > mPlayArea.right()) {
 					lCurX = mPlayArea.right() - mGameCamera.getWidth() * .5f;
-					if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_D)) // kill velocity
+					if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_RIGHT)) // kill velocity
 						mVelocity.x = 0;
 				}
 				if (lCurY - mGameCamera.getHeight() * .5f < mPlayArea.top()) {
 					lCurY = mPlayArea.top() + mGameCamera.getHeight() * .5f;
-					if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_W)) // kill velocity
+					if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_UP)) // kill velocity
 						mVelocity.y = 0;
 				}
 				if (lCurY + mGameCamera.getHeight() * .5f > mPlayArea.bottom()) {
 					lCurY = mPlayArea.bottom() - mGameCamera.getHeight() * .5f;
-					if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_S)) // kill velocity
+					if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_DOWN)) // kill velocity
 						mVelocity.y = 0;
 				}
 			}

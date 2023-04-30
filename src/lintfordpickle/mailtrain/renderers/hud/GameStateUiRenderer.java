@@ -87,10 +87,13 @@ public class GameStateUiRenderer extends UiWindow implements IInputProcessor {
 		{ // Deco
 			lSpriteBatch.begin(pCore.HUD());
 			final var lTrainFrontSprite = mHudSpritesheet.getSpriteFrame("TEXTURETRAINFRONT");
-			
-			// TODO : this IS null 
-			if(lTrainFrontSprite == null) return;
-			
+
+			// TODO : this IS null
+			if (lTrainFrontSprite == null) {
+				lSpriteBatch.end();
+				return;
+			}
+
 			final float lScale = 2.f;
 			final float lWidth = lTrainFrontSprite.width() * lScale;
 

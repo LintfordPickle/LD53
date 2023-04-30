@@ -1,6 +1,7 @@
 package lintfordpickle.mailtrain.renderers.hud;
 
-import lintfordpickle.mailtrain.controllers.TrainController;
+import lintfordpickle.mailtrain.ConstantsGame;
+import lintfordpickle.mailtrain.controllers.trains.PlayerTrainController;
 import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.ResourceManager;
 import net.lintford.library.core.graphics.ColorConstants;
@@ -20,7 +21,7 @@ public class TrainHudRenderer extends UiWindow {
 	// Variables
 	// ---------------------------------------------
 
-	private TrainController mTrainController;
+	private PlayerTrainController mPlayerTrainController;
 
 	private SpriteSheetDefinition mHudSpriteSheet;
 	private SpriteSheetDefinition mTrainSpriteSheet;
@@ -40,6 +41,8 @@ public class TrainHudRenderer extends UiWindow {
 
 	public TrainHudRenderer(RendererManager pRendererManager, int pEntityGroupUid) {
 		super(pRendererManager, RENDERER_NAME, pEntityGroupUid);
+
+		mIsOpen = true;
 	}
 
 	// ---------------------------------------------
@@ -51,15 +54,15 @@ public class TrainHudRenderer extends UiWindow {
 		super.initialize(pCore);
 		final var lControllerManager = pCore.controllerManager();
 
-		mTrainController = (TrainController) lControllerManager.getControllerByNameRequired(TrainController.CONTROLLER_NAME, entityGroupID());
+		mPlayerTrainController = (PlayerTrainController) lControllerManager.getControllerByNameRequired(PlayerTrainController.CONTROLLER_NAME, entityGroupID());
 	}
 
 	@Override
 	public void loadResources(ResourceManager pResourceManager) {
 		super.loadResources(pResourceManager);
 
-		mHudSpriteSheet = pResourceManager.spriteSheetManager().getSpriteSheet("SPRITESHEET_HUD", entityGroupID());
-		mTrainSpriteSheet = pResourceManager.spriteSheetManager().getSpriteSheet("SPRITESHEET_TRAINS", entityGroupID());
+		mHudSpriteSheet = pResourceManager.spriteSheetManager().getSpriteSheet("SPRITESHEET_HUD", ConstantsGame.GAME_RESOURCE_GROUP_ID);
+		mTrainSpriteSheet = pResourceManager.spriteSheetManager().getSpriteSheet("SPRITESHEET_TRAINS", ConstantsGame.GAME_RESOURCE_GROUP_ID);
 	}
 
 	@Override
@@ -111,20 +114,18 @@ public class TrainHudRenderer extends UiWindow {
 
 		lTextureBatch.draw(lWorldTexture, 0, 0, 1, 1, lHudRect.left(), lHudRect.bottom() - 64f - 16f, lHudRect.width(), 64 + 16f, -0.1f, ColorConstants.WHITE);
 
-		final var lMainTrain = mTrainController.mainTrain();
-		final var lNumCarsInMainTrain = lMainTrain.getNumberOfCarsInTrain();
+		final var lPlayerLoc = mPlayerTrainController.playerLocomotive();
+
+		final var lNumCarsInMainTrain = lPlayerLoc.getNumberOfCarsInTrain();
 		for (int i = 0; i < lNumCarsInMainTrain; i++) {
-			final var lTrainCar = lMainTrain.getCarByIndex(i);
-
-			// TODO: Kind of car
-
-			// TODO: Status / Info of car (hp, crew, powered, weight ?)
-			if (lTrainCar != lMainTrain.leadCar) {
+			final var lTrainCar = lPlayerLoc.getCarByIndex(i);
+			if (lTrainCar != lPlayerLoc.leadCar) {
 				if (lTrainCar.frontHitch.isOpen)
 					lTextureBatch.draw(lWorldTexture, lHitchOpenRect, lTrainHudPositionX, lTrainHudPositionY + 64 - 16, 8 * 2, 8 * 2, -0.1f, ColorConstants.WHITE);
 				else
 					lTextureBatch.draw(lWorldTexture, lHitchClosedRect, lTrainHudPositionX, lTrainHudPositionY + 64 - 16, 8 * 2, 8 * 2, -0.1f, ColorConstants.WHITE);
 			}
+
 			lTrainHudPositionX += 16f + 8f;
 			if (lTrainCar.isLocomotive()) {
 				lTextureBatch.draw(lWorldTexture, lTrainCarRect, lTrainHudPositionX, lTrainHudPositionY, 64 * 2, 32 * 2, -0.1f, ColorConstants.WHITE);

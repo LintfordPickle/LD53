@@ -1514,7 +1514,6 @@
             "specialEdgeType": 1,
             "edgeType": 0,
             "edgeAngle": 0.0,
-            "segmentName": "GAME_SPAWN",
             "trackJunction": {
                 "isSignalActive": false,
                 "leftEdgeUid": -1,

@@ -8,7 +8,7 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 
-import lintfordpickle.mailtrain.controllers.TrainController;
+import lintfordpickle.mailtrain.controllers.trains.TrainController;
 import lintfordpickle.mailtrain.data.track.Track;
 import lintfordpickle.mailtrain.data.track.TrackSegment;
 import lintfordpickle.mailtrain.data.track.TrackSegment.SegmentSignals;

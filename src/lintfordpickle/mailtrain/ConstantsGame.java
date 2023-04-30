@@ -47,10 +47,10 @@ public class ConstantsGame {
 	public static final boolean ESCAPE_RESTART_MAIN_SCENE = false;
 
 	public static final boolean DEBUG_FORCE_NO_CARRIAGES = false;
-
-	public static final boolean DEBUG_EDITOR_IN_GAME = false;
+	public static final boolean DEBUG_EDITOR_IN_GAME = true;
 
 	// TRAIN
+	public static final boolean DEBUG_DRAW_PLAYER_TRAIN_STATS = true;
 	public static final boolean DEBUG_DRAW_AXLE_POINTS = true;
 	public static final boolean DEBUG_DRAW_TRAIN_DEBUG_INFO = false;
 

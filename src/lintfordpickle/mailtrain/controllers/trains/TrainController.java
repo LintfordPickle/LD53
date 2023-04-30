@@ -1,9 +1,7 @@
-package lintfordpickle.mailtrain.controllers;
+package lintfordpickle.mailtrain.controllers.trains;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.lwjgl.glfw.GLFW;
 
 import lintfordpickle.mailtrain.ConstantsGame;
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
@@ -54,7 +52,6 @@ public class TrainController extends BaseController implements IInputProcessor {
 
 	private TrackController mTrackController;
 	private TrainManager mTrainManager;
-	private Train mMainTrain;
 
 	private final List<Train> mUpdateTrainList = new ArrayList<>();
 
@@ -69,10 +66,6 @@ public class TrainController extends BaseController implements IInputProcessor {
 
 	public TrainManager trainManager() {
 		return mTrainManager;
-	}
-
-	public Train mainTrain() {
-		return mMainTrain;
 	}
 
 	public int getNumActiveTrains() {
@@ -117,44 +110,6 @@ public class TrainController extends BaseController implements IInputProcessor {
 	}
 
 	@Override
-	public boolean handleInput(LintfordCore pCore) {
-		// FIXME: Debug code
-		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_9, this)) {
-			mainTrain().killSpeed();
-
-		}
-		// FIXME: Debug code
-		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_7, this)) {
-			// 1. get the distance from the current main train to the start of the next signals
-			final var lDestNodeUid = mainTrain().leadCar.frontAxle.destinationNodeUid;
-			final var lCurrentSegment = mainTrain().leadCar.frontAxle.currentEdge;
-			final var lSignalSegments = lCurrentSegment.getSignalsList(lDestNodeUid);
-
-			final var lDistanceToNextSignalBlock = getDistanceToNextSignalBlock(lSignalSegments, mainTrain());
-
-			mainTrain().brakeAtPosition(lDistanceToNextSignalBlock);
-
-		}
-		// FIXME: Move this to the Gui
-		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_1, this)) {
-			unhitchTrainCar(mainTrain(), 1);
-
-		} else if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_2, this)) {
-			unhitchTrainCar(mainTrain(), 2);
-
-		} else if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_3, this)) {
-			unhitchTrainCar(mainTrain(), 3);
-
-		}
-
-		else if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_H, this)) {
-			hitchLastCar(mainTrain());
-
-		}
-		return super.handleInput(pCore);
-	}
-
-	@Override
 	public void update(LintfordCore pCore) {
 		super.update(pCore);
 
@@ -187,13 +142,6 @@ public class TrainController extends BaseController implements IInputProcessor {
 	// Methods
 	// ---------------------------------------------
 
-	public Train addNewMainTrain() {
-		final var lPlayerSpawnEdge = mTrackController.track().getEdgeByUid(0);
-
-		mMainTrain = addNewTrain(lPlayerSpawnEdge, 3);
-		return mMainTrain;
-	}
-
 	public Train addNewTrain(TrackSegment pSpawnEdge) {
 		return addNewTrain(pSpawnEdge, 0);
 	}
@@ -207,8 +155,6 @@ public class TrainController extends BaseController implements IInputProcessor {
 		// Create a new train
 		final var lNewTrain = mTrainManager.getFreePooledItem();
 		lNewTrain.init(lNewTrainNumber);
-
-		lNewTrain.setSpeed(10000.f);
 
 		// Add a locomotive engine to the front of the train
 		final var lLocomotiveCar = createNewTrainCar(lNewTrain, null, TrainCarDefinition.Locomotive00Definition);
@@ -335,7 +281,7 @@ public class TrainController extends BaseController implements IInputProcessor {
 	}
 
 	// Hitch a TrainCar to the last car
-	private void hitchLastCar(Train pTrain) {
+	public void hitchLastCar(Train pTrain) {
 		// We can only hitch from the last car in our train
 
 		final var lTrainCar = pTrain.lastCar;

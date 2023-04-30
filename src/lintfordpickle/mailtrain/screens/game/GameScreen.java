@@ -5,11 +5,12 @@ import org.lwjgl.glfw.GLFW;
 import lintfordpickle.mailtrain.ConstantsGame;
 import lintfordpickle.mailtrain.controllers.GameStateController;
 import lintfordpickle.mailtrain.controllers.GameTrackEditorController;
-import lintfordpickle.mailtrain.controllers.TrainController;
 import lintfordpickle.mailtrain.controllers.core.GameCameraMovementController;
 import lintfordpickle.mailtrain.controllers.core.GameCameraZoomController;
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
 import lintfordpickle.mailtrain.controllers.tracks.TrackIOController;
+import lintfordpickle.mailtrain.controllers.trains.PlayerTrainController;
+import lintfordpickle.mailtrain.controllers.trains.TrainController;
 import lintfordpickle.mailtrain.controllers.world.GameWorldController;
 import lintfordpickle.mailtrain.controllers.world.WorldIOController;
 import lintfordpickle.mailtrain.data.GameState;
@@ -35,7 +36,6 @@ import net.lintford.library.core.audio.AudioManager;
 import net.lintford.library.core.audio.AudioSource;
 import net.lintford.library.core.audio.data.AudioData;
 import net.lintford.library.core.debug.Debug;
-import net.lintford.library.core.storage.FileUtils;
 import net.lintford.library.screenmanager.ScreenManager;
 import net.lintford.library.screenmanager.screens.BaseGameScreen;
 import net.lintford.library.screenmanager.screens.LoadingScreen;
@@ -55,9 +55,8 @@ public class GameScreen extends BaseGameScreen {
 	private GameStateController mGameStateController;
 	private GameWorldController mGameWorldController;
 	private TrainController mTrainController;
+	private PlayerTrainController mPlayerTrainController;
 	private TrackController mTrackController;
-
-	// TODO: something not right here - why is the game instantiating editor controllers ?
 	private GameTrackEditorController mGameTrackEditorController;
 
 	// Renderers
@@ -114,11 +113,11 @@ public class GameScreen extends BaseGameScreen {
 		final var lCore = screenManager().core();
 		final var lControllerManager = lCore.controllerManager();
 
-		createControllers(lControllerManager);
-		initializeControllers(lCore);
 		lControllerManager.initializeControllers(lCore);
 
-		mGameWorldController.startNewGame();
+		mPlayerTrainController.addPlayerTrain();
+
+//		mGameWorldController.startNewGame();
 		mGameState.startNewGame(300000); // 300000 ms = 5 mins
 
 		// Register the renders with the renderer tracker so they can be controlled through the debug menu (F1)
@@ -213,6 +212,7 @@ public class GameScreen extends BaseGameScreen {
 		mTrackController = new TrackController(controllerManager, mGameWorld, entityGroupUid());
 		mGameTrackEditorController = new GameTrackEditorController(controllerManager, screenManager(), entityGroupUid());
 		mTrainController = new TrainController(controllerManager, mGameWorld, entityGroupUid());
+		mPlayerTrainController = new PlayerTrainController(controllerManager, mGameWorld, entityGroupUid());
 
 		mCameraMovementController = new GameCameraMovementController(controllerManager, mGameCamera, entityGroupUid());
 		mCameraMovementController.setPlayArea(-1400, -1100, 2800, 2200);
@@ -229,6 +229,7 @@ public class GameScreen extends BaseGameScreen {
 		mTrackController.initialize(core);
 		mGameTrackEditorController.initialize(core);
 		mTrainController.initialize(core);
+		mPlayerTrainController.initialize(core);
 
 		mCameraMovementController.initialize(core);
 		mCameraZooomController.initialize(core);

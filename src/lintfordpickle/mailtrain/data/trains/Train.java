@@ -54,7 +54,6 @@ public class Train extends IndexedPooledBaseData {
 	boolean isBraking;
 	float distanceToNextStop;
 	final float lDistanceToStartBraking = 96.f;
-	public static final float TopSpeed = 256.f; // km/ph
 
 	// allows axles to figure out the next node uid to follow
 	public final transient List<TrainFollowEdge> trackEdgeFollowList = new ArrayList<>();
@@ -164,15 +163,23 @@ public class Train extends IndexedPooledBaseData {
 	}
 
 	public void update(LintfordCore pCore, Track pTrack) {
-		// Changed direction
-		if (getSpeed() == 0.f) {
-		} else if (drivingForward() && getSpeed() < 0.f) {
-			handleChangeDrivingDirection(pTrack);
 
-		} else if (!drivingForward() && getSpeed() > 0.f) {
-			handleChangeDrivingDirection(pTrack);
+		if (getSpeed() == 0) {
+			if (targetSpeedInMetersPerSecond > 0.f && drivingForward() == false) {
+				handleChangeDrivingDirection(pTrack, true);
+			} else if (targetSpeedInMetersPerSecond < 0.f && drivingForward() == true) {
+				handleChangeDrivingDirection(pTrack, false);
+			}
+
+		} else {
+			if (drivingForward() && getSpeed() < 0.f) {
+				handleChangeDrivingDirection(pTrack);
+			} else if (!drivingForward() && getSpeed() > 0.f) {
+				handleChangeDrivingDirection(pTrack);
+			}
 
 		}
+
 		// Update the speed of the train
 		updateTrainSpeed(pCore, pTrack);
 
@@ -257,18 +264,19 @@ public class Train extends IndexedPooledBaseData {
 
 			}
 		} else {
-			mAcceleration = TopSpeed * targetSpeedInMetersPerSecond;
+			mAcceleration = targetSpeedInMetersPerSecond * lDelta;
 
 		}
 		if (isBraking) {
 			System.out.println("Stopping in " + distanceToNextStop + "m");
 
 		}
-		// killSpeed();
+
 		mActualSpeedInMetersPerSecond += mAcceleration * lDelta;
 
 		// Limit the top speed
-		mActualSpeedInMetersPerSecond = MathHelper.clamp(mActualSpeedInMetersPerSecond, -TopSpeed, TopSpeed);
+		final var lTopSpeed = leadCar.topSpeed(); // only considers lead(locomotive)
+		mActualSpeedInMetersPerSecond = MathHelper.clamp(mActualSpeedInMetersPerSecond, -lTopSpeed, lTopSpeed);
 
 		// nothing to do
 		if (Math.abs(mActualSpeedInMetersPerSecond) < 0.1f) {
@@ -303,8 +311,10 @@ public class Train extends IndexedPooledBaseData {
 		// Drive the first (given) axle some destance
 		if (pTrainAxle.driveAxleForward(pTrack, Math.abs(getSpeed()) * lDelta)) {
 			killSpeed();
+			handleUpdateAxles(pTrack, pTrainAxle);
 			clearFollowPath();
 
+			return;
 		}
 		// drive the other axle on this car forward
 		final var lOtherAxle = lTrainCar.getOtherAxle(pTrainAxle);
@@ -343,6 +353,9 @@ public class Train extends IndexedPooledBaseData {
 	}
 
 	public void handleUpdateAxle(Track pTrack, TrainAxle pTrainAxle, boolean pIsLeadAxle) {
+
+		// FIXME: this isn't called if trains whacks into end node
+
 		if (pTrainAxle.hasArrived()) {
 			// We are the lead axle
 			final var lCurrentNodeUid = pTrainAxle.destinationNodeUid;
@@ -522,6 +535,16 @@ public class Train extends IndexedPooledBaseData {
 	// Changes the driving direction of all cars attached to the train
 	public void handleChangeDrivingDirection(Track pTrack) {
 		drivingForward(getSpeed() > 0.f);
+
+		// 'Rebuild' the follow map using the last car
+		clearFollowPath();
+
+		// Just need to update the destination nodes of the axles, as their 'current positions' wont have changed
+		rebuildFollowEdgeList(pTrack, !drivingForward() ? leadCar.frontAxle : lastCar.getAxleOnFreeHitch(), true);
+	}
+
+	public void handleChangeDrivingDirection(Track pTrack, boolean forwards) {
+		mDrivingForward = forwards;
 
 		// 'Rebuild' the follow map using the last car
 		clearFollowPath();

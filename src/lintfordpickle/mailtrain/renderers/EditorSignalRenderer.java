@@ -133,6 +133,9 @@ public class EditorSignalRenderer extends BaseRenderer {
 			final var lSourceNodeUid = lTrackSegment.getOtherNodeUid(lSignal.destinationNodeUid);
 			final var lSourceNode = lTrack.getNodeByUid(lSourceNodeUid);
 
+			if (lSourceNode == null)
+				continue;
+
 			final var lDistanceIntoNode = lSignal.startDistance;
 
 			final float lW = openSignalTextureFrame.width();

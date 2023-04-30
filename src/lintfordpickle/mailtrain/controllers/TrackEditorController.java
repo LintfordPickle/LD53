@@ -607,7 +607,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 			}
 			// Change offset position of the lamp and box
 			if (lEdge != null && lEdge.trackJunction != null && lEdge.trackJunction.isSignalActive) {
-				if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_I, this)) {
+				if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_I)) {
 					if (pCore.input().mouse().isMouseLeftButtonDown()) {
 						lEdge.trackJunction.signalLampOffsetX = mMouseWorldPositionX - mSelectedNodeA.x;
 						lEdge.trackJunction.signalLampOffsetY = mMouseWorldPositionY - mSelectedNodeA.y;
@@ -618,7 +618,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 
 					}
 				}
-				if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_B, this)) {
+				if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_B)) {
 					if (pCore.input().mouse().isMouseLeftButtonDown()) {
 						lEdge.trackJunction.signalBoxOffsetX = mMouseWorldPositionX - mSelectedNodeA.x;
 						lEdge.trackJunction.signalBoxOffsetY = mMouseWorldPositionY - mSelectedNodeA.y;
@@ -804,6 +804,8 @@ public class TrackEditorController extends BaseController implements IInputProce
 			mScreenManager.toastManager().addMessage("", "Added signal to track segment " + lActiveEdge.uid, 1500);
 
 		}
+
+		// TODO: Editor: slide signal blocks through [0..1]
 		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_R)) {
 		}
 		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_T)) {

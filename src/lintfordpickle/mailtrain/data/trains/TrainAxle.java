@@ -65,6 +65,8 @@ public class TrainAxle {
 		if (currentEdge == null)
 			return true;
 
+		// Always progressing from 0 -> 1
+
 		final float lThisSegmentLength = currentEdge.edgeLengthInMeters;
 		final float lThisSegmentUnit = (1.f / lThisSegmentLength);
 
@@ -72,31 +74,30 @@ public class TrainAxle {
 		final float lHowLongToDriveThisSegment = (pDriveDistInMeters + overshootDistanceInMeters) * lThisSegmentUnit;
 		overshootDistanceInMeters = 0.f;
 
-		final float lAmountRemaining = 1.0f - normalizedDistanceAlongEdge; // parentTrain.drivingForward() ? 1.0f - normalizedDistanceAlongEdge : normalizedDistanceAlongEdge;
+		final float lAmountRemaining = 1.0f - normalizedDistanceAlongEdge;
 		final float lAmtDriveThisSegment = (float) Math.min(lAmountRemaining, lHowLongToDriveThisSegment);
 
 		if (lThisSegmentUnit > 0.f) {
 			increaseDistanceTravelled(lAmtDriveThisSegment / lThisSegmentUnit);
 			mDistanceInMetersTravelledLastTick = lAmtDriveThisSegment / lThisSegmentUnit;
-
 		}
-
-		float restAmt = pDriveDistInMeters - (lAmtDriveThisSegment / lThisSegmentUnit);
 
 		final var lDestNode = pTrack.getNodeByUid(destinationNodeUid);
+
 		// Would the next update push us over the edge?
 		if (lDestNode.getIsEndNode() && lAmountRemaining < lHowLongToDriveThisSegment) {
+			normalizedDistanceAlongEdge = 1.f;
+			return true;
+		}
+
+		normalizedDistanceAlongEdge += lAmtDriveThisSegment;
+		if (normalizedDistanceAlongEdge > 1.f)
 			return true;
 
-		}
-
-		// Always progressing from 0 -> 1
-		normalizedDistanceAlongEdge += lAmtDriveThisSegment;
-
 		// If we overshoot this tick, then carry over the adjustment amount to the next tick/segment
-		if (lAmountRemaining > 0.f && lAmountRemaining < lHowLongToDriveThisSegment) {
+		float restAmt = pDriveDistInMeters - (lAmtDriveThisSegment / lThisSegmentUnit);
+		if (lAmountRemaining > 0.f && lAmountRemaining < lHowLongToDriveThisSegment)
 			overshootDistanceInMeters = restAmt;
-		}
 
 		return false;
 
