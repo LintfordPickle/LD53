@@ -3,7 +3,6 @@ package lintfordpickle.mailtrain.renderers.tracks;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 
-import lintfordpickle.mailtrain.controllers.GameTrackEditorController;
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
 import lintfordpickle.mailtrain.data.track.TrackSegment;
 import net.lintford.library.core.LintfordCore;
@@ -31,7 +30,6 @@ public class TrackDebugRenderer extends BaseRenderer implements IInputProcessor 
 	// Variables
 	// ---------------------------------------------
 
-	private GameTrackEditorController mGameTrackEditorController;
 	private TrackController mTrackController;
 	private FontUnit mGameTextFont;
 
@@ -74,7 +72,6 @@ public class TrackDebugRenderer extends BaseRenderer implements IInputProcessor 
 	@Override
 	public void initialize(LintfordCore pCore) {
 		mTrackController = (TrackController) pCore.controllerManager().getControllerByNameRequired(TrackController.CONTROLLER_NAME, entityGroupID());
-		mGameTrackEditorController = (GameTrackEditorController) pCore.controllerManager().getControllerByNameRequired(GameTrackEditorController.CONTROLLER_NAME, entityGroupID());
 	}
 
 	@Override

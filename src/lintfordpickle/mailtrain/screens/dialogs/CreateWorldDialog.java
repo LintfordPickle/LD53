@@ -7,38 +7,41 @@ import net.lintford.library.screenmanager.dialogs.ConfirmationDialog;
 import net.lintford.library.screenmanager.entries.MenuInputEntry;
 import net.lintford.library.screenmanager.layouts.BaseLayout;
 
-public class SaveTrackDialog extends ConfirmationDialog {
+public class CreateWorldDialog extends ConfirmationDialog {
 
 	// --------------------------------------
 	// Constants
 	// --------------------------------------
 
-	private static final String DIALOG_TITLE = "Save Track";
-	private static final String DIALOG_MESSAGE = "Enter the filename of the new track";
+	public static final int CREATE_WORLD_BUTTON_CONFIRM_YES = 200;
+	public static final int CREATE_WORLD_BUTTON_CONFIRM_NO = 101;
+
+	private static final String DIALOG_TITLE = "Create New World";
+	private static final String DIALOG_MESSAGE = "Enter the world name";
 
 	// --------------------------------------
 	// Variables
 	// --------------------------------------
 
-	private MenuInputEntry mFilenameInputEntry;
+	private MenuInputEntry mWorldNameInputEntry;
 
 	// --------------------------------------
 	// Properties
 	// --------------------------------------
 
-	public void trackFilename(String pFilename) {
-		mFilenameInputEntry.inputString(pFilename);
+	public void worldName(String pFilename) {
+		mWorldNameInputEntry.inputString(pFilename);
 	}
 
-	public String trackFilename() {
-		return mFilenameInputEntry.inputString();
+	public String worldName() {
+		return mWorldNameInputEntry.inputString();
 	}
 
 	// --------------------------------------
 	// Constructor
 	// --------------------------------------
 
-	public SaveTrackDialog(ScreenManager pScreenManager, MenuScreen pParentScreen) {
+	public CreateWorldDialog(ScreenManager pScreenManager, MenuScreen pParentScreen) {
 		super(pScreenManager, pParentScreen, DIALOG_TITLE, DIALOG_MESSAGE, true);
 	}
 
@@ -50,12 +53,11 @@ public class SaveTrackDialog extends ConfirmationDialog {
 	protected void createMenuEntries(BaseLayout pLayout) {
 		super.createMenuEntries(pLayout);
 
-		// TODO: need to pass the parent screen and not null
-		mFilenameInputEntry = new MenuInputEntry(screenManager(), mParentScreen);
-		mFilenameInputEntry.label("Filename");
-		mFilenameInputEntry.horizontalFillType(FILLTYPE.FILL_CONTAINER);
-		
-		pLayout.addMenuEntry(mFilenameInputEntry);
+		mWorldNameInputEntry = new MenuInputEntry(screenManager(), mParentScreen);
+		mWorldNameInputEntry.label("World Name:");
+		mWorldNameInputEntry.horizontalFillType(FILLTYPE.FILL_CONTAINER);
+
+		pLayout.addMenuEntry(mWorldNameInputEntry);
 	}
 
 	@Override

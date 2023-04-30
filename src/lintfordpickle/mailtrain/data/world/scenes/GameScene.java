@@ -1,10 +1,10 @@
-package lintfordpickle.mailtrain.data;
+package lintfordpickle.mailtrain.data.world.scenes;
 
 import lintfordpickle.mailtrain.data.track.Track;
 import lintfordpickle.mailtrain.data.trains.TrainManager;
-import lintfordpickle.mailtrain.data.world.WorldScenery;
+import lintfordpickle.mailtrain.data.world.GameWorldHeader;
 
-public class GameWorld {
+public class GameScene {
 
 	// ---------------------------------------------
 	// Variables
@@ -14,7 +14,7 @@ public class GameWorld {
 	private Track mTrack;
 
 	private TrainManager mTrainManager;
-	private WorldScenery mWorldScenery;
+	private ScenePropList mWorldScenery;
 
 	// ---------------------------------------------
 	// Properties
@@ -32,11 +32,11 @@ public class GameWorld {
 		mTrack = pTrack;
 	};
 
-	public WorldScenery worldScenery() {
+	public ScenePropList worldScenery() {
 		return mWorldScenery;
 	};
 
-	public void worldScenery(WorldScenery pWorldScenery) {
+	public void worldScenery(ScenePropList pWorldScenery) {
 		mWorldScenery = pWorldScenery;
 	};
 
@@ -48,7 +48,7 @@ public class GameWorld {
 	// Constructor
 	// ---------------------------------------------
 
-	public GameWorld(GameWorldHeader pGameWorldHeader) {
+	public GameScene(GameWorldHeader pGameWorldHeader) {
 		mGameWorldHeader = pGameWorldHeader;
 		mTrainManager = new TrainManager();
 	}

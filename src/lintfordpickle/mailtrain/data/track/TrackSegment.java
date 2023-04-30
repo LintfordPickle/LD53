@@ -174,7 +174,7 @@ public class TrackSegment extends TrackEdge {
 
 	public final SegmentSignals signalsA = new SegmentSignals(this);
 	public final SegmentSignals signalsB = new SegmentSignals(this);
-	public int logigalUpdateCounter;
+	public int logicalUpdateCounter;
 
 	public final List<Integer> allowedEdgeConections = new ArrayList<>();
 

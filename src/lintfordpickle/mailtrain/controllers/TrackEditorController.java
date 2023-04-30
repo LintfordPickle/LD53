@@ -56,9 +56,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 	private boolean mIsCapturedTextInput;
 	private boolean mIsCapturingName;
 	public TrackSegment mSelectedEdge;
-	private String mTempString;
 	private final StringBuilder mInputField = new StringBuilder();
-	private float mCaretFlashTimer;
 	//
 
 	// ---------------------------------------------

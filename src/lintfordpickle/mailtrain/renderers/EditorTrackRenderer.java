@@ -145,6 +145,8 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		// Draw world origin
 		Debug.debugManager().drawers().drawPointImmediate(pCore.gameCamera(), 0.f, 0.f);
 
+		drawTrackSignalBlocks(pCore, mRendererManager.uiSpriteBatch(), mTrackEditorController.track());
+		
 		drawTrackInfo(pCore);
 	}
 

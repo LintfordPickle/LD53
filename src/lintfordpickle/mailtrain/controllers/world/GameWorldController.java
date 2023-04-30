@@ -1,7 +1,7 @@
 package lintfordpickle.mailtrain.controllers.world;
 
 import lintfordpickle.mailtrain.controllers.TrainController;
-import lintfordpickle.mailtrain.data.GameWorld;
+import lintfordpickle.mailtrain.data.world.scenes.GameScene;
 import net.lintford.library.controllers.BaseController;
 import net.lintford.library.controllers.core.ControllerManager;
 import net.lintford.library.core.LintfordCore;
@@ -21,7 +21,7 @@ public class GameWorldController extends BaseController {
 	private TrainController mTrainController;
 
 	private boolean mIsGameLoaded;
-	private GameWorld mGameWorld;
+	private GameScene mGameWorld;
 
 	// ---------------------------------------------
 	// Properties
@@ -36,7 +36,7 @@ public class GameWorldController extends BaseController {
 		return mGameWorld != null;
 	}
 
-	public GameWorld gameWorld() {
+	public GameScene gameWorld() {
 		return mGameWorld;
 	}
 
@@ -44,7 +44,7 @@ public class GameWorldController extends BaseController {
 	// Constructor
 	// ---------------------------------------------
 
-	public GameWorldController(ControllerManager pControllerManager, GameWorld pGameWorld, int pEntityGroupUid) {
+	public GameWorldController(ControllerManager pControllerManager, GameScene pGameWorld, int pEntityGroupUid) {
 		super(pControllerManager, CONTROLLER_NAME, pEntityGroupUid);
 
 		mIsGameLoaded = false;

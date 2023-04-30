@@ -2,7 +2,7 @@ package lintfordpickle.mailtrain.controllers;
 
 import lintfordpickle.mailtrain.ConstantsGame;
 import lintfordpickle.mailtrain.data.GameState;
-import lintfordpickle.mailtrain.data.GameWorldHeader;
+import lintfordpickle.mailtrain.data.world.GameWorldHeader;
 import net.lintford.library.controllers.BaseController;
 import net.lintford.library.controllers.core.ControllerManager;
 import net.lintford.library.core.LintfordCore;

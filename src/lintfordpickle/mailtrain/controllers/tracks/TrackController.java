@@ -5,19 +5,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.lwjgl.glfw.GLFW;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 
 import lintfordpickle.mailtrain.controllers.TrainController;
-import lintfordpickle.mailtrain.data.GameWorld;
 import lintfordpickle.mailtrain.data.track.Track;
 import lintfordpickle.mailtrain.data.track.TrackSegment;
 import lintfordpickle.mailtrain.data.track.TrackSegment.SegmentSignals;
 import lintfordpickle.mailtrain.data.track.signals.TrackSignalBlock;
 import lintfordpickle.mailtrain.data.track.signals.TrackSignalBlock.SignalState;
 import lintfordpickle.mailtrain.data.trains.TrainAxle;
+import lintfordpickle.mailtrain.data.world.scenes.GameScene;
 import net.lintford.library.controllers.BaseController;
 import net.lintford.library.controllers.core.ControllerManager;
 import net.lintford.library.core.LintfordCore;
@@ -40,7 +38,7 @@ public class TrackController extends BaseController implements IInputProcessor {
 	// ---------------------------------------------
 
 	private TrainController mTrainController;
-	private GameWorld mGameWorld;
+	private GameScene mGameWorld;
 
 	private int mTrackBuildLogicalCounter = 0;
 
@@ -76,7 +74,7 @@ public class TrackController extends BaseController implements IInputProcessor {
 	// Constructor
 	// ---------------------------------------------
 
-	public TrackController(ControllerManager pControllerManager, GameWorld pGameWorld, int pEntityGroupUid) {
+	public TrackController(ControllerManager pControllerManager, GameScene pGameWorld, int pEntityGroupUid) {
 		super(pControllerManager, CONTROLLER_NAME, pEntityGroupUid);
 
 		mGameWorld = pGameWorld;
@@ -108,12 +106,15 @@ public class TrackController extends BaseController implements IInputProcessor {
 
 	@Override
 	public boolean handleInput(LintfordCore pCore) {
-		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_F4, this)) {
-			final var lTrackFilename = mGameWorld.gameWorldHeader().trackFilename();
-			Debug.debugManager().logger().i(getClass().getSimpleName(), "Saving track to " + lTrackFilename);
-			saveTrack(lTrackFilename);
-			return true;
-		}
+		// TODO: Restore this later to save from within game (needs the world + scene)
+
+//		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_F4, this)) {
+//			final var lTrackFilename = mGameWorld.gameWorldHeader().trackFilename();
+//			Debug.debugManager().logger().i(getClass().getSimpleName(), "Saving track to " + lTrackFilename);
+//			saveTrack(lTrackFilename);
+//			return true;
+//		}
+
 		return super.handleInput(pCore);
 	}
 
@@ -301,11 +302,11 @@ public class TrackController extends BaseController implements IInputProcessor {
 		for (int i = 0; i < lNumTrackSegments; i++) {
 			final var lTrackSegment = lTrackSegments.get(i);
 
-			if (lTrackSegment.logigalUpdateCounter >= mTrackBuildLogicalCounter)
+			if (lTrackSegment.logicalUpdateCounter >= mTrackBuildLogicalCounter)
 				continue;
 
 			// We visit each TrackSegment only once
-			lTrackSegment.logigalUpdateCounter = mTrackBuildLogicalCounter;
+			lTrackSegment.logicalUpdateCounter = mTrackBuildLogicalCounter;
 
 			// Update TrackSegment A Signals
 			if (lTrackSegment.signalsA.logigalUpdateCounter < mTrackBuildLogicalCounter) {

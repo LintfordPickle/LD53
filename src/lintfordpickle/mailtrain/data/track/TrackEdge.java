@@ -15,7 +15,7 @@ public class TrackEdge extends BaseInstanceData {
 	// ---------------------------------------------
 
 	public final int uid;
-	public boolean isSelected;
+	public transient boolean isSelected;
 
 	public int nodeAUid;
 	public float nodeAAngle;

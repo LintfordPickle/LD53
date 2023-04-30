@@ -1,23 +1,23 @@
-package lintfordpickle.mailtrain.data;
+package lintfordpickle.mailtrain.data.world.scenes;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GameWorldHeader {
+public class SceneHeader {
 
 	// ---------------------------------------------
 	// Constants
 	// ---------------------------------------------
 
-	public static final String TRACKS_DIRECTORY = "res/tracks/";
-	public static final String TRACK_FILE_EXTENSION = ".json";
+	public static final String SCENE_FILE_EXTENSION = ".json";
+	public static final String TRACK_FILE_EXTENSION = ".trk";
 
-	public static final FilenameFilter filter = new FilenameFilter() {
+	public static final FilenameFilter sceneFileFilter = new FilenameFilter() {
 		@Override
 		public boolean accept(File f, String name) {
-			return name.endsWith(TRACK_FILE_EXTENSION);
+			return name.endsWith(SCENE_FILE_EXTENSION);
 		}
 	};
 
@@ -25,12 +25,15 @@ public class GameWorldHeader {
 	// Variables
 	// ---------------------------------------------
 
+	private String mSceneName;
+	private String mSceneFilename;
+
 	private String mTrackFilename;
 	private String mSceneryFilename;
 
 	private List<String> mEntryPointNames;
 
-	private boolean mIsValidated;
+	private transient boolean mIsValidated;
 
 	// ---------------------------------------------
 	// Properties
@@ -40,14 +43,28 @@ public class GameWorldHeader {
 		return mIsValidated;
 	}
 
+	public String sceneName() {
+		return mSceneName;
+	}
+
+	public void sceneName(String sceneName) {
+		mSceneName = sceneName;
+	}
+
+	public String sceneFilename() {
+		return mSceneFilename;
+	}
+
+	public void sceneFilename(String sceneFilename) {
+		mSceneFilename = sceneFilename;
+	}
+
 	public String trackFilename() {
 		return mTrackFilename;
 	}
 
 	public void trackFilename(String pNewTrackFilename) {
-		mIsValidated = mTrackFilename.contentEquals(pNewTrackFilename);
 		mTrackFilename = pNewTrackFilename;
-
 	}
 
 	public String sceneryFilename() {
@@ -81,11 +98,11 @@ public class GameWorldHeader {
 	// Constructor
 	// ---------------------------------------------
 
-	public GameWorldHeader() {
+	public SceneHeader() {
 		mEntryPointNames = new ArrayList<>();
 	}
 
-	public GameWorldHeader(String pTrackFilename, String pSceneryFilename) {
+	public SceneHeader(String pTrackFilename, String pSceneryFilename) {
 		this();
 
 		mTrackFilename = pTrackFilename;
@@ -108,4 +125,5 @@ public class GameWorldHeader {
 		mIsValidated = lFile.exists();
 
 	}
+
 }

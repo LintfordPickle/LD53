@@ -1,6 +1,6 @@
-package lintfordpickle.mailtrain.data.world;
+package lintfordpickle.mailtrain.data.world.scenes;
 
-public class SceneryProp {
+public class ScenePropInstance {
 
 	public String spriteItemName;
 	public float worldPositionX;

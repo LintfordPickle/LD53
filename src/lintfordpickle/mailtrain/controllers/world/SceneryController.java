@@ -9,8 +9,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 
 import lintfordpickle.mailtrain.ConstantsGame;
-import lintfordpickle.mailtrain.data.world.SceneryProp;
-import lintfordpickle.mailtrain.data.world.WorldScenery;
+import lintfordpickle.mailtrain.data.world.scenes.ScenePropInstance;
+import lintfordpickle.mailtrain.data.world.scenes.ScenePropList;
 import net.lintford.library.controllers.BaseController;
 import net.lintford.library.controllers.core.ControllerManager;
 import net.lintford.library.controllers.core.ResourceController;
@@ -33,7 +33,7 @@ public class SceneryController extends BaseController implements IInputProcessor
 
 	private ResourceController mResourceController;
 	private SpriteSheetDefinition mWorldSpriteSheet;
-	private WorldScenery mWorldScenery;
+	private ScenePropList mWorldScenery;
 
 	public int selectedItemIndex = 0;
 
@@ -88,7 +88,7 @@ public class SceneryController extends BaseController implements IInputProcessor
 		return mWorldScenery != null;
 	}
 
-	public WorldScenery worldScenery() {
+	public ScenePropList worldScenery() {
 		return mWorldScenery;
 	}
 
@@ -96,7 +96,7 @@ public class SceneryController extends BaseController implements IInputProcessor
 	// Constructor
 	// ---------------------------------------------
 
-	public SceneryController(ControllerManager pControllerManager, WorldScenery pWorldScenery, int pEntityGroupUid) {
+	public SceneryController(ControllerManager pControllerManager, ScenePropList pWorldScenery, int pEntityGroupUid) {
 		super(pControllerManager, CONTROLLER_NAME, pEntityGroupUid);
 
 		mWorldScenery = pWorldScenery;
@@ -158,7 +158,7 @@ public class SceneryController extends BaseController implements IInputProcessor
 				final float lMouseWorldPositionX = pCore.gameCamera().getMouseWorldSpaceX();
 				final float lMouseWorldPositionY = pCore.gameCamera().getMouseWorldSpaceY();
 
-				SceneryProp lNewProp = new SceneryProp();
+				ScenePropInstance lNewProp = new ScenePropInstance();
 				lNewProp.worldPositionX = lMouseWorldPositionX;
 				lNewProp.worldPositionY = lMouseWorldPositionY;
 				lNewProp.spriteItemName = getSelectedSpriteName(selectedItemIndex);

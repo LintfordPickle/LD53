@@ -1,6 +1,7 @@
 package lintfordpickle.mailtrain;
 
 import net.lintford.library.core.entity.BaseEntity;
+import net.lintford.library.core.storage.FileUtils;
 
 public class ConstantsGame {
 
@@ -21,6 +22,14 @@ public class ConstantsGame {
 	public static final int GAME_RESOURCE_GROUP_ID = BaseEntity.getEntityNumber();
 
 	public static final boolean PREVIEW_MODE = true;
+
+	// ---------------------------------------------
+	// Values
+	// ---------------------------------------------
+
+	public static final String WORLD_BASE_DIRECTORY = "res" + FileUtils.FILE_SEPARATOR + "def" + FileUtils.FILE_SEPARATOR;
+	public static final String WORLD_DIRECTORY = WORLD_BASE_DIRECTORY + "worlds" + FileUtils.FILE_SEPARATOR;
+	public static final String SCENES_REL_DIRECTORY = "scenes" + FileUtils.FILE_SEPARATOR;
 
 	// ---------------------------------------------
 	// Audio

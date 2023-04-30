@@ -3,7 +3,7 @@ package lintfordpickle.mailtrain.renderers;
 import org.lwjgl.glfw.GLFW;
 
 import lintfordpickle.mailtrain.controllers.world.SceneryController;
-import lintfordpickle.mailtrain.data.world.SceneryProp;
+import lintfordpickle.mailtrain.data.world.scenes.ScenePropInstance;
 import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.ResourceManager;
 import net.lintford.library.core.graphics.ColorConstants;
@@ -117,7 +117,7 @@ public class SceneryRenderer extends BaseRenderer {
 	// Methods
 	// ---------------------------------------------
 
-	private void drawProp(LintfordCore pCore, TextureBatchPCT pTextureBatch, SceneryProp pProp) {
+	private void drawProp(LintfordCore pCore, TextureBatchPCT pTextureBatch, ScenePropInstance pProp) {
 		final var spriteFrame = mWorldSprites.getSpriteFrame(pProp.spriteItemName);
 		pTextureBatch.draw(mWorldTexture, spriteFrame.x(), spriteFrame.y(), spriteFrame.width(), spriteFrame.height(), pProp.worldPositionX, pProp.worldPositionY, spriteFrame.width(), spriteFrame.height(), -0.1f,
 				ColorConstants.WHITE);

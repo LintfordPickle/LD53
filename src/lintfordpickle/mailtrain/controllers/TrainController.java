@@ -7,7 +7,6 @@ import org.lwjgl.glfw.GLFW;
 
 import lintfordpickle.mailtrain.ConstantsGame;
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
-import lintfordpickle.mailtrain.data.GameWorld;
 import lintfordpickle.mailtrain.data.track.TrackSegment;
 import lintfordpickle.mailtrain.data.track.TrackSegment.SegmentSignals;
 import lintfordpickle.mailtrain.data.trains.Train;
@@ -15,6 +14,7 @@ import lintfordpickle.mailtrain.data.trains.TrainCar;
 import lintfordpickle.mailtrain.data.trains.TrainHitch;
 import lintfordpickle.mailtrain.data.trains.TrainManager;
 import lintfordpickle.mailtrain.data.trains.definitions.TrainCarDefinition;
+import lintfordpickle.mailtrain.data.world.scenes.GameScene;
 import net.lintford.library.controllers.BaseController;
 import net.lintford.library.controllers.core.ControllerManager;
 import net.lintford.library.controllers.core.ResourceController;
@@ -83,7 +83,7 @@ public class TrainController extends BaseController implements IInputProcessor {
 	// Constructor
 	// ---------------------------------------------
 
-	public TrainController(ControllerManager pControllerManager, GameWorld pGameWorld, int pEntityGroupUid) {
+	public TrainController(ControllerManager pControllerManager, GameScene pGameWorld, int pEntityGroupUid) {
 		super(pControllerManager, CONTROLLER_NAME, pEntityGroupUid);
 
 		mTrainManager = pGameWorld.trainManager();
