@@ -36,15 +36,10 @@ public class GameWorldHeader {
 
 	private transient final List<SceneHeader> mSceneHeaders = new ArrayList<>();
 	private transient final Map<String, SceneHeader> mSceneEntryPointNames = new HashMap<>();
-	private transient boolean mIsValidated;
 
 	// ---------------------------------------------
 	// Properties
 	// ---------------------------------------------
-
-	public boolean isValidated() {
-		return mIsValidated;
-	}
 
 	public String worldDirectory() {
 		return mWorldDirectory;
@@ -61,6 +56,20 @@ public class GameWorldHeader {
 	public void worldName(String pNewSceneryFilename) {
 		mWorldName = pNewSceneryFilename;
 
+	}
+
+	public SceneHeader getSceneByName(String sceneName) {
+		final int lNumScenes = mSceneHeaders.size();
+		for (int i = 0; i < lNumScenes; i++) {
+			final var lScene = mSceneHeaders.get(i);
+			if (lScene.sceneName() == null)
+				continue;
+
+			if (lScene.sceneName().equals(sceneName))
+				return lScene;
+
+		}
+		return null;
 	}
 
 	public SceneHeader getSceneByEntryPoint(String entryPoint) {
@@ -127,13 +136,4 @@ public class GameWorldHeader {
 		return lStartScene;
 	}
 
-	public void validateHeader() {
-
-		final var lFile = new File(mWorldDirectory);
-
-		// TODO: Actually validate the file maybe?
-
-		mIsValidated = lFile.exists();
-
-	}
 }

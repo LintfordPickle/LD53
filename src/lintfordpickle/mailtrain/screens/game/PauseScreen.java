@@ -1,5 +1,6 @@
 package lintfordpickle.mailtrain.screens.game;
 
+import lintfordpickle.mailtrain.data.GameState;
 import lintfordpickle.mailtrain.data.world.GameWorldHeader;
 import lintfordpickle.mailtrain.data.world.scenes.SceneHeader;
 import lintfordpickle.mailtrain.screens.MainMenu;
@@ -29,15 +30,21 @@ public class PauseScreen extends MenuScreen {
 	private GameWorldHeader mGameWorldHeader;
 	private SceneHeader mSceneHeader;
 
+	private GameState mInitialGameState;
+	// private GameState mLatestGameState;
+
 	// ---------------------------------------------
 	// Constructor
 	// ---------------------------------------------
 
-	public PauseScreen(ScreenManager screenManager, GameWorldHeader gameWorldHeader, SceneHeader sceneheader) {
+	public PauseScreen(ScreenManager screenManager, GameState initialGameState, GameState latestGameState, GameWorldHeader gameWorldHeader, SceneHeader sceneheader) {
 		super(screenManager, null);
 
 		mGameWorldHeader = gameWorldHeader;
 		mSceneHeader = sceneheader;
+
+		mInitialGameState = initialGameState;
+		// mLatestGameState = latestGameState;
 
 		final var lLayout = new ListLayout(this);
 		lLayout.layoutFillType(FILLTYPE.TAKE_WHATS_NEEDED);
@@ -80,7 +87,8 @@ public class PauseScreen extends MenuScreen {
 			return;
 
 		case SCREEN_BUTTON_RESTART:
-			final var lLoadingScreen = new LoadingScreen(screenManager(), true, new GameScreen(screenManager(), mGameWorldHeader, mSceneHeader));
+			// Restart with the initial state information
+			final var lLoadingScreen = new LoadingScreen(screenManager(), true, new GameScreen(screenManager(), mInitialGameState, mGameWorldHeader, mSceneHeader));
 			screenManager().createLoadingScreen(new LoadingScreen(screenManager(), true, lLoadingScreen));
 			break;
 

@@ -4,6 +4,7 @@ import lintfordpickle.mailtrain.ConstantsGame;
 import lintfordpickle.mailtrain.controllers.tracks.TrackIOController;
 import lintfordpickle.mailtrain.controllers.world.SceneIOController;
 import lintfordpickle.mailtrain.controllers.world.WorldIOController;
+import lintfordpickle.mailtrain.data.GameState;
 import lintfordpickle.mailtrain.data.world.GameWorldHeader;
 import lintfordpickle.mailtrain.screens.editor.TrackList;
 import net.lintford.library.core.LintfordCore;
@@ -150,12 +151,8 @@ public class LevelSelectionScreen extends MenuScreen {
 			}
 
 			final var lGameWorldHeader = lGameWorldHeaderEntry.value;
-			if (!lGameWorldHeader.isValidated()) {
-				// TODO: GameWorldValidation?
-			}
-
 			final var lSceneHeader = lGameWorldHeader.getStartSceneHeader();
-			screenManager().createLoadingScreen(new LoadingScreen(screenManager(), true, new GameScreen(screenManager(), lGameWorldHeader, lSceneHeader)));
+			screenManager().createLoadingScreen(new LoadingScreen(screenManager(), true, new GameScreen(screenManager(), new GameState(), lGameWorldHeader, lSceneHeader)));
 
 			break;
 		case BUTTON_BACK_ID:

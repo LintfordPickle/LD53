@@ -5,6 +5,8 @@ import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.lintford.library.core.debug.Debug;
+
 public class SceneHeader {
 
 	// ---------------------------------------------
@@ -31,6 +33,7 @@ public class SceneHeader {
 	private String mTrackFilename;
 	private String mSceneryFilename;
 
+	private String startEntryPointName;
 	private List<String> mEntryPointNames;
 
 	private transient boolean mIsValidated;
@@ -38,6 +41,24 @@ public class SceneHeader {
 	// ---------------------------------------------
 	// Properties
 	// ---------------------------------------------
+
+	public String startEntryPointName() {
+		return startEntryPointName;
+	}
+
+	public void startEntryPointName(String newStartEntryPoint) {
+		if (newStartEntryPoint == null) {
+			startEntryPointName = null;
+			return;
+		}
+
+		if (mEntryPointNames.contains(newStartEntryPoint) == false) {
+			Debug.debugManager().logger().e(getClass().getSimpleName(), "Cannot set scene entry point - entry point doesn't exist in scene: " + newStartEntryPoint);
+			return;
+		}
+
+		startEntryPointName = newStartEntryPoint;
+	}
 
 	public boolean isValidated() {
 		return mIsValidated;

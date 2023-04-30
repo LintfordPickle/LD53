@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lintfordpickle.mailtrain.ConstantsGame;
+import lintfordpickle.mailtrain.controllers.TriggerController;
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
 import lintfordpickle.mailtrain.data.track.TrackSegment;
 import lintfordpickle.mailtrain.data.track.TrackSegment.SegmentSignals;
@@ -12,7 +13,6 @@ import lintfordpickle.mailtrain.data.trains.TrainCar;
 import lintfordpickle.mailtrain.data.trains.TrainHitch;
 import lintfordpickle.mailtrain.data.trains.TrainManager;
 import lintfordpickle.mailtrain.data.trains.definitions.TrainCarDefinition;
-import lintfordpickle.mailtrain.data.world.scenes.GameScene;
 import net.lintford.library.controllers.BaseController;
 import net.lintford.library.controllers.core.ControllerManager;
 import net.lintford.library.controllers.core.ResourceController;
@@ -50,7 +50,9 @@ public class TrainController extends BaseController implements IInputProcessor {
 
 	private AudioFireAndForgetManager mTrainSoundManager;
 
+	private TriggerController mTriggerController;
 	private TrackController mTrackController;
+
 	private TrainManager mTrainManager;
 
 	private final List<Train> mUpdateTrainList = new ArrayList<>();
@@ -76,10 +78,10 @@ public class TrainController extends BaseController implements IInputProcessor {
 	// Constructor
 	// ---------------------------------------------
 
-	public TrainController(ControllerManager pControllerManager, GameScene pGameWorld, int pEntityGroupUid) {
-		super(pControllerManager, CONTROLLER_NAME, pEntityGroupUid);
+	public TrainController(ControllerManager controllerManager, TrainManager trainManager, int entityGroupUid) {
+		super(controllerManager, CONTROLLER_NAME, entityGroupUid);
 
-		mTrainManager = pGameWorld.trainManager();
+		mTrainManager = trainManager;
 	}
 
 	// ---------------------------------------------
@@ -90,6 +92,7 @@ public class TrainController extends BaseController implements IInputProcessor {
 	public void initialize(LintfordCore pCore) {
 		final var lControllerManager = pCore.controllerManager();
 
+		mTriggerController = (TriggerController) lControllerManager.getControllerByNameRequired(TriggerController.CONTROLLER_NAME, entityGroupUid());
 		mTrackController = (TrackController) lControllerManager.getControllerByNameRequired(TrackController.CONTROLLER_NAME, entityGroupUid());
 
 		final var lResourceController = (ResourceController) lControllerManager.getControllerByNameRequired(ResourceController.CONTROLLER_NAME, LintfordCore.CORE_ENTITY_GROUP_ID);
@@ -130,11 +133,23 @@ public class TrainController extends BaseController implements IInputProcessor {
 				continue;
 
 			}
-			// have the train check the next signal and if its clear
+
 			lTrain.update(pCore, mTrackController.track());
 
 			// Check for stops on special zone segments
+			if (lTrain.getSpeed() == 0) {
+				final var lEdge = lTrain.leadCar.frontAxle.currentEdge;
+				if (lEdge != null) {
 
+					// TODO: The triggering basics are there - but more thought needed as to segment types/names/triggers etc.
+					if (lEdge.isEdgeOfType(TrackSegment.EDGE_SPECIAL_TYPE_STATION)) {
+						final var lName = lEdge.segmentName;
+						if (lName != null) {
+							mTriggerController.setTrigger(TriggerController.TRIGGER_TYPE_NEW_SCENE, -1, lName);
+						}
+					}
+				}
+			}
 		}
 	}
 

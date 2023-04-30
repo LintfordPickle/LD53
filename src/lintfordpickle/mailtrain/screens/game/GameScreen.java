@@ -5,6 +5,7 @@ import org.lwjgl.glfw.GLFW;
 import lintfordpickle.mailtrain.ConstantsGame;
 import lintfordpickle.mailtrain.controllers.GameStateController;
 import lintfordpickle.mailtrain.controllers.GameTrackEditorController;
+import lintfordpickle.mailtrain.controllers.TriggerController;
 import lintfordpickle.mailtrain.controllers.core.GameCameraMovementController;
 import lintfordpickle.mailtrain.controllers.core.GameCameraZoomController;
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
@@ -14,6 +15,7 @@ import lintfordpickle.mailtrain.controllers.trains.TrainController;
 import lintfordpickle.mailtrain.controllers.world.GameWorldController;
 import lintfordpickle.mailtrain.controllers.world.WorldIOController;
 import lintfordpickle.mailtrain.data.GameState;
+import lintfordpickle.mailtrain.data.trains.TrainManager;
 import lintfordpickle.mailtrain.data.world.GameWorldHeader;
 import lintfordpickle.mailtrain.data.world.scenes.GameScene;
 import lintfordpickle.mailtrain.data.world.scenes.SceneHeader;
@@ -43,8 +45,12 @@ import net.lintford.library.screenmanager.screens.LoadingScreen;
 public class GameScreen extends BaseGameScreen {
 
 	// Data
-	private GameState mGameState;
-	private GameScene mGameWorld;
+	private GameState mActiveGameState;
+	private GameState mInitialGameState;
+
+	private GameScene mActiveGameScene;
+
+	private TrainManager mTrainManager;
 
 	private GameWorldHeader mGameWorldHeader;
 	private SceneHeader mSceneHeader;
@@ -58,6 +64,7 @@ public class GameScreen extends BaseGameScreen {
 	private PlayerTrainController mPlayerTrainController;
 	private TrackController mTrackController;
 	private GameTrackEditorController mGameTrackEditorController;
+	private TriggerController mTriggerController;
 
 	// Renderers
 	private TrainHudRenderer mTrainHudRenderer;
@@ -83,7 +90,7 @@ public class GameScreen extends BaseGameScreen {
 	// Constructor
 	// ---------------------------------------------
 
-	public GameScreen(ScreenManager screenManager, GameWorldHeader gameWorldHeader, SceneHeader sceneHeader) {
+	public GameScreen(ScreenManager screenManager, GameState persistentGameState, GameWorldHeader gameWorldHeader, SceneHeader sceneHeader) {
 		super(screenManager);
 
 		mShowBackgroundScreens = true;
@@ -91,15 +98,18 @@ public class GameScreen extends BaseGameScreen {
 		mGameWorldHeader = gameWorldHeader;
 		mSceneHeader = sceneHeader;
 
-		mGameWorld = new GameScene(mGameWorldHeader);
-		mGameState = new GameState(0);
+		mActiveGameScene = new GameScene(mGameWorldHeader);
+		mActiveGameState = persistentGameState;
+		mInitialGameState = new GameState(mActiveGameState);
+
+		mTrainManager = new TrainManager();
 
 		final var lTrackFilename = gameWorldHeader.getSceneTrackHeaderFilepath(sceneHeader);
 		var lTrackToLoad = TrackIOController.loadTrackFromFile(lTrackFilename);
 		var lWorldScenery = WorldIOController.loadSceneryFromFile("res/scenery/sceneryTest.json" /* mTrackHeader.sceneryFilename() */);
 
-		mGameWorld.track(lTrackToLoad);
-		mGameWorld.worldScenery(lWorldScenery);
+		mActiveGameScene.track(lTrackToLoad);
+		mActiveGameScene.props(lWorldScenery);
 	}
 
 	// ---------------------------------------------
@@ -115,10 +125,12 @@ public class GameScreen extends BaseGameScreen {
 
 		lControllerManager.initializeControllers(lCore);
 
-		mPlayerTrainController.addPlayerTrain();
+		mPlayerTrainController.addPlayerTrain(mSceneHeader.startEntryPointName());
 
-//		mGameWorldController.startNewGame();
-		mGameState.startNewGame(300000); // 300000 ms = 5 mins
+		final int lStartingCredits = 1000;
+		final int lStartingCrew = 10;
+		final float lStartingFuel = 10;
+		mActiveGameState.startNewGame(lStartingCredits, lStartingFuel, lStartingCrew);
 
 		// Register the renders with the renderer tracker so they can be controlled through the debug menu (F1)
 		if (Debug.debugManager().debugManagerEnabled() && ConstantsGame.IS_DEBUG_MODE) {
@@ -154,12 +166,12 @@ public class GameScreen extends BaseGameScreen {
 
 		if (core.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_ESCAPE, this) || core.input().gamepads().isGamepadButtonDownTimed(GLFW.GLFW_GAMEPAD_BUTTON_START, this)) {
 			if (ConstantsGame.ESCAPE_RESTART_MAIN_SCENE) {
-				final var lLoadingScreen = new LoadingScreen(screenManager(), true, new GameScreen(screenManager(), mGameWorldHeader, mSceneHeader));
+				final var lLoadingScreen = new LoadingScreen(screenManager(), true, new GameScreen(screenManager(), mActiveGameState, mGameWorldHeader, mSceneHeader));
 				screenManager().createLoadingScreen(new LoadingScreen(screenManager(), true, lLoadingScreen));
 				return;
 			}
 
-			screenManager().addScreen(new PauseScreen(screenManager(), mGameWorldHeader, mSceneHeader));
+			screenManager().addScreen(new PauseScreen(screenManager(), mInitialGameState, mActiveGameState, mGameWorldHeader, mSceneHeader));
 
 			return;
 		}
@@ -181,15 +193,47 @@ public class GameScreen extends BaseGameScreen {
 	public void update(LintfordCore pCore, boolean pOtherScreenHasFocus, boolean pCoveredByOtherScreen) {
 		super.update(pCore, pOtherScreenHasFocus, pCoveredByOtherScreen);
 		if (!pOtherScreenHasFocus && !pCoveredByOtherScreen) {
-//			if (mGameStateController.getHasWon()) {
-//				screenManager().addScreen(new GameWonScreen(screenManager(), entityGroupUid()));
-//				return;
-//			}
-//			
-//			if (mGameStateController.getHasLost()) {
-//				screenManager().addScreen(new GameLostScreen(screenManager(), entityGroupUid()));
-//				return;
-//			}
+
+			final var lNextTrigger = mTriggerController.getNextTrigger();
+			if (lNextTrigger != null) {
+				switch (lNextTrigger.type) {
+				case TriggerController.TRIGGER_TYPE_NEW_SCENE:
+					final var lNextSceneEntryPoint = lNextTrigger.vars;
+
+					final var targetParts = lNextSceneEntryPoint.split("\\.");
+					if (targetParts == null || targetParts.length != 2) {
+						Debug.debugManager().logger().e(getClass().getSimpleName(), "Could not resolve trigger to new scene");
+						break;
+					}
+
+					final var lNextSceneHeader = mGameWorldHeader.getSceneByName(targetParts[0]);
+					if (lNextSceneHeader == null) {
+						break;
+					}
+					lNextSceneHeader.startEntryPointName(targetParts[1]);
+
+					final var lLoadingScreen = new LoadingScreen(screenManager(), true, new GameScreen(screenManager(), mInitialGameState, mGameWorldHeader, lNextSceneHeader));
+					screenManager().createLoadingScreen(new LoadingScreen(screenManager(), true, lLoadingScreen));
+
+					break;
+
+				case TriggerController.TRIGGER_TYPE_GAME_LOST:
+					// screenManager().addScreen(new GameLostScreen(screenManager(), entityGroupUid()));
+					break;
+
+				case TriggerController.TRIGGER_TYPE_GAME_WON:
+					// screenManager().addScreen(new GameWonScreen(screenManager(), entityGroupUid()));
+					break;
+
+				case TriggerController.TRIGGER_TYPE_DIALOG:
+					break;
+
+				}
+
+				lNextTrigger.consumed = true;
+				mTriggerController.returnTrigger(lNextTrigger);
+
+			}
 		}
 	}
 
@@ -199,6 +243,14 @@ public class GameScreen extends BaseGameScreen {
 
 		if (mCameraMovementController != null)
 			Debug.debugManager().drawers().drawRectImmediate(pCore.gameCamera(), mCameraMovementController.playArea());
+
+		final var lHudBounds = pCore.HUD().boundingRectangle();
+
+		final var lTitleFont = mRendererManager.uiTitleFont();
+		lTitleFont.begin(pCore.HUD());
+		lTitleFont.drawText("Scene: " + mSceneHeader.sceneName(), lHudBounds.left() + 5.f, lHudBounds.top() + 5.f, -0.01f, 1.f);
+		lTitleFont.end();
+
 	}
 
 	// ---------------------------------------------
@@ -207,12 +259,13 @@ public class GameScreen extends BaseGameScreen {
 
 	@Override
 	protected void createControllers(ControllerManager controllerManager) {
-		mGameStateController = new GameStateController(controllerManager, mGameState, mGameWorldHeader, entityGroupUid());
-		mGameWorldController = new GameWorldController(controllerManager, mGameWorld, entityGroupUid());
-		mTrackController = new TrackController(controllerManager, mGameWorld, entityGroupUid());
+		mGameStateController = new GameStateController(controllerManager, mActiveGameState, mGameWorldHeader, entityGroupUid());
+		mGameWorldController = new GameWorldController(controllerManager, mActiveGameScene, entityGroupUid());
+		mTrackController = new TrackController(controllerManager, mActiveGameScene, entityGroupUid());
 		mGameTrackEditorController = new GameTrackEditorController(controllerManager, screenManager(), entityGroupUid());
-		mTrainController = new TrainController(controllerManager, mGameWorld, entityGroupUid());
-		mPlayerTrainController = new PlayerTrainController(controllerManager, mGameWorld, entityGroupUid());
+		mTrainController = new TrainController(controllerManager, mTrainManager, entityGroupUid());
+		mPlayerTrainController = new PlayerTrainController(controllerManager, mTrainManager, entityGroupUid());
+		mTriggerController = new TriggerController(controllerManager, entityGroupUid());
 
 		mCameraMovementController = new GameCameraMovementController(controllerManager, mGameCamera, entityGroupUid());
 		mCameraMovementController.setPlayArea(-1400, -1100, 2800, 2200);
@@ -230,6 +283,7 @@ public class GameScreen extends BaseGameScreen {
 		mGameTrackEditorController.initialize(core);
 		mTrainController.initialize(core);
 		mPlayerTrainController.initialize(core);
+		mTriggerController.initialize(core);
 
 		mCameraMovementController.initialize(core);
 		mCameraZooomController.initialize(core);

@@ -6,9 +6,9 @@ import java.util.List;
 import org.lwjgl.glfw.GLFW;
 
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
+import lintfordpickle.mailtrain.data.track.TrackSegment;
 import lintfordpickle.mailtrain.data.trains.Train;
 import lintfordpickle.mailtrain.data.trains.TrainManager;
-import lintfordpickle.mailtrain.data.world.scenes.GameScene;
 import net.lintford.library.controllers.BaseController;
 import net.lintford.library.controllers.core.ControllerManager;
 import net.lintford.library.core.LintfordCore;
@@ -52,10 +52,10 @@ public class PlayerTrainController extends BaseController implements IInputProce
 	// Constructor
 	// ---------------------------------------------
 
-	public PlayerTrainController(ControllerManager pControllerManager, GameScene pGameWorld, int pEntityGroupUid) {
-		super(pControllerManager, CONTROLLER_NAME, pEntityGroupUid);
+	public PlayerTrainController(ControllerManager controllerManager, TrainManager trainManager, int entityGroupUid) {
+		super(controllerManager, CONTROLLER_NAME, entityGroupUid);
 
-		mTrainManager = pGameWorld.trainManager();
+		mTrainManager = trainManager;
 	}
 
 	// ---------------------------------------------
@@ -163,8 +163,14 @@ public class PlayerTrainController extends BaseController implements IInputProce
 	// ---------------------------------------------
 
 	// TODO: Need to pass in the spawn edge (World->Scene)
-	public Train addPlayerTrain() {
-		final var lPlayerSpawnEdge = mTrackController.track().getEdgeByUid(0);
+	public Train addPlayerTrain(String startingEdge) {
+		TrackSegment lPlayerSpawnEdge;
+		
+		if (startingEdge == null) {
+			lPlayerSpawnEdge = mTrackController.track().getEdgeByUid(0);
+		} else {
+			lPlayerSpawnEdge = mTrackController.track().getEdgeByName(startingEdge);
+		}
 
 		mPlayerLocomotiveTrain = mTrainController.addNewTrain(lPlayerSpawnEdge, 3);
 		return mPlayerLocomotiveTrain;

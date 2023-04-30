@@ -10,7 +10,7 @@ import com.google.gson.JsonIOException;
 
 import lintfordpickle.mailtrain.ConstantsGame;
 import lintfordpickle.mailtrain.data.world.scenes.ScenePropInstance;
-import lintfordpickle.mailtrain.data.world.scenes.ScenePropList;
+import lintfordpickle.mailtrain.data.world.scenes.Props;
 import net.lintford.library.controllers.BaseController;
 import net.lintford.library.controllers.core.ControllerManager;
 import net.lintford.library.controllers.core.ResourceController;
@@ -33,7 +33,7 @@ public class SceneryController extends BaseController implements IInputProcessor
 
 	private ResourceController mResourceController;
 	private SpriteSheetDefinition mWorldSpriteSheet;
-	private ScenePropList mWorldScenery;
+	private Props mWorldScenery;
 
 	public int selectedItemIndex = 0;
 
@@ -88,7 +88,7 @@ public class SceneryController extends BaseController implements IInputProcessor
 		return mWorldScenery != null;
 	}
 
-	public ScenePropList worldScenery() {
+	public Props worldScenery() {
 		return mWorldScenery;
 	}
 
@@ -96,7 +96,7 @@ public class SceneryController extends BaseController implements IInputProcessor
 	// Constructor
 	// ---------------------------------------------
 
-	public SceneryController(ControllerManager pControllerManager, ScenePropList pWorldScenery, int pEntityGroupUid) {
+	public SceneryController(ControllerManager pControllerManager, Props pWorldScenery, int pEntityGroupUid) {
 		super(pControllerManager, CONTROLLER_NAME, pEntityGroupUid);
 
 		mWorldScenery = pWorldScenery;

@@ -1,7 +1,6 @@
 package lintfordpickle.mailtrain.data.world.scenes;
 
 import lintfordpickle.mailtrain.data.track.Track;
-import lintfordpickle.mailtrain.data.trains.TrainManager;
 import lintfordpickle.mailtrain.data.world.GameWorldHeader;
 
 public class GameScene {
@@ -11,10 +10,10 @@ public class GameScene {
 	// ---------------------------------------------
 
 	private transient final GameWorldHeader mGameWorldHeader;
-	private Track mTrack;
+	private transient GameScene mActiveGameSceneHeader;
 
-	private TrainManager mTrainManager;
-	private ScenePropList mWorldScenery;
+	private Track mTrack;
+	private Props mProps;
 
 	// ---------------------------------------------
 	// Properties
@@ -22,6 +21,10 @@ public class GameScene {
 
 	public GameWorldHeader gameWorldHeader() {
 		return mGameWorldHeader;
+	}
+
+	public GameScene activeSceneHeader() {
+		return mActiveGameSceneHeader;
 	}
 
 	public Track track() {
@@ -32,17 +35,13 @@ public class GameScene {
 		mTrack = pTrack;
 	};
 
-	public ScenePropList worldScenery() {
-		return mWorldScenery;
+	public Props props() {
+		return mProps;
 	};
 
-	public void worldScenery(ScenePropList pWorldScenery) {
-		mWorldScenery = pWorldScenery;
+	public void props(Props props) {
+		mProps = props;
 	};
-
-	public TrainManager trainManager() {
-		return mTrainManager;
-	}
 
 	// ---------------------------------------------
 	// Constructor
@@ -50,7 +49,15 @@ public class GameScene {
 
 	public GameScene(GameWorldHeader pGameWorldHeader) {
 		mGameWorldHeader = pGameWorldHeader;
-		mTrainManager = new TrainManager();
+
+	}
+
+	// ---------------------------------------------
+	// Methods
+	// ---------------------------------------------
+
+	public void LoadGameScene(SceneHeader sceneHeader) {
+
 	}
 
 }

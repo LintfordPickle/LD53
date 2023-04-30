@@ -136,6 +136,19 @@ public class Track extends BaseInstanceData {
 		return null;
 	}
 
+	public TrackSegment getEdgeByName(final String segmentName) {
+		final int edgeCount = mEdges.size();
+		for (int i = 0; i < edgeCount; i++) {
+			if (mEdges.get(i).segmentName == null)
+				continue;
+
+			if (mEdges.get(i).segmentName.equals(segmentName))
+				return mEdges.get(i);
+
+		}
+		return null;
+	}
+
 	public TrackNode getNodeByUid(final int pUid) {
 		final int nodeCount = mNodes.size();
 		for (int i = 0; i < nodeCount; i++) {

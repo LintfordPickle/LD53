@@ -9,7 +9,7 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 
 import lintfordpickle.mailtrain.data.world.GameWorldHeader;
-import lintfordpickle.mailtrain.data.world.scenes.ScenePropList;
+import lintfordpickle.mailtrain.data.world.scenes.Props;
 import net.lintford.library.core.debug.Debug;
 import net.lintford.library.core.storage.FileUtils;
 
@@ -19,14 +19,14 @@ public class WorldIOController {
 	// Methods
 	// ---------------------------------------------
 
-	public static ScenePropList loadSceneryFromFile(String pFilename) {
+	public static Props loadSceneryFromFile(String pFilename) {
 		final var lGson = new GsonBuilder().create();
 		String lWorldSceneryRawFileContents = null;
-		ScenePropList lWorldScenery = null;
+		Props lWorldScenery = null;
 
 		try {
 			lWorldSceneryRawFileContents = FileUtils.loadString(pFilename);
-			lWorldScenery = lGson.fromJson(lWorldSceneryRawFileContents, ScenePropList.class);
+			lWorldScenery = lGson.fromJson(lWorldSceneryRawFileContents, Props.class);
 
 		} catch (JsonSyntaxException ex) {
 			Debug.debugManager().logger().printException(WorldIOController.class.getSimpleName(), ex);
@@ -35,7 +35,7 @@ public class WorldIOController {
 
 		if (lWorldScenery == null) {
 			System.out.println("Creating empty scenery file");
-			lWorldScenery = new ScenePropList();
+			lWorldScenery = new Props();
 		}
 
 		return lWorldScenery;

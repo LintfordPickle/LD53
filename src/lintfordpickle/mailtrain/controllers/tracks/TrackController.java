@@ -38,7 +38,7 @@ public class TrackController extends BaseController implements IInputProcessor {
 	// ---------------------------------------------
 
 	private TrainController mTrainController;
-	private GameScene mGameWorld;
+	private GameScene mActiveGameScene;
 
 	private int mTrackBuildLogicalCounter = 0;
 
@@ -47,23 +47,23 @@ public class TrackController extends BaseController implements IInputProcessor {
 	// ---------------------------------------------
 
 	public int trackBuildLogicalCounter() {
-		return mGameWorld.track().trackLogicalCounter();
+		return mActiveGameScene.track().trackLogicalCounter();
 	}
 
 	public void updateTrackBuildLogicalCounter() {
 		mTrackBuildLogicalCounter++;
-		mGameWorld.track().trackLogicalCounter(mTrackBuildLogicalCounter);
+		mActiveGameScene.track().trackLogicalCounter(mTrackBuildLogicalCounter);
 
 		Debug.debugManager().logger().i(getClass().getSimpleName(), "Track logical build counter (" + mTrackBuildLogicalCounter + ")");
 	}
 
 	@Override
 	public boolean isInitialized() {
-		return mGameWorld != null;
+		return mActiveGameScene != null;
 	}
 
 	public Track track() {
-		return mGameWorld.track();
+		return mActiveGameScene.track();
 	}
 
 	public float worldToGrid(final float pWorldCoord) {
@@ -77,7 +77,7 @@ public class TrackController extends BaseController implements IInputProcessor {
 	public TrackController(ControllerManager pControllerManager, GameScene pGameWorld, int pEntityGroupUid) {
 		super(pControllerManager, CONTROLLER_NAME, pEntityGroupUid);
 
-		mGameWorld = pGameWorld;
+		mActiveGameScene = pGameWorld;
 	}
 
 	// ---------------------------------------------
@@ -86,8 +86,10 @@ public class TrackController extends BaseController implements IInputProcessor {
 
 	@Override
 	public void initialize(LintfordCore pCore) {
+
 		mTrainController = (TrainController) pCore.controllerManager().getControllerByNameRequired(TrainController.CONTROLLER_NAME, entityGroupUid());
-		mGameWorld.track().areSignalsDirty = true;
+
+		mActiveGameScene.track().areSignalsDirty = true;
 	}
 
 	@Override
@@ -95,12 +97,8 @@ public class TrackController extends BaseController implements IInputProcessor {
 		super.update(pCore);
 		if (track().areSignalsDirty) {
 			rebuildTrackSignalBlocks(pCore, track());
-
-		}
-		// Update the signals on the track
-		if (!track().areSignalsDirty) {
+		} else {
 			updateSignals(pCore, track());
-
 		}
 	}
 
@@ -124,7 +122,7 @@ public class TrackController extends BaseController implements IInputProcessor {
 
 	public void loadTrackFromFile(String fileName) {
 		final var lLoadedTrack = TrackIOController.loadTrackFromFile(fileName);
-		mGameWorld.track(lLoadedTrack);
+		mActiveGameScene.track(lLoadedTrack);
 	}
 
 	public void saveTrack(String pFilename) {
@@ -132,7 +130,7 @@ public class TrackController extends BaseController implements IInputProcessor {
 		Gson gson = new Gson();
 		try {
 			lWriter = new FileWriter(pFilename);
-			gson.toJson(mGameWorld.track(), lWriter);
+			gson.toJson(mActiveGameScene.track(), lWriter);
 
 		} catch (JsonIOException e) {
 			e.printStackTrace();
