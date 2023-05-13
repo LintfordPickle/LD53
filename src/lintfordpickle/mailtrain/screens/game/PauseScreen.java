@@ -1,8 +1,8 @@
 package lintfordpickle.mailtrain.screens.game;
 
 import lintfordpickle.mailtrain.data.GameState;
+import lintfordpickle.mailtrain.data.scene.GameSceneHeader;
 import lintfordpickle.mailtrain.data.world.GameWorldHeader;
-import lintfordpickle.mailtrain.data.world.scenes.SceneHeader;
 import lintfordpickle.mailtrain.screens.MainMenu;
 import lintfordpickle.mailtrain.screens.MenuBackgroundScreen;
 import net.lintford.library.core.graphics.ColorConstants;
@@ -28,7 +28,7 @@ public class PauseScreen extends MenuScreen {
 	// ---------------------------------------------
 
 	private GameWorldHeader mGameWorldHeader;
-	private SceneHeader mSceneHeader;
+	private GameSceneHeader mSceneHeader;
 
 	private GameState mInitialGameState;
 	// private GameState mLatestGameState;
@@ -37,7 +37,7 @@ public class PauseScreen extends MenuScreen {
 	// Constructor
 	// ---------------------------------------------
 
-	public PauseScreen(ScreenManager screenManager, GameState initialGameState, GameState latestGameState, GameWorldHeader gameWorldHeader, SceneHeader sceneheader) {
+	public PauseScreen(ScreenManager screenManager, GameState initialGameState, GameState latestGameState, GameWorldHeader gameWorldHeader, GameSceneHeader sceneheader) {
 		super(screenManager, null);
 
 		mGameWorldHeader = gameWorldHeader;

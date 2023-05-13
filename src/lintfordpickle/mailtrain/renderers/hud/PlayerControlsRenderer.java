@@ -5,7 +5,6 @@ import lintfordpickle.mailtrain.controllers.GameStateController;
 import lintfordpickle.mailtrain.controllers.core.GameCameraMovementController;
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
 import lintfordpickle.mailtrain.controllers.trains.PlayerTrainController;
-import lintfordpickle.mailtrain.controllers.trains.TrainController;
 import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.ResourceManager;
 import net.lintford.library.core.graphics.sprites.spritesheet.SpriteSheetDefinition;

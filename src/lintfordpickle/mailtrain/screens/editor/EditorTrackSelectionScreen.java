@@ -5,13 +5,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import lintfordpickle.mailtrain.ConstantsGame;
-import lintfordpickle.mailtrain.controllers.tracks.TrackIOController;
-import lintfordpickle.mailtrain.controllers.world.SceneIOController;
-import lintfordpickle.mailtrain.controllers.world.WorldIOController;
+import lintfordpickle.mailtrain.data.scene.GameSceneHeader;
 import lintfordpickle.mailtrain.data.world.GameWorldHeader;
-import lintfordpickle.mailtrain.data.world.scenes.SceneHeader;
-import lintfordpickle.mailtrain.screens.dialogs.CreateSceneDialog;
 import lintfordpickle.mailtrain.screens.dialogs.CreateWorldDialog;
+import lintfordpickle.mailtrain.services.GameSceneHeaderIOService;
+import lintfordpickle.mailtrain.services.GameWorldHeaderIOService;
 import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.storage.FileUtils;
 import net.lintford.library.screenmanager.MenuEntry;
@@ -46,7 +44,7 @@ public class EditorTrackSelectionScreen extends MenuScreen {
 	// ---------------------------------------------
 
 	private MenuDropDownEntry<GameWorldHeader> mWorldEntries;
-	private MenuDropDownEntry<SceneHeader> mSceneEntries;
+	private MenuDropDownEntry<GameSceneHeader> mSceneEntries;
 
 	private MenuEntry mNewWorldButton;
 	private MenuEntry mDeleteWorldButton;
@@ -58,10 +56,9 @@ public class EditorTrackSelectionScreen extends MenuScreen {
 	private MenuEntry mBackButton;
 
 	private CreateWorldDialog mCreateWorldDialog;
-	private CreateSceneDialog mCreateSceneDialog;
 
 	private GameWorldHeader mSelectedGameWorldHeader;
-	private SceneHeader mSelectedSceneHeader;
+	private GameSceneHeader mSelectedSceneHeader;
 
 	// ---------------------------------------------
 	// Constructor
@@ -74,8 +71,11 @@ public class EditorTrackSelectionScreen extends MenuScreen {
 
 		mWorldEntries = new MenuDropDownEntry<GameWorldHeader>(screenManager(), this);
 		mWorldEntries.registerClickListener(this, DROPDOWN_LIST_WORLD);
-		mSceneEntries = new MenuDropDownEntry<SceneHeader>(screenManager(), this);
+		mWorldEntries.noItemsFoundText("No Worlds Available");
+
+		mSceneEntries = new MenuDropDownEntry<GameSceneHeader>(screenManager(), this);
 		mSceneEntries.registerClickListener(this, DROPDOWN_LIST_SCENES);
+		mSceneEntries.noItemsFoundText("No Scenes Available");
 
 		mNewWorldButton = new MenuEntry(pScreenManager, this, "New World");
 		mDeleteWorldButton = new MenuEntry(pScreenManager, this, "Delete World");
@@ -133,10 +133,6 @@ public class EditorTrackSelectionScreen extends MenuScreen {
 		mCreateWorldDialog = new CreateWorldDialog(pScreenManager, this);
 		mCreateWorldDialog.confirmEntry().registerClickListener(this, CreateWorldDialog.CREATE_WORLD_BUTTON_CONFIRM_YES);
 		mCreateWorldDialog.cancelEntry().registerClickListener(this, CreateWorldDialog.CREATE_WORLD_BUTTON_CONFIRM_NO);
-
-		mCreateSceneDialog = new CreateSceneDialog(pScreenManager, this);
-		mCreateSceneDialog.confirmEntry().registerClickListener(this, CreateSceneDialog.CREATE_SCENE_BUTTON_CONFIRM_YES);
-		mCreateSceneDialog.cancelEntry().registerClickListener(this, CreateSceneDialog.CREATE_SCENE_BUTTON_CONFIRM_NO);
 	}
 
 	// ---------------------------------------------
@@ -167,7 +163,7 @@ public class EditorTrackSelectionScreen extends MenuScreen {
 		final int lTrackCount = lListOfWorlds.size();
 		for (int i = 0; i < lTrackCount; i++) {
 			final var lGameWorldHeaderFile = lListOfWorlds.get(i);
-			final var lGameWorldHeader = WorldIOController.loadGameWorldHeaderFromFile(lGameWorldHeaderFile.getPath() + FileUtils.FILE_SEPARATOR + GameWorldHeader.WORLD_HEADER_FILE_NAME);
+			final var lGameWorldHeader = GameWorldHeaderIOService.loadGameWorldHeaderFromFile(lGameWorldHeaderFile.getPath() + FileUtils.FILE_SEPARATOR + GameWorldHeader.WORLD_HEADER_FILE_NAME);
 			lGameWorldHeader.worldDirectory(lGameWorldHeaderFile.getPath() + FileUtils.FILE_SEPARATOR);
 
 			final var lNewEntry = pEntry.new MenuEnumEntryItem(lGameWorldHeaderFile.getName(), lGameWorldHeader);
@@ -181,49 +177,21 @@ public class EditorTrackSelectionScreen extends MenuScreen {
 			mSelectedGameWorldHeader = null;
 		} else {
 			mSelectedGameWorldHeader = pEntry.items().get(0).value;
-			populateGameWorldSceneEntryPoints(mSelectedGameWorldHeader);
 			populateSceneDropDownListWithScenes(mSceneEntries, mSelectedGameWorldHeader);
 		}
 	}
 
-	// TODO: same code in LevelSelectionScreen code - refactor
-	private void populateGameWorldSceneEntryPoints(GameWorldHeader gameWorldHeader) {
-		final var lScenesFolder = gameWorldHeader.worldDirectory() + FileUtils.FILE_SEPARATOR + ConstantsGame.SCENES_REL_DIRECTORY;
-		final var lListOfSceneFiles = TrackList.getListOfSceneFiles(lScenesFolder);
-
-		final int lSceneFileCount = lListOfSceneFiles.size();
-		for (int i = 0; i < lSceneFileCount; i++) {
-			final var lSceneFile = lListOfSceneFiles.get(i);
-			final var lSceneHeader = SceneIOController.loadSceneryFromFile(lSceneFile.getPath());
-
-			if (lSceneHeader != null) {
-				// Load the track so we can poll for entry points
-				// TODO: resolving track filenames to directories is getting old
-				final var lTrackFilename = lSceneFile.getParentFile() + FileUtils.FILE_SEPARATOR + lSceneHeader.trackFilename();
-				final var lTrack = TrackIOController.loadTrackFromFile(lTrackFilename);
-
-				final int lNumEdgesInTrack = lTrack.edges().size();
-				for (int j = 0; j < lNumEdgesInTrack; j++) {
-					final var lEdge = lTrack.edges().get(j);
-					if (lEdge.segmentName == null)
-						continue;
-
-					lSceneHeader.addEntryPointName(lEdge.segmentName);
-					gameWorldHeader.addSceneHeaderEntryPoint(lEdge.segmentName, lSceneHeader);
-				}
-			}
-		}
-	}
-
-	private void populateSceneDropDownListWithScenes(MenuDropDownEntry<SceneHeader> pEntry, GameWorldHeader gameWorldHeader) {
+	private void populateSceneDropDownListWithScenes(MenuDropDownEntry<GameSceneHeader> pEntry, GameWorldHeader gameWorldHeader) {
 		pEntry.clearItems();
 		final var lListOfSceneFiles = TrackList.getListOfSceneFiles(gameWorldHeader.worldDirectory() + FileUtils.FILE_SEPARATOR + ConstantsGame.SCENES_REL_DIRECTORY);
 
 		final int lSceneFileCount = lListOfSceneFiles.size();
 		for (int i = 0; i < lSceneFileCount; i++) {
 			final var lSceneFile = lListOfSceneFiles.get(i);
-			final var lSceneHeader = SceneIOController.loadSceneryFromFile(lSceneFile.getPath());
+			final var lSceneHeader = GameSceneHeaderIOService.loadGameSceneHeaderFromFile(lSceneFile.getPath());
 
+			gameWorldHeader.sceneHeaders().add(lSceneHeader);
+			
 			final var lNewEntry = pEntry.new MenuEnumEntryItem(lSceneFile.getName(), lSceneHeader);
 			pEntry.addItem(lNewEntry);
 		}
@@ -246,7 +214,6 @@ public class EditorTrackSelectionScreen extends MenuScreen {
 
 			mSceneEntries.clearItems();
 
-			populateGameWorldSceneEntryPoints(lSelectedGameWorld);
 			populateSceneDropDownListWithScenes(mSceneEntries, lSelectedGameWorld);
 
 			return;
@@ -287,22 +254,21 @@ public class EditorTrackSelectionScreen extends MenuScreen {
 			break;
 
 		case BUTTON_SCENE_CREATE_ID:
-			screenManager().addScreen(mCreateSceneDialog);
+			createNewSceneHeader();
 			break;
 
 		case BUTTON_SCENE_LOAD_ID:
+			final var lSelectedSceneEntry = mSceneEntries.selectedItem();
+			if(lSelectedSceneEntry == null)
+				return;
+			
+			mSelectedSceneHeader.sceneFilename(lSelectedSceneEntry.value.sceneFilename());
 			screenManager().createLoadingScreen(new LoadingScreen(screenManager(), true, new TrackEditorScreen(screenManager(), mSelectedGameWorldHeader, mSelectedSceneHeader)));
 			break;
 
 		case BUTTON_SCENE_DELETE_ID:
 			if (mSelectedSceneHeader != null) {
-				try {
-					// TODO: Need to delete all supporting files from this scene (track, scenery etc.)
-
-					deleteFolder(new File(mSelectedSceneHeader.trackFilename()));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				// TODO: Need to delete all supporting files from this scene (track, scenery etc.)
 			}
 			break;
 
@@ -311,16 +277,6 @@ public class EditorTrackSelectionScreen extends MenuScreen {
 			return;
 
 		// --- Dialogs
-
-		case CreateSceneDialog.CREATE_SCENE_BUTTON_CONFIRM_NO:
-			if (mScreenManager.getTopScreen() instanceof CreateSceneDialog) {
-				mScreenManager.removeScreen(mCreateSceneDialog);
-			}
-			break;
-
-		case CreateSceneDialog.CREATE_SCENE_BUTTON_CONFIRM_YES:
-			createNewSceneHeader();
-			break;
 
 		case CreateWorldDialog.CREATE_WORLD_BUTTON_CONFIRM_NO:
 			if (mScreenManager.getTopScreen() instanceof CreateWorldDialog) {
@@ -354,28 +310,15 @@ public class EditorTrackSelectionScreen extends MenuScreen {
 		if (!dir.exists())
 			dir.mkdirs();
 
-		WorldIOController.saveGameWorldHeader(lNewGameWorldHeader, lWorldDirectory + GameWorldHeader.WORLD_HEADER_FILE_NAME);
+		GameWorldHeaderIOService.saveGameWorldHeader(lNewGameWorldHeader, lWorldDirectory + GameWorldHeader.WORLD_HEADER_FILE_NAME);
 	}
 
 	private void createNewSceneHeader() {
-		if (mScreenManager.getTopScreen() instanceof CreateSceneDialog) {
-			mScreenManager.removeScreen(mCreateSceneDialog);
-		}
-
 		if (mSelectedGameWorldHeader == null) {
 			return;
 		}
 
-		final var lNewSceneName = mCreateSceneDialog.worldName();
-		final var lNewSceneHeader = new SceneHeader();
-
-		lNewSceneHeader.sceneName(lNewSceneName);
-		lNewSceneHeader.sceneFilename(lNewSceneName + SceneHeader.SCENE_FILE_EXTENSION);
-		lNewSceneHeader.trackFilename(lNewSceneName + SceneHeader.TRACK_FILE_EXTENSION);
-
-		SceneIOController.saveSceneHeader(lNewSceneHeader,
-				mSelectedGameWorldHeader.worldDirectory() + FileUtils.FILE_SEPARATOR + ConstantsGame.SCENES_REL_DIRECTORY + FileUtils.FILE_SEPARATOR + lNewSceneHeader.sceneFilename());
-
+		final var lNewSceneHeader = new GameSceneHeader();
 		screenManager().createLoadingScreen(new LoadingScreen(screenManager(), true, new TrackEditorScreen(screenManager(), mSelectedGameWorldHeader, lNewSceneHeader)));
 	}
 

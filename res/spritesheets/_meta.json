@@ -4,6 +4,7 @@
 		"res/spritesheets/spritesheetHud.json",
 
 		"res/spritesheets/spritesheetEnvironment.json",
-		"res/spritesheets/spritesheetTrains.json"
+		"res/spritesheets/spritesheetTrains.json",
+		"res/spritesheets/spritesheetProjectiles.json"
 	]
 }

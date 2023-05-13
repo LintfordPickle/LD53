@@ -1,19 +1,15 @@
 package lintfordpickle.mailtrain.controllers;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.lwjgl.glfw.GLFW;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonIOException;
-
-import lintfordpickle.mailtrain.controllers.tracks.TrackIOController;
-import lintfordpickle.mailtrain.data.track.Track;
-import lintfordpickle.mailtrain.data.track.TrackNode;
-import lintfordpickle.mailtrain.data.track.TrackSegment;
+import lintfordpickle.mailtrain.controllers.tracks.TrackController;
+import lintfordpickle.mailtrain.data.scene.GameSceneInstance;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackInstance;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackNode;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackSegment;
 import net.lintford.library.controllers.BaseController;
 import net.lintford.library.controllers.core.ControllerManager;
 import net.lintford.library.core.LintfordCore;
@@ -29,14 +25,17 @@ public class TrackEditorController extends BaseController implements IInputProce
 	// Constants
 	// ---------------------------------------------
 
-	private static List<TrackSegment> mTempEdgeList = new ArrayList<>();
+	private static List<RailTrackSegment> mTempEdgeList = new ArrayList<>();
 
 	public static final String CONTROLLER_NAME = "Track Editor Controller";
 
 	private ScreenManager mScreenManager;
-	private Track mTrack;
-	public TrackNode mSelectedNodeA;
-	public TrackNode mSelectedNodeB;
+	private GameSceneInstance mGameScene;
+
+	private RailTrackInstance mTrack;
+
+	public RailTrackNode mSelectedNodeA;
+	public RailTrackNode mSelectedNodeB;
 
 	public int selectedSignalUid = 0;
 
@@ -55,7 +54,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 	// TODO: refactor out
 	private boolean mIsCapturedTextInput;
 	private boolean mIsCapturingName;
-	public TrackSegment mSelectedEdge;
+	public RailTrackSegment mSelectedEdge;
 	private final StringBuilder mInputField = new StringBuilder();
 	//
 
@@ -92,22 +91,24 @@ public class TrackEditorController extends BaseController implements IInputProce
 		return mTrack != null;
 	}
 
-	public Track track() {
+	public RailTrackInstance track() {
 		return mTrack;
 	}
 
 	public float worldToGrid(final float pWorldCoord) {
-		return Track.worldToGrid(pWorldCoord, mTrack.gridSizeInPixels);
+		return RailTrackInstance.worldToGrid(pWorldCoord, TrackController.GRID_SIZE_DEPRECATED);
 	}
 
 	// ---------------------------------------------
 	// Constructor
 	// ---------------------------------------------
 
-	public TrackEditorController(ControllerManager pControllerManager, ScreenManager pScreenManager, int pEntityGroupUid) {
+	public TrackEditorController(ControllerManager pControllerManager, ScreenManager pScreenManager, GameSceneInstance gameScene, int pEntityGroupUid) {
 		super(pControllerManager, CONTROLLER_NAME, pEntityGroupUid);
 
 		mScreenManager = pScreenManager;
+		mGameScene = gameScene;
+		mTrack = mGameScene.trackManager().track();
 	}
 
 	// ---------------------------------------------
@@ -179,7 +180,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 	// Methods
 	// ---------------------------------------------
 
-	private void deleteNode(TrackNode pNode) {
+	private void deleteNode(RailTrackNode pNode) {
 		if (pNode == null) {
 			return;
 		}
@@ -196,7 +197,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 		mTrack.nodes().remove(pNode);
 	}
 
-	private void deleteEdge(TrackSegment pEdge) {
+	private void deleteEdge(RailTrackSegment pEdge) {
 		if (pEdge == null)
 			return;
 		final int lNodeCount = mTrack.nodes().size();
@@ -206,7 +207,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 				lNode.removeEdgeByUid(pEdge.uid);
 			}
 		}
-		TrackSegment lEdgeToDelete = null;
+		RailTrackSegment lEdgeToDelete = null;
 		final int lEdgeCount = mTrack.edges().size();
 		for (int i = 0; i < lEdgeCount; i++) {
 			final var lEdge = mTrack.edges().get(i);
@@ -220,7 +221,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 		pEdge = null;
 	}
 
-	private TrackSegment getCommonEdge(final int pUidA, final int pUidB) {
+	private RailTrackSegment getCommonEdge(final int pUidA, final int pUidB) {
 		final var lNodeA = mTrack.getNodeByUid(pUidA);
 		final var lNodeB = mTrack.getNodeByUid(pUidB);
 
@@ -253,7 +254,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 
 		final var lNewEdgeAngle = MathHelper.wrapAngle((float) Math.atan2(lNodeB.y - lNodeA.y, lNodeB.x - lNodeA.x));
 
-		final var lNewEdge = new TrackSegment(mTrack, mTrack.getNewEdgeUid(), pNodeAUid, pNodeBUid, lNewEdgeAngle);
+		final var lNewEdge = new RailTrackSegment(mTrack, mTrack.getNewEdgeUid(), pNodeAUid, pNodeBUid, lNewEdgeAngle);
 		mTrack.edges().add(lNewEdge);
 
 		final int lNodeAEdgeCount = lNodeA.numberConnectedEdges();
@@ -280,11 +281,11 @@ public class TrackEditorController extends BaseController implements IInputProce
 				lNewEdge.allowedEdgeConections.add((Integer) lOldEdge.uid);
 			}
 		}
-		lNewEdge.lControl0X = lNodeA.x;
-		lNewEdge.lControl0Y = lNodeA.y;
+		lNewEdge.control0X = lNodeA.x;
+		lNewEdge.control0Y = lNodeA.y;
 
-		lNewEdge.lControl1X = lNodeB.x;
-		lNewEdge.lControl1Y = lNodeB.y;
+		lNewEdge.control1X = lNodeB.x;
+		lNewEdge.control1Y = lNodeB.y;
 
 		lNewEdge.edgeLengthInMeters = mTrack.getEdgeLength(lNewEdge);
 
@@ -292,35 +293,6 @@ public class TrackEditorController extends BaseController implements IInputProce
 		lNodeB.addEdgeToNode(lNewEdge);
 
 		mScreenManager.toastManager().addMessage("", "Track segment created", 1500);
-	}
-
-	public void setNewScene() {
-		mTrack = new Track();
-	}
-
-	public void loadTrackFromFile(String fileName) {
-		mTrack = TrackIOController.loadTrackFromFile(fileName);
-	}
-
-	public void saveTrack(String pFilename) {
-		FileWriter lWriter = null;
-		Gson gson = new Gson();
-		try {
-			lWriter = new FileWriter(pFilename);
-			gson.toJson(mTrack, lWriter);
-
-		} catch (JsonIOException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				lWriter.flush();
-				lWriter.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
 	}
 
 	// ---------------------------------------------
@@ -338,10 +310,10 @@ public class TrackEditorController extends BaseController implements IInputProce
 
 			// toggle betwen line type (cubic bezier or straight line)
 			if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_V, this)) {
-				if (lManipulateEdge.edgeType == TrackSegment.EDGE_TYPE_STRAIGHT)
-					lManipulateEdge.edgeType = TrackSegment.EDGE_TYPE_CURVE;
+				if (lManipulateEdge.edgeType == RailTrackSegment.EDGE_TYPE_STRAIGHT)
+					lManipulateEdge.edgeType = RailTrackSegment.EDGE_TYPE_CURVE;
 				else
-					lManipulateEdge.edgeType = TrackSegment.EDGE_TYPE_STRAIGHT;
+					lManipulateEdge.edgeType = RailTrackSegment.EDGE_TYPE_STRAIGHT;
 
 				updateUpdateCounter();
 
@@ -349,8 +321,8 @@ public class TrackEditorController extends BaseController implements IInputProce
 
 			}
 			if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_1) && mLeftMouseDown) {
-				lManipulateEdge.lControl0X = mMouseGridPositionX;
-				lManipulateEdge.lControl0Y = mMouseGridPositionY;
+				lManipulateEdge.control0X = mMouseGridPositionX;
+				lManipulateEdge.control0Y = mMouseGridPositionY;
 
 				lManipulateEdge.edgeLengthInMeters = mTrack.getEdgeLength(lManipulateEdge);
 				updateUpdateCounter();
@@ -359,8 +331,8 @@ public class TrackEditorController extends BaseController implements IInputProce
 
 			}
 			if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_2) && mLeftMouseDown) {
-				lManipulateEdge.lControl1X = mMouseGridPositionX;
-				lManipulateEdge.lControl1Y = mMouseGridPositionY;
+				lManipulateEdge.control1X = mMouseGridPositionX;
+				lManipulateEdge.control1Y = mMouseGridPositionY;
 
 				lManipulateEdge.edgeLengthInMeters = mTrack.getEdgeLength(lManipulateEdge);
 				updateUpdateCounter();
@@ -461,7 +433,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 //				if (!lCreationAllowed)
 //					return true;
 
-				final var lNewNode = new TrackNode(mTrack.getNewNodeUid());
+				final var lNewNode = new RailTrackNode(mTrack.getNewNodeUid());
 				lNewNode.x = mMouseGridPositionX;
 				lNewNode.y = mMouseGridPositionY;
 
@@ -490,7 +462,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 //				if (!lCreationAllowed)
 //					return true;
 
-				final var lNewNode = new TrackNode(mTrack.getNewNodeUid());
+				final var lNewNode = new RailTrackNode(mTrack.getNewNodeUid());
 				lNewNode.x = mMouseGridPositionX;
 				lNewNode.y = mMouseGridPositionY;
 
@@ -503,7 +475,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 
 				return true;
 			} else {
-				final var lNewNode = new TrackNode(mTrack.getNewNodeUid());
+				final var lNewNode = new RailTrackNode(mTrack.getNewNodeUid());
 				lNewNode.x = mMouseGridPositionX;
 				lNewNode.y = mMouseGridPositionY;
 
@@ -528,7 +500,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 				return true;
 
 			}
-			final TrackNode lSelectedNode = getNodeAtGridLocation(mMouseWorldPositionX, mMouseWorldPositionY);
+			final RailTrackNode lSelectedNode = getNodeAtGridLocation(mMouseWorldPositionX, mMouseWorldPositionY);
 			if (lSelectedNode == null) {
 				selectedSignalUid = -1;
 
@@ -570,7 +542,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 		return false;
 	}
 
-	private TrackNode getNodeAtGridLocation(final float pWorldPositionX, float pWorldPositionY) {
+	private RailTrackNode getNodeAtGridLocation(final float pWorldPositionX, float pWorldPositionY) {
 		final int lNodeCount = mTrack.nodes().size();
 		for (int i = 0; i < lNodeCount; i++) {
 			final var lNode = mTrack.nodes().get(i);
@@ -605,6 +577,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 					lEdge.trackJunction.reset();
 				}
 			}
+			
 			// Change offset position of the lamp and box
 			if (lEdge != null && lEdge.trackJunction != null && lEdge.trackJunction.isSignalActive) {
 				if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_I)) {
@@ -618,6 +591,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 
 					}
 				}
+				
 				if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_B)) {
 					if (pCore.input().mouse().isMouseLeftButtonDown()) {
 						lEdge.trackJunction.signalBoxOffsetX = mMouseWorldPositionX - mSelectedNodeA.x;
@@ -751,27 +725,27 @@ public class TrackEditorController extends BaseController implements IInputProce
 		}
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_4, this)) {
 			System.out.println("Setting player spawn edge");
-			lActiveEdge.setEdgeWithType(TrackSegment.EDGE_SPECIAL_TYPE_MAP_SPAWN);
+			lActiveEdge.setEdgeWithType(RailTrackSegment.EDGE_SPECIAL_TYPE_MAP_SPAWN);
 			return true;
 		}
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_5, this)) {
 			System.out.println("Setting player exit edge");
-			lActiveEdge.setEdgeWithType(TrackSegment.EDGE_SPECIAL_TYPE_MAP_EXIT);
+			lActiveEdge.setEdgeWithType(RailTrackSegment.EDGE_SPECIAL_TYPE_MAP_EXIT);
 			return true;
 		}
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_6, this)) {
 			System.out.println("Setting map edge");
-			lActiveEdge.setEdgeWithType(TrackSegment.EDGE_SPECIAL_TYPE_MAP_EDGE);
+			lActiveEdge.setEdgeWithType(RailTrackSegment.EDGE_SPECIAL_TYPE_MAP_EDGE);
 			return true;
 		}
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_7, this)) {
 			System.out.println("Setting station");
-			lActiveEdge.setEdgeWithType(TrackSegment.EDGE_SPECIAL_TYPE_STATION);
+			lActiveEdge.setEdgeWithType(RailTrackSegment.EDGE_SPECIAL_TYPE_STATION);
 			return true;
 		}
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_8, this)) {
 			System.out.println("Setting enemy spawn edge");
-			lActiveEdge.setEdgeWithType(TrackSegment.EDGE_SPECIAL_TYPE_ENEMY_SPAWN);
+			lActiveEdge.setEdgeWithType(RailTrackSegment.EDGE_SPECIAL_TYPE_ENEMY_SPAWN);
 			return true;
 		}
 

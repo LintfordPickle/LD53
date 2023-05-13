@@ -118,7 +118,7 @@ public class EditorSignalRenderer extends BaseRenderer {
 		for (int i = 0; i < lNumSignals; i++) {
 			final var lSignal = lSignalList.get(i);
 
-			if (!lSignal.isSignalHead)
+			if (!lSignal.isSignalHead())
 				continue; // don't render the segments
 
 			final var lTrackSegment = lSignal.trackSegment;
@@ -127,16 +127,16 @@ public class EditorSignalRenderer extends BaseRenderer {
 
 			final var lTrackSegmentLength = lTrackSegment.edgeLengthInMeters;
 
-			final var lDestNode = lTrack.getNodeByUid(lSignal.destinationNodeUid);
+			final var lDestNode = lTrack.getNodeByUid(lSignal.destinationNodeUid());
 			if (lDestNode == null)
 				return;
-			final var lSourceNodeUid = lTrackSegment.getOtherNodeUid(lSignal.destinationNodeUid);
+			final var lSourceNodeUid = lTrackSegment.getOtherNodeUid(lSignal.destinationNodeUid());
 			final var lSourceNode = lTrack.getNodeByUid(lSourceNodeUid);
 
 			if (lSourceNode == null)
 				continue;
 
-			final var lDistanceIntoNode = lSignal.startDistance;
+			final var lDistanceIntoNode = lSignal.startDistance();
 
 			final float lW = openSignalTextureFrame.width();
 			final float lH = openSignalTextureFrame.height();

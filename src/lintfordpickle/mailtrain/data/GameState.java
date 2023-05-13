@@ -1,14 +1,6 @@
 package lintfordpickle.mailtrain.data;
 
-import net.lintford.library.core.entity.BaseInstanceData;
-
-public class GameState extends BaseInstanceData {
-
-	// ---------------------------------------------
-	// Constants
-	// ---------------------------------------------
-
-	private static final long serialVersionUID = -4614085384213757212L;
+public class GameState {
 
 	// ---------------------------------------------
 	// Variables

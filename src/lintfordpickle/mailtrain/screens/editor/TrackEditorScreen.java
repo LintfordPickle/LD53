@@ -1,14 +1,18 @@
 package lintfordpickle.mailtrain.screens.editor;
 
+import java.io.File;
+
 import org.lwjgl.glfw.GLFW;
 
 import lintfordpickle.mailtrain.ConstantsGame;
 import lintfordpickle.mailtrain.controllers.TrackEditorController;
 import lintfordpickle.mailtrain.controllers.core.GameCameraMovementController;
 import lintfordpickle.mailtrain.controllers.core.GameCameraZoomController;
-import lintfordpickle.mailtrain.controllers.world.SceneryController;
+import lintfordpickle.mailtrain.controllers.scene.GameSceneController;
+import lintfordpickle.mailtrain.controllers.scene.SceneryController;
+import lintfordpickle.mailtrain.data.scene.GameSceneHeader;
+import lintfordpickle.mailtrain.data.scene.GameSceneInstance;
 import lintfordpickle.mailtrain.data.world.GameWorldHeader;
-import lintfordpickle.mailtrain.data.world.scenes.SceneHeader;
 import lintfordpickle.mailtrain.renderers.EditorSignalRenderer;
 import lintfordpickle.mailtrain.renderers.EditorTrackRenderer;
 import lintfordpickle.mailtrain.renderers.GridRenderer;
@@ -16,6 +20,7 @@ import lintfordpickle.mailtrain.renderers.SceneryRenderer;
 import lintfordpickle.mailtrain.screens.MainMenu;
 import lintfordpickle.mailtrain.screens.MenuBackgroundScreen;
 import lintfordpickle.mailtrain.screens.dialogs.SaveTrackDialog;
+import lintfordpickle.mailtrain.services.GameSceneHeaderIOService;
 import net.lintford.library.controllers.core.ControllerManager;
 import net.lintford.library.controllers.core.GameRendererController;
 import net.lintford.library.core.LintfordCore;
@@ -52,9 +57,11 @@ public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
 
 	// Data
 	private GameWorldHeader mWorldHeader;
-	private SceneHeader mSceneHeader;
+	private GameSceneHeader mSceneHeader;
+	private GameSceneInstance mGameScene;
 
 	// Controllers
+	private GameSceneController mGameSceneController;
 	private GameCameraMovementController mCameraMovementController;
 	private GameCameraZoomController mCameraZoomController;
 	private TrackEditorController mTrackEditorController;
@@ -75,11 +82,13 @@ public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
 	// Constructor
 	// ---------------------------------------------
 
-	public TrackEditorScreen(ScreenManager pScreenManager, GameWorldHeader worldHeader, SceneHeader sceneHeader) {
+	public TrackEditorScreen(ScreenManager pScreenManager, GameWorldHeader worldHeader, GameSceneHeader sceneHeader) {
 		super(pScreenManager, "");
 
 		mWorldHeader = worldHeader;
 		mSceneHeader = sceneHeader;
+
+		mGameScene = new GameSceneInstance(worldHeader);
 
 		mESCBackEnabled = false;
 
@@ -111,20 +120,16 @@ public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
 		createControllers(lControllerManager);
 		createRenderers(lCore);
 
-		initializeControllers(lCore);
+		if (mSceneHeader.sceneFilename() != null) {
+			mGameSceneController.loadGameScene(mSceneHeader.sceneFilename());
+		} else {
+			mGameSceneController.createEmptyScene();
+		}
 
+		initializeControllers(lCore);
 		initializeRenderers(lCore);
 
-		if (mSceneHeader.trackFilename() == null) {
-			mTrackEditorController.setNewScene();
-		} else {
-			final var lTrackFilename = mWorldHeader.worldDirectory() + ConstantsGame.SCENES_REL_DIRECTORY + mSceneHeader.trackFilename();
-			mTrackEditorController.loadTrackFromFile(lTrackFilename);
-		}
-
-		if (mSceneHeader.sceneryFilename() == null) {
-
-		}
+		mGameScene.initializeScene();
 	}
 
 	@Override
@@ -150,14 +155,26 @@ public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
 
 		super.handleInput(pCore);
 
-		// TODO: fix the world/scene saving
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_F4, this)) {
-			mSaveTrackDialog.trackFilename(mSceneHeader.sceneFilename());
+			var lProposedFilename = "";
+
+			if (mSceneHeader.sceneFilename() != null) {
+				final var lSceneFilename = new File(mSceneHeader.sceneFilename());
+
+				if (lSceneFilename.exists())
+					lProposedFilename = lSceneFilename.getName();
+			}
+
+			mSaveTrackDialog.trackFilename(lProposedFilename);
 			lScreenManager.addScreen(mSaveTrackDialog);
 			return;
 		}
 
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_ESCAPE, this)) {
+			if (lScreenManager.getTopScreen() instanceof SaveTrackDialog) {
+				lScreenManager.removeScreen(mSaveTrackDialog);
+				return;
+			}
 			lScreenManager.createLoadingScreen(new LoadingScreen(lScreenManager, false, new MenuBackgroundScreen(lScreenManager), new MainMenu(lScreenManager)));
 			return;
 		}
@@ -177,7 +194,6 @@ public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
 			handleOnClick();
 			mClickAction.reset();
 			return;
-
 		}
 	}
 
@@ -185,25 +201,26 @@ public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
 	// Methods
 	// ---------------------------------------------
 
-	public void createControllers(ControllerManager pControllerManager) {
-		mCameraMovementController = new GameCameraMovementController(pControllerManager, mGameCamera, entityGroupUid());
+	public void createControllers(ControllerManager controllerManager) {
+		mCameraMovementController = new GameCameraMovementController(controllerManager, mGameCamera, entityGroupUid());
 		mCameraMovementController.setPlayArea(-1400, -1100, 2800, 2200);
-		mCameraZoomController = new GameCameraZoomController(pControllerManager, mGameCamera, entityGroupUid());
+		mCameraZoomController = new GameCameraZoomController(controllerManager, mGameCamera, entityGroupUid());
 		mCameraZoomController.setZoomConstraints(200, 900);
 
-		mTrackEditorController = new TrackEditorController(pControllerManager, screenManager(), entityGroupUid());
-		mSceneryController = new SceneryController(pControllerManager, null, entityGroupUid());
+		mGameSceneController = new GameSceneController(controllerManager, mWorldHeader, mSceneHeader, mGameScene, entityGroupUid());
+		mTrackEditorController = new TrackEditorController(controllerManager, screenManager(), mGameScene, entityGroupUid());
+		mSceneryController = new SceneryController(controllerManager, null, entityGroupUid());
 	}
 
-	public void initializeControllers(LintfordCore pCore) {
-		mTrackEditorController.initialize(pCore);
-		mSceneryController.initialize(pCore);
-
-		mCameraMovementController.initialize(pCore);
-		mCameraZoomController.initialize(pCore);
+	public void initializeControllers(LintfordCore core) {
+		mTrackEditorController.initialize(core);
+		mSceneryController.initialize(core);
+		mGameSceneController.initialize(core);
+		mCameraMovementController.initialize(core);
+		mCameraZoomController.initialize(core);
 	}
 
-	public void createRenderers(LintfordCore pCore) {
+	public void createRenderers(LintfordCore core) {
 		mTrackEditorRenderer = new EditorTrackRenderer(rendererManager(), entityGroupUid());
 		mGridRenderer = new GridRenderer(rendererManager(), entityGroupUid());
 		mSignalBlockRenderer = new EditorSignalRenderer(rendererManager(), entityGroupUid());
@@ -230,7 +247,7 @@ public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
 	protected void handleOnClick() {
 		switch (mClickAction.consume()) {
 		case BUTTON_DIALOG_SAVE_CONFIRM:
-			saveTrackToFile(mSaveTrackDialog.trackFilename());
+			saveSceneToFile(mSaveTrackDialog.trackFilename());
 			mSaveTrackDialog.exitScreen();
 			break;
 		case BUTTON_DIALOG_SAVE_CANCEL:
@@ -240,27 +257,25 @@ public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
 		}
 	}
 
-	// TODO: More to saving the scene than just the track
-	private void saveTrackToFile(String pFilename) {
-		var lTrackFilename = pFilename;
+	private void saveSceneToFile(String sceneFilename) {
+		var lTrackFilename = sceneFilename;
 
-		if(pFilename.indexOf('.') > 0)
-			lTrackFilename = pFilename.substring(0, pFilename.lastIndexOf('.'));
-		
-		if (!lTrackFilename.endsWith(SceneHeader.TRACK_FILE_EXTENSION)) {
-			lTrackFilename = lTrackFilename + SceneHeader.TRACK_FILE_EXTENSION;
-		}
+		if (lTrackFilename.indexOf('.') > 0)
+			lTrackFilename = lTrackFilename.substring(0, lTrackFilename.lastIndexOf('.'));
+
+		File lFileName = new File(lTrackFilename);
 
 		final var lSceneDirectory = mWorldHeader.worldDirectory() + ConstantsGame.SCENES_REL_DIRECTORY;
 
-		if (!lTrackFilename.startsWith(lSceneDirectory)) {
-			lTrackFilename = lSceneDirectory + lTrackFilename;
-		}
+		final var lFullHeaderFilename = lSceneDirectory + lFileName.getName() + GameSceneHeader.SCENE_FILE_EXTENSION;
+		final var lFullFilename = lSceneDirectory + lFileName.getName() + GameSceneHeader.LEVEL_FILE_EXTENSION;
 
-		Debug.debugManager().logger().i(getClass().getSimpleName(), "Saving track to " + lTrackFilename);
+		Debug.debugManager().logger().i(getClass().getSimpleName(), "Saving track to: " + lFullFilename);
 
-		mTrackEditorController.saveTrack(lTrackFilename);
-		// mSceneryController.saveSceneryScene(lSceneryFilename);
+		mSceneHeader.sceneFilename(lFullFilename);
+
+		GameSceneHeaderIOService.saveGameSceneHeader(mSceneHeader, lFullHeaderFilename);
+		mGameSceneController.saveSceneToFile(lFullFilename);
 	}
 
 	// ---------------------------------------------

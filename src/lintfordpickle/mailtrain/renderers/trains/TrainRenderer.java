@@ -6,9 +6,9 @@ import lintfordpickle.mailtrain.ConstantsGame;
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
 import lintfordpickle.mailtrain.controllers.trains.PlayerTrainController;
 import lintfordpickle.mailtrain.controllers.trains.TrainController;
-import lintfordpickle.mailtrain.data.track.Track;
-import lintfordpickle.mailtrain.data.trains.Train;
-import lintfordpickle.mailtrain.data.trains.TrainCar;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackInstance;
+import lintfordpickle.mailtrain.data.scene.trains.Train;
+import lintfordpickle.mailtrain.data.scene.trains.TrainCar;
 import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.ResourceManager;
 import net.lintford.library.core.debug.Debug;
@@ -107,7 +107,7 @@ public class TrainRenderer extends BaseRenderer {
 	// Methods
 	// ---------------------------------------------
 
-	private void drawTrain(LintfordCore pCore, Track pTrack, Train pTrain) {
+	private void drawTrain(LintfordCore pCore, RailTrackInstance pTrack, Train pTrain) {
 		final var lTextureBatch = mRendererManager.uiSpriteBatch();
 
 		// draw the train on the front axle
@@ -119,6 +119,7 @@ public class TrainRenderer extends BaseRenderer {
 			lTextureBatch.begin(pCore.gameCamera());
 
 			final var lTrainCar = pTrain.getCarByIndex(i);
+			final var lCarriageDefinition = lTrainCar.definition();
 
 			final float lDestX = lTrainCar.frontAxle.worldPositionX;
 			final float lDestY = lTrainCar.frontAxle.worldPositionY;
@@ -134,23 +135,26 @@ public class TrainRenderer extends BaseRenderer {
 
 			final float lAlpha = ConstantsGame.DEBUG_DRAW_AXLE_POINTS ? 0.7f : 1f;
 			final var lWhiteWithAlpha = ColorConstants.getWhiteWithAlpha(lAlpha);
-			if (lTrainCar.isLocomotive()) {
-				final var lSrcRect = mTrainsSpriteSheet.getSpriteFrame("TEXTUREENGINE00");
-				lTextureBatch.drawAroundCenter(mTrainsSpriteSheet.texture(), lSrcRect, lDestX, lDestY, lDestW, lDestH, -0.3f, lAngle, lRotX, lRotY, 1, lWhiteWithAlpha);
-			} else {
-				final var lSrcRect = mTrainsSpriteSheet.getSpriteFrame("TEXTURECARRIAGEEMPTY");
-				lTextureBatch.drawAroundCenter(mTrainsSpriteSheet.texture(), lSrcRect, lDestX, lDestY, lDestW, lDestH, -0.3f, lAngle, lRotX, lRotY, 1, lWhiteWithAlpha);
+
+			final var lSrcFrame = mTrainsSpriteSheet.getSpriteFrame(lCarriageDefinition.carriageBaseSpriteFrameName);
+
+			if (lSrcFrame != null) {
+				lTextureBatch.drawAroundCenter(mTrainsSpriteSheet.texture(), lSrcFrame, lDestX, lDestY, lDestW, lDestH, -0.3f, lAngle, lRotX, lRotY, 1, lWhiteWithAlpha);
 			}
+
 			lTextureBatch.end();
+
+			lCarriageDefinition.drawCarriageInstance(pCore, mTrainsSpriteSheet, lTextureBatch, lTrainCar);
 
 			debugDrawTrainAxlePoints(pCore, pTrack, lTrainCar);
 
 			GL11.glPointSize(6.f);
 			Debug.debugManager().drawers().drawPointImmediate(pCore.gameCamera(), 0, 0);
+			GL11.glPointSize(2.f);
 		}
 	}
 
-	private void debugDrawTrainAxlePoints(LintfordCore pCore, Track pTrack, TrainCar pTrainCar) {
+	private void debugDrawTrainAxlePoints(LintfordCore pCore, RailTrackInstance pTrack, TrainCar pTrainCar) {
 		if (!ConstantsGame.DEBUG_DRAW_AXLE_POINTS)
 			return;
 
@@ -174,7 +178,7 @@ public class TrainRenderer extends BaseRenderer {
 		Debug.debugManager().drawers().drawPointImmediate(pCore.gameCamera(), lWorldPosX1, lWorldPosY1, -0.01f, 1f, 0.5f, 0.f, 1.f);
 	}
 
-	private void debugDrawTrainSpeedInformation(LintfordCore pCore, Track pTrack, Train pTrain) {
+	private void debugDrawTrainSpeedInformation(LintfordCore pCore, RailTrackInstance pTrack, Train pTrain) {
 		if (!ConstantsGame.DEBUG_DRAW_TRAIN_DEBUG_SPEED_INFO)
 			return;
 

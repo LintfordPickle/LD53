@@ -22,6 +22,13 @@
 			"wrapTIndex":1
 		},
 		{
+			"textureName":"TEXTURE_PROJECTILES",
+			"filepath":"res/textures/textureProjectiles.png",
+			"filterIndex":1,
+			"wrapSIndex":1,
+			"wrapTIndex":1
+		},
+		{
 			"textureName":"TEXTURE_ENVIRONMENT",
 			"filepath":"res/textures/textureEnvironment.png",
 			"filterIndex":1,

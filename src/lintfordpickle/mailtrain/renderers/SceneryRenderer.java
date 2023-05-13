@@ -2,8 +2,8 @@ package lintfordpickle.mailtrain.renderers;
 
 import org.lwjgl.glfw.GLFW;
 
-import lintfordpickle.mailtrain.controllers.world.SceneryController;
-import lintfordpickle.mailtrain.data.world.scenes.ScenePropInstance;
+import lintfordpickle.mailtrain.controllers.scene.SceneryController;
+import lintfordpickle.mailtrain.data.scene.environment.ScenePropInstance;
 import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.ResourceManager;
 import net.lintford.library.core.graphics.ColorConstants;

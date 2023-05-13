@@ -6,9 +6,10 @@ import java.util.List;
 import org.lwjgl.glfw.GLFW;
 
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
-import lintfordpickle.mailtrain.data.track.TrackSegment;
-import lintfordpickle.mailtrain.data.trains.Train;
-import lintfordpickle.mailtrain.data.trains.TrainManager;
+import lintfordpickle.mailtrain.data.scene.GameSceneInstance;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackSegment;
+import lintfordpickle.mailtrain.data.scene.trains.Train;
+import lintfordpickle.mailtrain.data.scene.trains.TrainManager;
 import net.lintford.library.controllers.BaseController;
 import net.lintford.library.controllers.core.ControllerManager;
 import net.lintford.library.core.LintfordCore;
@@ -52,10 +53,10 @@ public class PlayerTrainController extends BaseController implements IInputProce
 	// Constructor
 	// ---------------------------------------------
 
-	public PlayerTrainController(ControllerManager controllerManager, TrainManager trainManager, int entityGroupUid) {
+	public PlayerTrainController(ControllerManager controllerManager, GameSceneInstance gameScene, int entityGroupUid) {
 		super(controllerManager, CONTROLLER_NAME, entityGroupUid);
 
-		mTrainManager = trainManager;
+		mTrainManager = gameScene.trainManager();
 	}
 
 	// ---------------------------------------------
@@ -92,6 +93,12 @@ public class PlayerTrainController extends BaseController implements IInputProce
 			lPlayerLoc.targetSpeedInMetersPerSecond -= 4.f;
 			if (lPlayerLoc.targetSpeedInMetersPerSecond < -lPlayerLoc.leadCar.maxAccel())
 				lPlayerLoc.targetSpeedInMetersPerSecond = -lPlayerLoc.leadCar.maxAccel();
+		}
+
+		// TODO: Brakes don't work
+		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_SPACE)) {
+			lPlayerLoc.targetSpeedInMetersPerSecond = 0;
+			lPlayerLoc.fullBrake();
 		}
 
 		// DEBUG
@@ -164,8 +171,8 @@ public class PlayerTrainController extends BaseController implements IInputProce
 
 	// TODO: Need to pass in the spawn edge (World->Scene)
 	public Train addPlayerTrain(String startingEdge) {
-		TrackSegment lPlayerSpawnEdge;
-		
+		RailTrackSegment lPlayerSpawnEdge;
+
 		if (startingEdge == null) {
 			lPlayerSpawnEdge = mTrackController.track().getEdgeByUid(0);
 		} else {

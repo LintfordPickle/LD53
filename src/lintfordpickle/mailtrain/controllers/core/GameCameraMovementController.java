@@ -3,7 +3,7 @@ package lintfordpickle.mailtrain.controllers.core;
 import org.lwjgl.glfw.GLFW;
 
 import lintfordpickle.mailtrain.ConstantsGame;
-import lintfordpickle.mailtrain.data.trains.Train;
+import lintfordpickle.mailtrain.data.scene.trains.Train;
 import net.lintford.library.controllers.BaseController;
 import net.lintford.library.controllers.core.ControllerManager;
 import net.lintford.library.core.LintfordCore;

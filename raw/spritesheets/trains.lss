@@ -1,0 +1,29 @@
+{
+  "outputDataFilename": "D:\\dev\\java\\ludumdare\\LD53 - Delivery\\projects\\MainTrain\\res\\spritesheets\\spritesheetTrains.json",
+  "outputNameDataFilename": null,
+  "outputImageFilename": "D:\\dev\\java\\ludumdare\\LD53 - Delivery\\projects\\MainTrain\\res\\textures\\textureTrains.png",
+  "workingDirectory": "D:\\dev\\java\\ludumdare\\LD53 - Delivery\\projects\\MainTrain\\raw\\spritesheets",
+  "spriteSheetName": "SPRITESHEET_TRAINS",
+  "textureName": "TEXTURE_TRAINS",
+  "dataPackageName": "",
+  "exportDataFile": true,
+  "exportTextureFile": true,
+  "exportNamesFile": false,
+  "sortMode": "Area",
+  "borderPadding": 0,
+  "shapeOutlines": false,
+  "crop": false,
+  "trim": false,
+  "allowRotations": false,
+  "spritePadding": 0,
+  "textureWidthMax": 256,
+  "textureWidthActual": 256,
+  "textureHeightMax": 256,
+  "textureHeightActual": 256,
+  "forcePoTTextures": true,
+  "autoSizeTexture": false,
+  "itemFilenames": [
+    "D:\\dev\\java\\ludumdare\\LD53 - Delivery\\projects\\MainTrain\\raw\\spritesheets\\trains\\*.*"
+  ],
+  "animationItems": { }
+}

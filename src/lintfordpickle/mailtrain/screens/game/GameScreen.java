@@ -8,22 +8,22 @@ import lintfordpickle.mailtrain.controllers.GameTrackEditorController;
 import lintfordpickle.mailtrain.controllers.TriggerController;
 import lintfordpickle.mailtrain.controllers.core.GameCameraMovementController;
 import lintfordpickle.mailtrain.controllers.core.GameCameraZoomController;
+import lintfordpickle.mailtrain.controllers.scanline.ScanlineProjectileController;
+import lintfordpickle.mailtrain.controllers.scene.GameSceneController;
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
-import lintfordpickle.mailtrain.controllers.tracks.TrackIOController;
 import lintfordpickle.mailtrain.controllers.trains.PlayerTrainController;
 import lintfordpickle.mailtrain.controllers.trains.TrainController;
-import lintfordpickle.mailtrain.controllers.world.GameWorldController;
-import lintfordpickle.mailtrain.controllers.world.WorldIOController;
 import lintfordpickle.mailtrain.data.GameState;
-import lintfordpickle.mailtrain.data.trains.TrainManager;
+import lintfordpickle.mailtrain.data.scanline.ScanlineManager;
+import lintfordpickle.mailtrain.data.scene.GameSceneHeader;
+import lintfordpickle.mailtrain.data.scene.GameSceneInstance;
 import lintfordpickle.mailtrain.data.world.GameWorldHeader;
-import lintfordpickle.mailtrain.data.world.scenes.GameScene;
-import lintfordpickle.mailtrain.data.world.scenes.SceneHeader;
 import lintfordpickle.mailtrain.renderers.GridRenderer;
 import lintfordpickle.mailtrain.renderers.TrackSignalRenderer;
 import lintfordpickle.mailtrain.renderers.hud.GameStateUiRenderer;
 import lintfordpickle.mailtrain.renderers.hud.PlayerControlsRenderer;
 import lintfordpickle.mailtrain.renderers.hud.TrainHudRenderer;
+import lintfordpickle.mailtrain.renderers.scanline.ScanlineRenderer;
 import lintfordpickle.mailtrain.renderers.tracks.GameTrackEditorUiRenderer;
 import lintfordpickle.mailtrain.renderers.tracks.TrackDebugRenderer;
 import lintfordpickle.mailtrain.renderers.tracks.TrackGhostRenderer;
@@ -45,26 +45,27 @@ import net.lintford.library.screenmanager.screens.LoadingScreen;
 public class GameScreen extends BaseGameScreen {
 
 	// Data
+	private GameWorldHeader mGameWorldHeader;
+	private GameSceneHeader mSceneHeader;
+
 	private GameState mActiveGameState;
 	private GameState mInitialGameState;
 
-	private GameScene mActiveGameScene;
+	private GameSceneInstance mGameScene;
 
-	private TrainManager mTrainManager;
-
-	private GameWorldHeader mGameWorldHeader;
-	private SceneHeader mSceneHeader;
+	private ScanlineManager mScanlineManager;
 
 	// Controllers
 	private GameCameraMovementController mCameraMovementController;
 	private GameCameraZoomController mCameraZooomController;
 	private GameStateController mGameStateController;
-	private GameWorldController mGameWorldController;
+	private GameSceneController mGameSceneController;
 	private TrainController mTrainController;
 	private PlayerTrainController mPlayerTrainController;
 	private TrackController mTrackController;
 	private GameTrackEditorController mGameTrackEditorController;
 	private TriggerController mTriggerController;
+	private ScanlineProjectileController mScanlineProjectileController;
 
 	// Renderers
 	private TrainHudRenderer mTrainHudRenderer;
@@ -73,6 +74,7 @@ public class GameScreen extends BaseGameScreen {
 	private TrackSignalRenderer mTrackSignalRenderer;
 	private TrackGhostRenderer mTrackGhostRenderer;
 	private TrackDebugRenderer mDebugTrackRenderer;
+	private ScanlineRenderer mScanlineRenderer;
 
 	// HUD
 	private TrackRenderer mTrackRenderer;
@@ -90,7 +92,7 @@ public class GameScreen extends BaseGameScreen {
 	// Constructor
 	// ---------------------------------------------
 
-	public GameScreen(ScreenManager screenManager, GameState persistentGameState, GameWorldHeader gameWorldHeader, SceneHeader sceneHeader) {
+	public GameScreen(ScreenManager screenManager, GameState persistentGameState, GameWorldHeader gameWorldHeader, GameSceneHeader sceneHeader) {
 		super(screenManager);
 
 		mShowBackgroundScreens = true;
@@ -98,18 +100,11 @@ public class GameScreen extends BaseGameScreen {
 		mGameWorldHeader = gameWorldHeader;
 		mSceneHeader = sceneHeader;
 
-		mActiveGameScene = new GameScene(mGameWorldHeader);
+		mGameScene = new GameSceneInstance(mGameWorldHeader);
 		mActiveGameState = persistentGameState;
 		mInitialGameState = new GameState(mActiveGameState);
 
-		mTrainManager = new TrainManager();
-
-		final var lTrackFilename = gameWorldHeader.getSceneTrackHeaderFilepath(sceneHeader);
-		var lTrackToLoad = TrackIOController.loadTrackFromFile(lTrackFilename);
-		var lWorldScenery = WorldIOController.loadSceneryFromFile("res/scenery/sceneryTest.json" /* mTrackHeader.sceneryFilename() */);
-
-		mActiveGameScene.track(lTrackToLoad);
-		mActiveGameScene.props(lWorldScenery);
+		mScanlineManager = new ScanlineManager();
 	}
 
 	// ---------------------------------------------
@@ -123,9 +118,18 @@ public class GameScreen extends BaseGameScreen {
 		final var lCore = screenManager().core();
 		final var lControllerManager = lCore.controllerManager();
 
+		if (mSceneHeader.sceneFilename() != null) {
+			mGameSceneController.loadGameScene(mSceneHeader.sceneFilename());
+		} else {
+			mGameSceneController.createEmptyScene();
+		}
+		
 		lControllerManager.initializeControllers(lCore);
 
-		mPlayerTrainController.addPlayerTrain(mSceneHeader.startEntryPointName());
+		// TODO: Get the scene spawn edge:
+		// If this is the first time visiting the scene, then use TrackSegment.SPAWN_EDGE
+		// otherwise, use the last visited edge from the traversal graph
+		mPlayerTrainController.addPlayerTrain(null);
 
 		final int lStartingCredits = 1000;
 		final int lStartingCrew = 10;
@@ -210,7 +214,8 @@ public class GameScreen extends BaseGameScreen {
 					if (lNextSceneHeader == null) {
 						break;
 					}
-					lNextSceneHeader.startEntryPointName(targetParts[1]);
+
+					// lNextSceneHeader.startEntryPointName(targetParts[1]);
 
 					final var lLoadingScreen = new LoadingScreen(screenManager(), true, new GameScreen(screenManager(), mInitialGameState, mGameWorldHeader, lNextSceneHeader));
 					screenManager().createLoadingScreen(new LoadingScreen(screenManager(), true, lLoadingScreen));
@@ -260,12 +265,13 @@ public class GameScreen extends BaseGameScreen {
 	@Override
 	protected void createControllers(ControllerManager controllerManager) {
 		mGameStateController = new GameStateController(controllerManager, mActiveGameState, mGameWorldHeader, entityGroupUid());
-		mGameWorldController = new GameWorldController(controllerManager, mActiveGameScene, entityGroupUid());
-		mTrackController = new TrackController(controllerManager, mActiveGameScene, entityGroupUid());
+		mGameSceneController = new GameSceneController(controllerManager, mGameWorldHeader, mSceneHeader, mGameScene, entityGroupUid());
+		mTrackController = new TrackController(controllerManager, mGameScene, entityGroupUid());
 		mGameTrackEditorController = new GameTrackEditorController(controllerManager, screenManager(), entityGroupUid());
-		mTrainController = new TrainController(controllerManager, mTrainManager, entityGroupUid());
-		mPlayerTrainController = new PlayerTrainController(controllerManager, mTrainManager, entityGroupUid());
+		mTrainController = new TrainController(controllerManager, mGameScene, entityGroupUid());
+		mPlayerTrainController = new PlayerTrainController(controllerManager, mGameScene, entityGroupUid());
 		mTriggerController = new TriggerController(controllerManager, entityGroupUid());
+		mScanlineProjectileController = new ScanlineProjectileController(controllerManager, mScanlineManager, entityGroupUid());
 
 		mCameraMovementController = new GameCameraMovementController(controllerManager, mGameCamera, entityGroupUid());
 		mCameraMovementController.setPlayArea(-1400, -1100, 2800, 2200);
@@ -278,12 +284,13 @@ public class GameScreen extends BaseGameScreen {
 	@Override
 	protected void initializeControllers(LintfordCore core) {
 		mGameStateController.initialize(core);
-		mGameWorldController.initialize(core);
+		mGameSceneController.initialize(core);
 		mTrackController.initialize(core);
 		mGameTrackEditorController.initialize(core);
 		mTrainController.initialize(core);
 		mPlayerTrainController.initialize(core);
 		mTriggerController.initialize(core);
+		mScanlineProjectileController.initialize(core);
 
 		mCameraMovementController.initialize(core);
 		mCameraZooomController.initialize(core);
@@ -300,6 +307,10 @@ public class GameScreen extends BaseGameScreen {
 		mTrainRenderer = new TrainRenderer(rendererManager(), entityGroupUid());
 		if (ConstantsGame.DEBUG_EDITOR_IN_GAME)
 			mTrackGhostRenderer = new TrackGhostRenderer(rendererManager(), entityGroupUid());
+
+		mScanlineRenderer = new ScanlineRenderer(mRendererManager, entityGroupUid());
+
+		// Ui
 
 		mPlayerControlsRenderer = new PlayerControlsRenderer(rendererManager(), entityGroupUid());
 		mTrainHudRenderer = new TrainHudRenderer(rendererManager(), entityGroupUid());
@@ -322,6 +333,10 @@ public class GameScreen extends BaseGameScreen {
 		if (ConstantsGame.DEBUG_EDITOR_IN_GAME)
 			mTrackGhostRenderer.initialize(core);
 
+		mScanlineRenderer.initialize(core);
+
+		// Ui
+
 		mPlayerControlsRenderer.initialize(core);
 		mTrainHudRenderer.initialize(core);
 		if (ConstantsGame.DEBUG_EDITOR_IN_GAME)
@@ -342,6 +357,10 @@ public class GameScreen extends BaseGameScreen {
 		mTrainRenderer.loadResources(resourceManager);
 		if (ConstantsGame.DEBUG_EDITOR_IN_GAME)
 			mTrackGhostRenderer.loadResources(resourceManager);
+
+		mScanlineRenderer.loadResources(resourceManager);
+
+		// Ui
 
 		mPlayerControlsRenderer.loadResources(resourceManager);
 		mTrainHudRenderer.loadResources(resourceManager);

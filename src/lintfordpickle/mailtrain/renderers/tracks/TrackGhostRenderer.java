@@ -3,9 +3,9 @@ package lintfordpickle.mailtrain.renderers.tracks;
 import org.lwjgl.opengl.GL11;
 
 import lintfordpickle.mailtrain.controllers.GameTrackEditorController;
-import lintfordpickle.mailtrain.data.track.Track;
-import lintfordpickle.mailtrain.data.track.TrackNode;
-import lintfordpickle.mailtrain.data.track.TrackSegment;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackInstance;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackNode;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackSegment;
 import lintfordpickle.mailtrain.renderers.TrackMeshRenderer;
 import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.ResourceManager;
@@ -31,11 +31,11 @@ public class TrackGhostRenderer extends TrackMeshRenderer implements IInputProce
 	private float mMouseCooldownTimer;
 
 	private Texture mTextureGhostTrack;
-	private final Track mGhostTrack = new Track();
+	private final RailTrackInstance mGhostTrack = new RailTrackInstance();
 
-	private TrackSegment mGhostSegment;
-	private TrackNode mGhostNodeA;
-	private TrackNode mGhostNodeB;
+	private RailTrackSegment mGhostSegment;
+	private RailTrackNode mGhostNodeA;
+	private RailTrackNode mGhostNodeB;
 
 	private float mGhostEndPointX;
 	private float mGhostEndPointY;
@@ -72,14 +72,14 @@ public class TrackGhostRenderer extends TrackMeshRenderer implements IInputProce
 
 		mTextureGhostTrack = pResourceManager.textureManager().loadTexture("TEXTURE_TRACK_SLEEPER", "res/textures/textureTrackSleepers.png", GL11.GL_LINEAR, entityGroupID());
 
-		mGhostNodeA = new TrackNode(mGhostTrack.getNewNodeUid());
-		mGhostNodeB = new TrackNode(mGhostTrack.getNewNodeUid());
+		mGhostNodeA = new RailTrackNode(mGhostTrack.getNewNodeUid());
+		mGhostNodeB = new RailTrackNode(mGhostTrack.getNewNodeUid());
 		mGhostTrack.nodes().add(mGhostNodeA);
 		mGhostTrack.nodes().add(mGhostNodeB);
 
 		final var lEdgeAngle = MathHelper.wrapAngle((float) Math.atan2(mGhostNodeA.y - mGhostNodeB.y, mGhostNodeA.x - mGhostNodeB.x));
 
-		mGhostSegment = new TrackSegment(mGhostTrack, mGhostTrack.getNewEdgeUid(), mGhostNodeA.uid, mGhostNodeB.uid, lEdgeAngle);
+		mGhostSegment = new RailTrackSegment(mGhostTrack, mGhostTrack.getNewEdgeUid(), mGhostNodeA.uid, mGhostNodeB.uid, lEdgeAngle);
 		mGhostTrack.edges().add(mGhostSegment);
 	}
 
@@ -133,7 +133,7 @@ public class TrackGhostRenderer extends TrackMeshRenderer implements IInputProce
 	// Methods
 	// ---------------------------------------------
 
-	private void drawTrack(LintfordCore pCore, Track pTrack) {
+	private void drawTrack(LintfordCore pCore, RailTrackInstance pTrack) {
 		drawMesh(pCore, mTextureGhostTrack);
 	}
 

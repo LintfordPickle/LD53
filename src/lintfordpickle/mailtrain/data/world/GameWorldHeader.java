@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import lintfordpickle.mailtrain.ConstantsGame;
-import lintfordpickle.mailtrain.data.world.scenes.SceneHeader;
+import lintfordpickle.mailtrain.data.scene.GameSceneHeader;
 import net.lintford.library.core.debug.Debug;
 
 public class GameWorldHeader {
@@ -34,8 +34,8 @@ public class GameWorldHeader {
 	private String mWorldName;
 	private String mWorldDirectory;
 
-	private transient final List<SceneHeader> mSceneHeaders = new ArrayList<>();
-	private transient final Map<String, SceneHeader> mSceneEntryPointNames = new HashMap<>();
+	private transient final List<GameSceneHeader> mSceneHeaders = new ArrayList<>();
+	private transient final Map<String, GameSceneHeader> mSceneEntryPointNames = new HashMap<>();
 
 	// ---------------------------------------------
 	// Properties
@@ -58,7 +58,7 @@ public class GameWorldHeader {
 
 	}
 
-	public SceneHeader getSceneByName(String sceneName) {
+	public GameSceneHeader getSceneByName(String sceneName) {
 		final int lNumScenes = mSceneHeaders.size();
 		for (int i = 0; i < lNumScenes; i++) {
 			final var lScene = mSceneHeaders.get(i);
@@ -72,23 +72,28 @@ public class GameWorldHeader {
 		return null;
 	}
 
-	public SceneHeader getSceneByEntryPoint(String entryPoint) {
+	public GameSceneHeader getSceneByEntryPoint(String entryPoint) {
 		return mSceneEntryPointNames.get(entryPoint);
 	}
 
-	public void addSceneHeaderEntryPoint(String entryPointName, SceneHeader sceneHeader) {
+	public void addSceneHeaderEntryPoint(String entryPointName, GameSceneHeader sceneHeader) {
 		mSceneEntryPointNames.put(entryPointName, sceneHeader);
 
 		if (mSceneHeaders.contains(sceneHeader) == false)
 			mSceneHeaders.add(sceneHeader);
 
 	}
+	
+	public void addSceneHeader(GameSceneHeader sceneHeader) {
+		if (mSceneHeaders.contains(sceneHeader) == false)
+			mSceneHeaders.add(sceneHeader);
+	}
 
-	public List<SceneHeader> sceneHeaders() {
+	public List<GameSceneHeader> sceneHeaders() {
 		return mSceneHeaders;
 	}
 
-	public Map<String, SceneHeader> entryPointNames() {
+	public Map<String, GameSceneHeader> entryPointNames() {
 		return mSceneEntryPointNames;
 	}
 
@@ -101,7 +106,6 @@ public class GameWorldHeader {
 	// ---------------------------------------------
 
 	public GameWorldHeader() {
-		// validateHeader();
 	}
 
 	// ---------------------------------------------
@@ -113,15 +117,11 @@ public class GameWorldHeader {
 		mSceneEntryPointNames.clear();
 	}
 
-	public String getSceneHeaderFilepath(SceneHeader sceneHeader) {
+	public String getSceneHeaderFilepath(GameSceneHeader sceneHeader) {
 		return worldDirectory() + ConstantsGame.SCENES_REL_DIRECTORY + sceneHeader.sceneFilename();
 	}
 
-	public String getSceneTrackHeaderFilepath(SceneHeader sceneHeader) {
-		return worldDirectory() + ConstantsGame.SCENES_REL_DIRECTORY + sceneHeader.trackFilename();
-	}
-
-	public SceneHeader getStartSceneHeader() {
+	public GameSceneHeader getStartSceneHeader() {
 		var lStartScene = entryPointNames().get("GAME_SPAWN");
 
 		if (lStartScene == null) {
@@ -134,6 +134,11 @@ public class GameWorldHeader {
 		}
 
 		return lStartScene;
+	}
+
+	public boolean isValid() {
+		// TODO: Validate the GameWorldHeader
+		return true;
 	}
 
 }

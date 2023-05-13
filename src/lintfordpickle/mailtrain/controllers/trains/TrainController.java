@@ -5,14 +5,16 @@ import java.util.List;
 
 import lintfordpickle.mailtrain.ConstantsGame;
 import lintfordpickle.mailtrain.controllers.TriggerController;
+import lintfordpickle.mailtrain.controllers.scanline.ScanlineProjectileController;
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
-import lintfordpickle.mailtrain.data.track.TrackSegment;
-import lintfordpickle.mailtrain.data.track.TrackSegment.SegmentSignals;
-import lintfordpickle.mailtrain.data.trains.Train;
-import lintfordpickle.mailtrain.data.trains.TrainCar;
-import lintfordpickle.mailtrain.data.trains.TrainHitch;
-import lintfordpickle.mailtrain.data.trains.TrainManager;
-import lintfordpickle.mailtrain.data.trains.definitions.TrainCarDefinition;
+import lintfordpickle.mailtrain.data.scene.GameSceneInstance;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackSegment;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackSegment.SegmentSignalsCollection;
+import lintfordpickle.mailtrain.data.scene.trains.Train;
+import lintfordpickle.mailtrain.data.scene.trains.TrainCar;
+import lintfordpickle.mailtrain.data.scene.trains.TrainHitch;
+import lintfordpickle.mailtrain.data.scene.trains.TrainManager;
+import lintfordpickle.mailtrain.data.scene.trains.definitions.TrainCarDefinition;
 import net.lintford.library.controllers.BaseController;
 import net.lintford.library.controllers.core.ControllerManager;
 import net.lintford.library.controllers.core.ResourceController;
@@ -22,7 +24,7 @@ import net.lintford.library.core.debug.Debug;
 import net.lintford.library.core.input.mouse.IInputProcessor;
 import net.lintford.library.core.maths.Vector2f;
 
-public class TrainController extends BaseController implements IInputProcessor {
+public class TrainController extends BaseController implements ITrainWhisperer, IInputProcessor {
 
 	// ---------------------------------------------
 	// Constants
@@ -50,6 +52,7 @@ public class TrainController extends BaseController implements IInputProcessor {
 
 	private AudioFireAndForgetManager mTrainSoundManager;
 
+	private ScanlineProjectileController mScanlineProjectileController;
 	private TriggerController mTriggerController;
 	private TrackController mTrackController;
 
@@ -78,10 +81,10 @@ public class TrainController extends BaseController implements IInputProcessor {
 	// Constructor
 	// ---------------------------------------------
 
-	public TrainController(ControllerManager controllerManager, TrainManager trainManager, int entityGroupUid) {
+	public TrainController(ControllerManager controllerManager, GameSceneInstance gameScene, int entityGroupUid) {
 		super(controllerManager, CONTROLLER_NAME, entityGroupUid);
 
-		mTrainManager = trainManager;
+		mTrainManager = gameScene.trainManager();
 	}
 
 	// ---------------------------------------------
@@ -94,6 +97,7 @@ public class TrainController extends BaseController implements IInputProcessor {
 
 		mTriggerController = (TriggerController) lControllerManager.getControllerByNameRequired(TriggerController.CONTROLLER_NAME, entityGroupUid());
 		mTrackController = (TrackController) lControllerManager.getControllerByNameRequired(TrackController.CONTROLLER_NAME, entityGroupUid());
+		mScanlineProjectileController = (ScanlineProjectileController) lControllerManager.getControllerByNameRequired(ScanlineProjectileController.CONTROLLER_NAME, entityGroupUid());
 
 		final var lResourceController = (ResourceController) lControllerManager.getControllerByNameRequired(ResourceController.CONTROLLER_NAME, LintfordCore.CORE_ENTITY_GROUP_ID);
 		final var lResourceManager = lResourceController.resourceManager();
@@ -142,7 +146,7 @@ public class TrainController extends BaseController implements IInputProcessor {
 				if (lEdge != null) {
 
 					// TODO: The triggering basics are there - but more thought needed as to segment types/names/triggers etc.
-					if (lEdge.isEdgeOfType(TrackSegment.EDGE_SPECIAL_TYPE_STATION)) {
+					if (lEdge.isEdgeOfType(RailTrackSegment.EDGE_SPECIAL_TYPE_STATION)) {
 						final var lName = lEdge.segmentName;
 						if (lName != null) {
 							mTriggerController.setTrigger(TriggerController.TRIGGER_TYPE_NEW_SCENE, -1, lName);
@@ -157,11 +161,11 @@ public class TrainController extends BaseController implements IInputProcessor {
 	// Methods
 	// ---------------------------------------------
 
-	public Train addNewTrain(TrackSegment pSpawnEdge) {
+	public Train addNewTrain(RailTrackSegment pSpawnEdge) {
 		return addNewTrain(pSpawnEdge, 0);
 	}
 
-	public Train addNewTrain(TrackSegment pSpawnEdge, int pNumCarriages) {
+	public Train addNewTrain(RailTrackSegment pSpawnEdge, int pNumCarriages) {
 		if (ConstantsGame.DEBUG_FORCE_NO_CARRIAGES)
 			pNumCarriages = 0;
 
@@ -175,7 +179,7 @@ public class TrainController extends BaseController implements IInputProcessor {
 		final var lLocomotiveCar = createNewTrainCar(lNewTrain, null, TrainCarDefinition.Locomotive00Definition);
 		var lFollowingCar = lLocomotiveCar;
 		for (int i = 0; i < pNumCarriages; i++) {
-			lFollowingCar = createNewTrainCar(lNewTrain, lFollowingCar, TrainCarDefinition.EmptyCarriage00Definition);
+			lFollowingCar = createNewTrainCar(lNewTrain, lFollowingCar, TrainCarDefinition.Cannon00Definition);
 
 		}
 		if (pSpawnEdge == null) {
@@ -202,12 +206,14 @@ public class TrainController extends BaseController implements IInputProcessor {
 		lNewTrainCar.train = pParentTrain;
 
 		lNewTrainCar.init(pDefinition);
+		lNewTrainCar.trainCallbackListener(this);
+
 		pParentTrain.addTrainCarsToBackOfTrain(lNewTrainCar.frontHitch);
 
 		return lNewTrainCar;
 	}
 
-	private void placeTrainOnTracks(Train pTrain, TrackSegment pSpawnEdge, int pDestinationNodeUid, float pDistanceAlongEdge) {
+	private void placeTrainOnTracks(Train pTrain, RailTrackSegment pSpawnEdge, int pDestinationNodeUid, float pDistanceAlongEdge) {
 		final float lEdgeLength = pSpawnEdge.edgeLengthInMeters;
 		final float lEdgeUnit = (1.f / lEdgeLength);
 
@@ -252,6 +258,8 @@ public class TrainController extends BaseController implements IInputProcessor {
 		if (pTrain == null)
 			return;
 
+		// TOOD: Missing removing the TrainCars ??
+
 		final var lTrainsList = mTrainManager.activeTrains();
 		if (lTrainsList.contains(pTrain)) {
 			lTrainsList.remove(pTrain);
@@ -276,7 +284,7 @@ public class TrainController extends BaseController implements IInputProcessor {
 		for (int i = pTrainCarNumber; i < pOrigTrain.getNumberOfCarsInTrain(); i++) {
 			lCurTrainCar = pOrigTrain.detachTrainCar(i);
 			if (lCurTrainCar == null) {
-				System.out.println("Couldn't detach TrainCar " + pTrainCarNumber + " from Train " + pOrigTrain.poolUid);
+				System.out.println("Couldn't detach TrainCar " + pTrainCarNumber + " from Train " + pOrigTrain.uid);
 
 				return;
 
@@ -352,7 +360,7 @@ public class TrainController extends BaseController implements IInputProcessor {
 		return null;
 	}
 
-	public float getDistanceToNextSignalBlock(SegmentSignals pCurrentSignalBlock, Train pTrain) {
+	public float getDistanceToNextSignalBlock(SegmentSignalsCollection pCurrentSignalBlock, Train pTrain) {
 		final var lTrainCar = pTrain.drivingForward() ? pTrain.leadCar : pTrain.lastCar;
 		final var lLeadAxle = pTrain.drivingForward() ? lTrainCar.frontAxle : lTrainCar.getAxleOnFreeHitch();
 
@@ -362,6 +370,10 @@ public class TrainController extends BaseController implements IInputProcessor {
 
 		return mTrackController.getDistanceToNextSignalBlock(lCurrentSegment, lDistance, lDestNodeUid);
 	}
+
+	// ---------------------------------------------
+	// IInputProcessor-Methods
+	// ---------------------------------------------
 
 	@Override
 	public boolean isCoolDownElapsed() {
@@ -391,6 +403,15 @@ public class TrainController extends BaseController implements IInputProcessor {
 	public boolean allowMouseInput() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	// ---------------------------------------------
+	// Train Callback-Methods
+	// ---------------------------------------------
+
+	@Override
+	public void shootScanlineProjectile(int ownerId, float sx, float sy, float angle, float dist) {
+		mScanlineProjectileController.shootScanline(ownerId, sx, sy, angle, dist);
 	}
 
 }

@@ -4,7 +4,7 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
-import lintfordpickle.mailtrain.data.track.TrackSegment;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackSegment;
 import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.ResourceManager;
 import net.lintford.library.core.debug.Debug;
@@ -149,8 +149,8 @@ public class TrackDebugRenderer extends BaseRenderer implements IInputProcessor 
 				if (lEdge.edgeType > 0) {
 					final float lLineLength = 10.f;
 
-					lEdge.nodeAAngle = (float) Math.atan2(lNodeA.y - lEdge.lControl0Y, lNodeA.x - lEdge.lControl0X);
-					lEdge.nodeBAngle = (float) Math.atan2(lNodeB.y - lEdge.lControl1Y, lNodeB.x - lEdge.lControl1X);
+					lEdge.nodeAAngle = (float) Math.atan2(lNodeA.y - lEdge.control0Y, lNodeA.x - lEdge.control0X);
+					lEdge.nodeBAngle = (float) Math.atan2(lNodeB.y - lEdge.control1Y, lNodeB.x - lEdge.control1X);
 
 					final float lNodeAAngleX = (float) Math.cos(lEdge.nodeAAngle);
 					final float lNodeAAngleY = (float) Math.sin(lEdge.nodeAAngle);
@@ -172,7 +172,7 @@ public class TrackDebugRenderer extends BaseRenderer implements IInputProcessor 
 				final var lActiveEdgeUid = lEdge.trackJunction.leftEnabled ? lEdge.trackJunction.leftEdgeUid : lEdge.trackJunction.rightEdgeUid;
 				final var lActiveEdge = lTrack.getEdgeByUid(lActiveEdgeUid);
 
-				final int pCommonNodeUid = TrackSegment.getCommonNodeUid(lEdge, lActiveEdge);
+				final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(lEdge, lActiveEdge);
 
 				final var lActiveNode = lTrack.getNodeByUid(pCommonNodeUid);
 				final var lOtherNodeUid = lActiveEdge.getOtherNodeUid(lActiveNode.uid);
@@ -190,11 +190,11 @@ public class TrackDebugRenderer extends BaseRenderer implements IInputProcessor 
 			{
 				// Control Nodes
 				if (lEdge.edgeType > 0) {
-					final float lControl0X = lEdge.lControl0X;
-					final float lControl0Y = lEdge.lControl0Y;
+					final float lControl0X = lEdge.control0X;
+					final float lControl0Y = lEdge.control0Y;
 
-					final float lControl1X = lEdge.lControl1X;
-					final float lControl1Y = lEdge.lControl1Y;
+					final float lControl1X = lEdge.control1X;
+					final float lControl1Y = lEdge.control1Y;
 
 					Debug.debugManager().drawers().drawLine(lNodeA.x, lNodeA.y, lControl1X, lControl1Y, 0.f, 1.f, 1.f);
 					Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lControl0X, lControl0Y, 4.f);

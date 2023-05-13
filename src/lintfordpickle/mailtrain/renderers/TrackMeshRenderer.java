@@ -11,9 +11,10 @@ import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
+import org.lwjgl.system.MemoryUtil;
 
-import lintfordpickle.mailtrain.data.track.Track;
-import lintfordpickle.mailtrain.data.track.TrackSegment;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackInstance;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackSegment;
 import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.ResourceManager;
 import net.lintford.library.core.debug.Debug;
@@ -184,6 +185,13 @@ public class TrackMeshRenderer extends BaseRenderer implements IInputProcessor {
 
 		if (mVboId > -1)
 			GL15.glDeleteBuffers(mVboId);
+
+		if (mTrackVertexBuffer != null) {
+			mTrackVertexBuffer.clear();
+			MemoryUtil.memFree(mTrackVertexBuffer);
+			mTrackVertexBuffer = null;
+		}
+
 	}
 
 	@Override
@@ -257,7 +265,7 @@ public class TrackMeshRenderer extends BaseRenderer implements IInputProcessor {
 		mTextureSlots.clear();
 	}
 
-	public void loadTrackMesh(Track pTrack) {
+	public void loadTrackMesh(RailTrackInstance pTrack) {
 		if (pTrack == null)
 			return;
 
@@ -299,7 +307,7 @@ public class TrackMeshRenderer extends BaseRenderer implements IInputProcessor {
 			float lOldPointY = lNodeA.y;
 
 			// Straight segment or curved
-			if (lEdge.edgeType == TrackSegment.EDGE_TYPE_STRAIGHT) {
+			if (lEdge.edgeType == RailTrackSegment.EDGE_TYPE_STRAIGHT) {
 				tempDriveDirection.x = lNodeB.x - lOldPointX;
 				tempDriveDirection.y = lNodeB.y - lOldPointY;
 
@@ -361,8 +369,8 @@ public class TrackMeshRenderer extends BaseRenderer implements IInputProcessor {
 					lOldPointX = lNodeA.x;
 					lOldPointY = lNodeA.y;
 
-					final float lNewPointX = MathHelper.bezier4CurveTo(lStepSize, lNodeA.x, lEdge.lControl0X, lEdge.lControl1X, lNodeB.x);
-					final float lNewPointY = MathHelper.bezier4CurveTo(lStepSize, lNodeA.y, lEdge.lControl0Y, lEdge.lControl1Y, lNodeB.y);
+					final float lNewPointX = MathHelper.bezier4CurveTo(lStepSize, lNodeA.x, lEdge.control0X, lEdge.control1X, lNodeB.x);
+					final float lNewPointY = MathHelper.bezier4CurveTo(lStepSize, lNodeA.y, lEdge.control0Y, lEdge.control1Y, lNodeB.y);
 
 					tempDriveDirection.x = lNewPointX - lOldPointX;
 					tempDriveDirection.y = lNewPointY - lOldPointY;
@@ -397,8 +405,8 @@ public class TrackMeshRenderer extends BaseRenderer implements IInputProcessor {
 
 				}
 				for (float t = lStepSize * 2f; t <= 1f + lStepSize; t += lStepSize) {
-					final float lNewPointX = MathHelper.bezier4CurveTo(t, lNodeA.x, lEdge.lControl0X, lEdge.lControl1X, lNodeB.x);
-					final float lNewPointY = MathHelper.bezier4CurveTo(t, lNodeA.y, lEdge.lControl0Y, lEdge.lControl1Y, lNodeB.y);
+					final float lNewPointX = MathHelper.bezier4CurveTo(t, lNodeA.x, lEdge.control0X, lEdge.control1X, lNodeB.x);
+					final float lNewPointY = MathHelper.bezier4CurveTo(t, lNodeA.y, lEdge.control0Y, lEdge.control1Y, lNodeB.y);
 
 					tempDriveDirection.x = lNewPointX - lOldPointX;
 					tempDriveDirection.y = lNewPointY - lOldPointY;

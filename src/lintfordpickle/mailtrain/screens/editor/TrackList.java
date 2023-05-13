@@ -7,14 +7,14 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
+import lintfordpickle.mailtrain.data.scene.GameSceneHeader;
 import lintfordpickle.mailtrain.data.world.GameWorldHeader;
-import lintfordpickle.mailtrain.data.world.scenes.SceneHeader;
 
 public class TrackList {
 
 	public static List<File> getListOfSceneFiles(String pTracksDirectory) {
 		final var lDirectory = new File(pTracksDirectory);
-		final var lTrackList = lDirectory.listFiles(SceneHeader.sceneFileFilter);
+		final var lTrackList = lDirectory.listFiles(GameSceneHeader.sceneFileFilter);
 
 		if (lTrackList == null) {
 			return new ArrayList<File>();

@@ -5,10 +5,10 @@ import org.lwjgl.opengl.GL11;
 import lintfordpickle.mailtrain.ConstantsGame;
 import lintfordpickle.mailtrain.controllers.GameTrackEditorController;
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
-import lintfordpickle.mailtrain.data.track.Track;
-import lintfordpickle.mailtrain.data.track.TrackNode;
-import lintfordpickle.mailtrain.data.track.TrackSegment;
-import lintfordpickle.mailtrain.data.track.signals.TrackSignalBlock.SignalState;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackInstance;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackNode;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackSegment;
+import lintfordpickle.mailtrain.data.scene.track.signals.RailTrackSignalBlock.SignalState;
 import lintfordpickle.mailtrain.renderers.TrackMeshRenderer;
 import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.ResourceManager;
@@ -49,7 +49,6 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 
 	private SpriteFrame wiresTextureFrame;
 
-	private SpriteFrame offSignalTextureFrame;
 	private SpriteFrame closedSignalTextureFrame;
 	private SpriteFrame warningSignalTextureFrame;
 	private SpriteFrame openSignalTextureFrame;
@@ -109,7 +108,6 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 
 		wiresTextureFrame = mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALWIRES");
 
-		offSignalTextureFrame = mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALLIGHTSOFF");
 		closedSignalTextureFrame = mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALLIGHTSOCCUPIED");
 		warningSignalTextureFrame = mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALLIGHTSWARNING");
 		openSignalTextureFrame = mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALLIGHTSOPEN");
@@ -206,7 +204,7 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 	// Methods
 	// ---------------------------------------------
 
-	private void drawTrack(LintfordCore pCore, Track pTrack) {
+	private void drawTrack(LintfordCore pCore, RailTrackInstance pTrack) {
 		drawMesh(pCore, mTextureStonebed);
 		drawMesh(pCore, mTextureSleepers);
 		drawSignals(pCore);
@@ -220,7 +218,8 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 		for (int i = 0; i < lEdgeCount; i++) {
 			final var lEdge = lEdgeList.get(i);
 
-			drawJunctionBox(pCore, mRendererManager.uiSpriteBatch(), lTrack, lEdge);
+			if (lEdge.trackJunction.isSignalActive)
+				drawJunctionBox(pCore, mRendererManager.uiSpriteBatch(), lTrack, lEdge);
 		}
 	}
 
@@ -237,7 +236,7 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 		for (int i = 0; i < lNumSignals; i++) {
 			final var lSignal = lSignalList.get(i);
 
-			if (!lSignal.isSignalHead)
+			if (!lSignal.isSignalHead())
 				continue; // don't render the segments
 
 			final var lTrackSegment = lSignal.trackSegment;
@@ -250,14 +249,14 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 
 			final var lTrackSegmentLength = lTrackSegment.edgeLengthInMeters;
 
-			final var lDestNode = lTrack.getNodeByUid(lSignal.destinationNodeUid);
-			final var lSourceNodeUid = lTrackSegment.getOtherNodeUid(lSignal.destinationNodeUid);
+			final var lDestNode = lTrack.getNodeByUid(lSignal.destinationNodeUid());
+			final var lSourceNodeUid = lTrackSegment.getOtherNodeUid(lSignal.destinationNodeUid());
 			final var lSourceNode = lTrack.getNodeByUid(lSourceNodeUid);
 
 			if (lSourceNode == null || lDestNode == null)
 				continue;
 
-			final var lDistanceIntoNode = lSignal.startDistance;
+			final var lDistanceIntoNode = lSignal.startDistance();
 
 			final float lW = openSignalTextureFrame.width();
 			final float lH = openSignalTextureFrame.height();
@@ -292,7 +291,7 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 		lTextureBatch.end();
 	}
 
-	private void drawJunctionBox(LintfordCore pCore, TextureBatchPCT pTextureBatch, Track pTrack, TrackSegment pActiveEdge) {
+	private void drawJunctionBox(LintfordCore pCore, TextureBatchPCT pTextureBatch, RailTrackInstance pTrack, RailTrackSegment pActiveEdge) {
 		final var lIsLeftSignalActive = pActiveEdge.trackJunction.leftEnabled;
 		final var lActiveEdgeUid = lIsLeftSignalActive ? pActiveEdge.trackJunction.leftEdgeUid : pActiveEdge.trackJunction.rightEdgeUid;
 		if (lActiveEdgeUid == -1)
@@ -302,7 +301,7 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 			// FIXME: This stil occurs during editing
 			return;
 		}
-		final int pCommonNodeUid = TrackSegment.getCommonNodeUid(pActiveEdge, lActiveEdge);
+		final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(pActiveEdge, lActiveEdge);
 
 		final var lActiveNode = pTrack.getNodeByUid(pCommonNodeUid);
 
@@ -338,12 +337,12 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 		pTextureBatch.end();
 	}
 
-	private void drawSignalBox(LintfordCore pCore, TextureBatchPCT pTextureBatch, Track pTrack, TrackSegment pActiveEdge, TrackNode pTrackNode) {
+	private void drawSignalBox(LintfordCore pCore, TextureBatchPCT pTextureBatch, RailTrackInstance pTrack, RailTrackSegment pActiveEdge, RailTrackNode pTrackNode) {
 		final var lIsLeftSignalActive = pActiveEdge.trackJunction.leftEnabled;
 		final var lActiveEdgeUid = lIsLeftSignalActive ? pActiveEdge.trackJunction.leftEdgeUid : pActiveEdge.trackJunction.rightEdgeUid;
 		final var lActiveEdge = pTrack.getEdgeByUid(lActiveEdgeUid);
 
-		final int pCommonNodeUid = TrackSegment.getCommonNodeUid(pActiveEdge, lActiveEdge);
+		final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(pActiveEdge, lActiveEdge);
 
 		final var lActiveNode = pTrack.getNodeByUid(pCommonNodeUid);
 		final var lOtherNodeUid = lActiveEdge.getOtherNodeUid(lActiveNode.uid);

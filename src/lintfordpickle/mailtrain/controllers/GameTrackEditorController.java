@@ -6,9 +6,9 @@ import java.util.List;
 import org.lwjgl.glfw.GLFW;
 
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
-import lintfordpickle.mailtrain.data.track.Track;
-import lintfordpickle.mailtrain.data.track.TrackNode;
-import lintfordpickle.mailtrain.data.track.TrackSegment;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackInstance;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackNode;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackSegment;
 import net.lintford.library.controllers.BaseController;
 import net.lintford.library.controllers.core.ControllerManager;
 import net.lintford.library.core.LintfordCore;
@@ -24,7 +24,7 @@ public class GameTrackEditorController extends BaseController implements IInputP
 	// Constants
 	// ---------------------------------------------
 
-	private static List<TrackSegment> mTempEdgeList = new ArrayList<>();
+	private static List<RailTrackSegment> mTempEdgeList = new ArrayList<>();
 
 	public static final String CONTROLLER_NAME = "Track Editor Controller";
 
@@ -33,18 +33,18 @@ public class GameTrackEditorController extends BaseController implements IInputP
 	};
 
 	private ScreenManager mScreenManager;
-	private Track mTrack;
+	private RailTrackInstance mTrack;
 	private TrackController mTrackController;
 
 	private EditorMode mEditorMode;
 
-	public TrackNode mSelectedNodeA; // always 'building-from' this node
-	public TrackNode mSelectedNodeB;
+	public RailTrackNode mSelectedNodeA; // always 'building-from' this node
+	public RailTrackNode mSelectedNodeB;
 
-	public TrackNode ghostNodeA; // node we are currently placing
-	public TrackNode ghostNodeB; // node we are currently placing
+	public RailTrackNode ghostNodeA; // node we are currently placing
+	public RailTrackNode ghostNodeB; // node we are currently placing
 
-	public TrackSegment selectedTrackSegment;
+	public RailTrackSegment selectedTrackSegment;
 
 	public int selectedSignalUid = 0;
 
@@ -104,12 +104,8 @@ public class GameTrackEditorController extends BaseController implements IInputP
 		return mTrack != null;
 	}
 
-	public Track track() {
+	public RailTrackInstance track() {
 		return mTrack;
-	}
-
-	public float worldToGrid(final float pWorldCoord) {
-		return Track.worldToGrid(pWorldCoord, mTrack.gridSizeInPixels);
 	}
 
 	// ---------------------------------------------
@@ -132,8 +128,8 @@ public class GameTrackEditorController extends BaseController implements IInputP
 		mTrackController = (TrackController) pCore.controllerManager().getControllerByNameRequired(TrackController.CONTROLLER_NAME, entityGroupUid());
 		mTrack = mTrackController.track();
 
-		ghostNodeA = new TrackNode(mTrack.getNewNodeUid());
-		ghostNodeB = new TrackNode(mTrack.getNewEdgeUid());
+		ghostNodeA = new RailTrackNode(mTrack.getNewNodeUid());
+		ghostNodeB = new RailTrackNode(mTrack.getNewEdgeUid());
 	}
 
 	@Override
@@ -162,8 +158,9 @@ public class GameTrackEditorController extends BaseController implements IInputP
 
 		mMouseWorldPositionX = pCore.gameCamera().getMouseWorldSpaceX();
 		mMouseWorldPositionY = pCore.gameCamera().getMouseWorldSpaceY();
-		mMouseGridPositionX = worldToGrid(mMouseWorldPositionX);
-		mMouseGridPositionY = worldToGrid(mMouseWorldPositionY);
+		mMouseGridPositionX = mMouseWorldPositionX;// worldToGrid(mMouseWorldPositionX);
+		mMouseGridPositionY = mMouseWorldPositionY;// worldToGrid(mMouseWorldPositionY);
+
 		switch (mEditorMode) {
 		case place_track:
 
@@ -277,7 +274,7 @@ public class GameTrackEditorController extends BaseController implements IInputP
 	// Methods
 	// ---------------------------------------------
 
-	private void deleteNode(TrackNode pNode) {
+	private void deleteNode(RailTrackNode pNode) {
 		if (pNode == null) {
 			return;
 		}
@@ -294,7 +291,7 @@ public class GameTrackEditorController extends BaseController implements IInputP
 		mTrack.nodes().remove(pNode);
 	}
 
-	private void deleteEdge(TrackSegment pEdge) {
+	private void deleteEdge(RailTrackSegment pEdge) {
 		if (pEdge == null)
 			return;
 		final int lNodeCount = mTrack.nodes().size();
@@ -304,7 +301,7 @@ public class GameTrackEditorController extends BaseController implements IInputP
 				lNode.removeEdgeByUid(pEdge.uid);
 			}
 		}
-		TrackSegment lEdgeToDelete = null;
+		RailTrackSegment lEdgeToDelete = null;
 		final int lEdgeCount = mTrack.edges().size();
 		for (int i = 0; i < lEdgeCount; i++) {
 			final var lEdge = mTrack.edges().get(i);
@@ -318,7 +315,7 @@ public class GameTrackEditorController extends BaseController implements IInputP
 		pEdge = null;
 	}
 
-	private TrackSegment getCommonEdge(final int pUidA, final int pUidB) {
+	private RailTrackSegment getCommonEdge(final int pUidA, final int pUidB) {
 		final var lNodeA = mTrack.getNodeByUid(pUidA);
 		final var lNodeB = mTrack.getNodeByUid(pUidB);
 
@@ -350,10 +347,10 @@ public class GameTrackEditorController extends BaseController implements IInputP
 			return; // nope
 
 		final var lNewEdgeAngle = (float) Math.atan2(Math.abs(lNodeB.y - lNodeA.y), Math.abs(lNodeB.x - lNodeA.x));
-		final var lNewEdge = new TrackSegment(mTrack, mTrack.getNewEdgeUid(), pNodeAUid, pNodeBUid, lNewEdgeAngle);
+		final var lNewEdge = new RailTrackSegment(mTrack, mTrack.getNewEdgeUid(), pNodeAUid, pNodeBUid, lNewEdgeAngle);
 		mTrack.edges().add(lNewEdge);
 
-		lNewEdge.edgeType = (lNodeA.x == lNodeB.x || lNodeA.y == lNodeB.y) ? TrackSegment.EDGE_TYPE_STRAIGHT : TrackSegment.EDGE_TYPE_CURVE;
+		lNewEdge.edgeType = (lNodeA.x == lNodeB.x || lNodeA.y == lNodeB.y) ? RailTrackSegment.EDGE_TYPE_STRAIGHT : RailTrackSegment.EDGE_TYPE_CURVE;
 
 		final int lNodeAEdgeCount = lNodeA.numberConnectedEdges();
 		for (int i = 0; i < lNodeAEdgeCount; i++) {
@@ -389,11 +386,11 @@ public class GameTrackEditorController extends BaseController implements IInputP
 				mScreenManager.toastManager().addMessage("Track", "Angle too large!", 150);
 			}
 		}
-		lNewEdge.lControl0X = lNodeA.x;
-		lNewEdge.lControl0Y = lNodeA.y;
+		lNewEdge.control0X = lNodeA.x;
+		lNewEdge.control0Y = lNodeA.y;
 
-		lNewEdge.lControl1X = lNodeB.x;
-		lNewEdge.lControl1Y = lNodeB.y;
+		lNewEdge.control1X = lNodeB.x;
+		lNewEdge.control1Y = lNodeB.y;
 
 		lNewEdge.edgeLengthInMeters = mTrack.getEdgeLength(lNewEdge);
 
@@ -427,15 +424,15 @@ public class GameTrackEditorController extends BaseController implements IInputP
 			final var lNodeB = mTrack.getNodeByUid(lEdge.nodeBUid);
 
 			// Recalc type of edge
-			lEdge.edgeType = (lNodeA.x == lNodeB.x || lNodeA.y == lNodeB.y) ? TrackSegment.EDGE_TYPE_STRAIGHT : TrackSegment.EDGE_TYPE_CURVE;
+			lEdge.edgeType = (lNodeA.x == lNodeB.x || lNodeA.y == lNodeB.y) ? RailTrackSegment.EDGE_TYPE_STRAIGHT : RailTrackSegment.EDGE_TYPE_CURVE;
 
 			Debug.debugManager().drawers().drawLine(lNodeA.x, lNodeA.y, lNodeB.x, lNodeB.y);
 			if (lEdge.edgeType == 0) {
-				lEdge.lControl0X = lNodeA.x;
-				lEdge.lControl0Y = lNodeA.y;
+				lEdge.control0X = lNodeA.x;
+				lEdge.control0Y = lNodeA.y;
 
-				lEdge.lControl1X = lNodeB.x;
-				lEdge.lControl1Y = lNodeB.y;
+				lEdge.control1X = lNodeB.x;
+				lEdge.control1Y = lNodeB.y;
 
 				lEdge.nodeAAngle = MathHelper.wrapAngle((float) Math.atan2(lNodeA.y - lNodeB.y, lNodeA.x - lNodeB.x));
 				lEdge.nodeBAngle = MathHelper.wrapAngle((float) Math.atan2(lNodeB.y - lNodeA.y, lNodeB.x - lNodeA.x));
@@ -444,11 +441,11 @@ public class GameTrackEditorController extends BaseController implements IInputP
 				float lControlLength = Vector2f.dst(lNodeA.x, lNodeA.y, lNodeB.x, lNodeB.y) / 2.f;
 				lControlLength = MathHelper.max(lControlMinLength, lControlLength);
 
-				lEdge.lControl0X = lNodeA.x;
-				lEdge.lControl0Y = lNodeA.y;
+				lEdge.control0X = lNodeA.x;
+				lEdge.control0Y = lNodeA.y;
 
-				lEdge.lControl1X = lNodeB.x;
-				lEdge.lControl1Y = lNodeB.y;
+				lEdge.control1X = lNodeB.x;
+				lEdge.control1Y = lNodeB.y;
 
 				int edge0Uid = lEdge.getOtherAllowedEdgeConnectionUids();
 				if (edge0Uid != -1) {
@@ -458,10 +455,10 @@ public class GameTrackEditorController extends BaseController implements IInputP
 
 					// Red
 					final float lNodeAngle = lEdge0.getNodeAngle(lNodeA.uid);
-					lEdge.lControl0X = lNodeA.x + (float) Math.cos(lNodeAngle) * lControlLength;
-					lEdge.lControl0Y = lNodeA.y + (float) Math.sin(lNodeAngle) * lControlLength;
+					lEdge.control0X = lNodeA.x + (float) Math.cos(lNodeAngle) * lControlLength;
+					lEdge.control0Y = lNodeA.y + (float) Math.sin(lNodeAngle) * lControlLength;
 
-					lEdge.nodeAAngle = MathHelper.wrapAngle((float) Math.atan2(lNodeA.y - lEdge.lControl0Y, lNodeA.x - lEdge.lControl0X));
+					lEdge.nodeAAngle = MathHelper.wrapAngle((float) Math.atan2(lNodeA.y - lEdge.control0Y, lNodeA.x - lEdge.control0X));
 
 				}
 				int edge1Uid = lEdge.getOtherAllowedEdgeConnectionUids2();
@@ -472,22 +469,22 @@ public class GameTrackEditorController extends BaseController implements IInputP
 
 					// Green
 					final float lNodeAngle = lEdge1.getNodeAngle(lNodeB.uid);
-					lEdge.lControl1X = lNodeB.x + (float) Math.cos(lNodeAngle) * lControlLength;
-					lEdge.lControl1Y = lNodeB.y + (float) Math.sin(lNodeAngle) * lControlLength;
+					lEdge.control1X = lNodeB.x + (float) Math.cos(lNodeAngle) * lControlLength;
+					lEdge.control1Y = lNodeB.y + (float) Math.sin(lNodeAngle) * lControlLength;
 
-					lEdge.nodeBAngle = MathHelper.wrapAngle((float) Math.atan2(lNodeB.y - lEdge.lControl1Y, lNodeB.x - lEdge.lControl1X));
+					lEdge.nodeBAngle = MathHelper.wrapAngle((float) Math.atan2(lNodeB.y - lEdge.control1Y, lNodeB.x - lEdge.control1X));
 				}
 				if (lNodeA != null && lNodeB != null && lNodeA.y > lNodeB.y) {
-					float tx = lEdge.lControl0X;
-					float ty = lEdge.lControl0Y;
-					lEdge.lControl0X = lEdge.lControl1X;
-					lEdge.lControl0Y = lEdge.lControl1Y;
-					lEdge.lControl1X = tx;
-					lEdge.lControl1Y = ty;
+					float tx = lEdge.control0X;
+					float ty = lEdge.control0Y;
+					lEdge.control0X = lEdge.control1X;
+					lEdge.control0Y = lEdge.control1Y;
+					lEdge.control1X = tx;
+					lEdge.control1Y = ty;
 				}
 				if (lEdge.uid == 18) {
-					System.out.println(lNodeA.x + "," + lNodeA.y + " (" + lEdge.lControl0X + "," + lEdge.lControl0Y + ")");
-					System.out.println(lNodeB.x + "," + lNodeB.y + " (" + lEdge.lControl1X + "," + lEdge.lControl1Y + ")");
+					System.out.println(lNodeA.x + "," + lNodeA.y + " (" + lEdge.control0X + "," + lEdge.control0Y + ")");
+					System.out.println(lNodeB.x + "," + lNodeB.y + " (" + lEdge.control1X + "," + lEdge.control1Y + ")");
 					System.out.println("------------------");
 				}
 				lEdge.edgeLengthInMeters = mTrack.getEdgeLength(lEdge);
@@ -559,7 +556,7 @@ public class GameTrackEditorController extends BaseController implements IInputP
 		// A but no B - then create node at GA - create edge between A and GA
 		// A and B - destroy segment between A-B, create node at GA, connect A-GA-B
 		if (mSelectedNodeA == null && mSelectedNodeB == null) {
-			final var lNewNode = new TrackNode(mTrack.getNewNodeUid());
+			final var lNewNode = new RailTrackNode(mTrack.getNewNodeUid());
 			lNewNode.x = mMouseGridPositionX;
 			lNewNode.y = mMouseGridPositionY;
 
@@ -572,7 +569,7 @@ public class GameTrackEditorController extends BaseController implements IInputP
 			return true;
 		}
 		if (mSelectedNodeA != null && mSelectedNodeB == null) {
-			final var lNewNode = new TrackNode(mTrack.getNewNodeUid());
+			final var lNewNode = new RailTrackNode(mTrack.getNewNodeUid());
 			lNewNode.x = mMouseGridPositionX;
 			lNewNode.y = mMouseGridPositionY;
 
@@ -597,7 +594,7 @@ public class GameTrackEditorController extends BaseController implements IInputP
 		for (int i = 0; i < lEdgeCount; i++) {
 			// TODO: Add faster AABB check on segment bounds
 			final var lEdge = lEdgeList.get(i);
-			if (lEdge.edgeType == TrackSegment.EDGE_TYPE_STRAIGHT) {
+			if (lEdge.edgeType == RailTrackSegment.EDGE_TYPE_STRAIGHT) {
 				// TODO: add AABB to TrackSegment, then we can skip this check
 				final var lNodeA = mTrack.getNodeByUid(lEdge.nodeAUid);
 				final var lNodeB = mTrack.getNodeByUid(lEdge.nodeBUid);
@@ -613,7 +610,7 @@ public class GameTrackEditorController extends BaseController implements IInputP
 		return false;
 	}
 
-	private TrackNode getNodeAtGridLocation(final float pWorldPositionX, float pWorldPositionY) {
+	private RailTrackNode getNodeAtGridLocation(final float pWorldPositionX, float pWorldPositionY) {
 		// TODO :This can be made to an AABB grid colision (no need for sqrt)
 		final int lNodeCount = mTrack.nodes().size();
 		for (int i = 0; i < lNodeCount; i++) {
