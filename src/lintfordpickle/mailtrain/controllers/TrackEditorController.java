@@ -13,6 +13,7 @@ import lintfordpickle.mailtrain.data.scene.track.RailTrackSegment;
 import net.lintford.library.controllers.BaseController;
 import net.lintford.library.controllers.core.ControllerManager;
 import net.lintford.library.core.LintfordCore;
+import net.lintford.library.core.debug.Debug;
 import net.lintford.library.core.input.keyboard.IBufferedTextInputCallback;
 import net.lintford.library.core.input.mouse.IInputProcessor;
 import net.lintford.library.core.maths.MathHelper;
@@ -34,13 +35,12 @@ public class TrackEditorController extends BaseController implements IInputProce
 
 	private RailTrackInstance mTrack;
 
+	// Selected Items from Editor
 	public RailTrackNode mSelectedNodeA;
 	public RailTrackNode mSelectedNodeB;
 
-	public int selectedSignalUid = 0;
-
 	public int activeEdgeLocalIndex = -1; // index is local to the selected node
-	public int auxilleryEdgeLocalIndex = -1; // index is local to the selected node
+	public int auxiliaryEdgeLocalIndex = -1; // index is local to the selected node
 
 	private boolean mLeftMouseDownTimed;
 	private boolean mLeftMouseDown;
@@ -51,7 +51,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 
 	private int mLogicalUpdateCounter;
 
-	// TODO: refactor out
+	// TODO: refactor out (or just delete)
 	private boolean mIsCapturedTextInput;
 	private boolean mIsCapturingName;
 	public RailTrackSegment mSelectedEdge;
@@ -117,11 +117,15 @@ public class TrackEditorController extends BaseController implements IInputProce
 
 	@Override
 	public boolean handleInput(LintfordCore pCore) {
+		if (pCore.input().mouse().isMouseOverThisComponent(hashCode()) == false) {
+			return false;
+		}
+
 		// Scenery controller
 		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_RIGHT_ALT)) {
 			return false;
-
 		}
+
 		mLeftMouseDown = pCore.input().mouse().isMouseLeftButtonDown();
 		mLeftMouseDownTimed = pCore.input().mouse().isMouseLeftButtonDownTimed(this);
 
@@ -136,28 +140,13 @@ public class TrackEditorController extends BaseController implements IInputProce
 		if (handleMoveTrackNode(pCore))
 			return true;
 
-		// TODO: Toggle node is exit
-		// --->
-
 		if (handleSignalBoxes(pCore))
 			return true;
 
 		if (handleClearEditor(pCore))
 			return true;
 
-		if (handleDeleteTrackNode(pCore))
-			return true;
-
-		if (handleTrackConstrainSelection(pCore))
-			return true;
-
-		if (handleNodeCreation(pCore))
-			return true;
-
 		if (handleNodeSelection(pCore))
-			return true;
-
-		if (handleTrackEdgeCreation(pCore))
 			return true;
 
 		if (handleEdgeSpecialCases(pCore))
@@ -296,30 +285,54 @@ public class TrackEditorController extends BaseController implements IInputProce
 	}
 
 	// ---------------------------------------------
-	// Map Manipulation Methods
+	// Track Manipulation Methods
 	// ---------------------------------------------
+
+	public void togglePrimaryEdgeType() {
+		if (mSelectedNodeA == null)
+			return;
+
+		if (activeEdgeLocalIndex < 0)
+			return;
+
+		final var lManipulateEdge = mSelectedNodeA.getEdgeByIndex(activeEdgeLocalIndex);
+
+		if (lManipulateEdge == null)
+			return;
+
+		if (lManipulateEdge.edgeType == RailTrackSegment.EDGE_TYPE_STRAIGHT)
+			lManipulateEdge.edgeType = RailTrackSegment.EDGE_TYPE_CURVE;
+		else
+			lManipulateEdge.edgeType = RailTrackSegment.EDGE_TYPE_STRAIGHT;
+
+		updateUpdateCounter();
+	}
+
+	public int getPrimaryEdgeType() {
+		if (mSelectedNodeA == null)
+			return RailTrackSegment.EDGE_TYPE_NONE;
+
+		if (activeEdgeLocalIndex < 0)
+			return RailTrackSegment.EDGE_TYPE_NONE;
+
+		final var lManipulateEdge = mSelectedNodeA.getEdgeByIndex(activeEdgeLocalIndex);
+
+		if (lManipulateEdge == null)
+			return RailTrackSegment.EDGE_TYPE_NONE;
+
+		return lManipulateEdge.edgeType;
+	}
 
 	private boolean handleEdgeTypeManipulation(LintfordCore pCore) {
 		if (mSelectedNodeA == null)
 			return false;
+
 		if (activeEdgeLocalIndex != -1) {
 			final var lManipulateEdge = mSelectedNodeA.getEdgeByIndex(activeEdgeLocalIndex);
 
 			if (lManipulateEdge == null)
 				return false;
 
-			// toggle betwen line type (cubic bezier or straight line)
-			if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_V, this)) {
-				if (lManipulateEdge.edgeType == RailTrackSegment.EDGE_TYPE_STRAIGHT)
-					lManipulateEdge.edgeType = RailTrackSegment.EDGE_TYPE_CURVE;
-				else
-					lManipulateEdge.edgeType = RailTrackSegment.EDGE_TYPE_STRAIGHT;
-
-				updateUpdateCounter();
-
-				return true;
-
-			}
 			if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_1) && mLeftMouseDown) {
 				lManipulateEdge.control0X = mMouseGridPositionX;
 				lManipulateEdge.control0Y = mMouseGridPositionY;
@@ -328,8 +341,8 @@ public class TrackEditorController extends BaseController implements IInputProce
 				updateUpdateCounter();
 
 				return true;
-
 			}
+
 			if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_2) && mLeftMouseDown) {
 				lManipulateEdge.control1X = mMouseGridPositionX;
 				lManipulateEdge.control1Y = mMouseGridPositionY;
@@ -338,163 +351,105 @@ public class TrackEditorController extends BaseController implements IInputProce
 				updateUpdateCounter();
 
 				return true;
-
 			}
 		}
 		return false;
 	}
 
-	private boolean handleTrackConstrainSelection(LintfordCore pCore) {
-		if (mSelectedNodeA != null && mSelectedNodeB == null) {
-			if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_L, this)) {
-				activeEdgeLocalIndex--;
-				if (activeEdgeLocalIndex < 0)
-					activeEdgeLocalIndex = mSelectedNodeA.numberConnectedEdges() - 1;
+	public boolean handleNodeCreation(float worldPositionX, float worldPositionY) {
+		final var lMouseGridPositionX = worldToGrid(worldPositionX);
+		final var lMouseGridPositionY = worldToGrid(worldPositionY);
+
+		// If there is already a node here
+		final var lNodeUnderMouse = getNodeAtGridLocation(lMouseGridPositionX, lMouseGridPositionY);
+		if (lNodeUnderMouse != null) {
+			if (mSelectedNodeB != null && lNodeUnderMouse != mSelectedNodeB) {
+				// There maybe a chance to connect nodes A and the just selected one together
+				createEdgeBetween(mSelectedNodeB.uid, lNodeUnderMouse.uid);
+
+				updateUpdateCounter();
 
 				return true;
-
-			} else if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_K, this)) {
-				activeEdgeLocalIndex++;
-				if (activeEdgeLocalIndex >= mSelectedNodeA.numberConnectedEdges())
-					activeEdgeLocalIndex = 0;
-
-				return true;
-
 			}
-			// Update the currently active constraint
-			if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_H, this)) {
-				auxilleryEdgeLocalIndex--;
-				if (auxilleryEdgeLocalIndex < 0)
-					auxilleryEdgeLocalIndex = mSelectedNodeA.numberConnectedEdges() - 1;
-
-				return true;
-
-			} else if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_J, this)) {
-				auxilleryEdgeLocalIndex++;
-				if (auxilleryEdgeLocalIndex >= mSelectedNodeA.numberConnectedEdges())
-					auxilleryEdgeLocalIndex = 0;
-
-				return true;
-
-			}
-			if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_O, this)) {
-				if (activeEdgeLocalIndex != -1 && auxilleryEdgeLocalIndex != -1) {
-					// Toggle allowed / not allowed (ref. edgeSelected)
-
-					final var lSelectedEdge = mSelectedNodeA.getEdgeByIndex(activeEdgeLocalIndex);
-					final var lConstrainedEdge = mSelectedNodeA.getEdgeByIndex(auxilleryEdgeLocalIndex);
-					if (lSelectedEdge.allowedEdgeConections.contains(lConstrainedEdge.uid)) {
-						lSelectedEdge.allowedEdgeConections.remove((Integer) lConstrainedEdge.uid);
-						System.out.println("Removed constraint uid " + lConstrainedEdge.uid + " from Edge " + lSelectedEdge.uid);
-
-					} else {
-						lSelectedEdge.allowedEdgeConections.add(lConstrainedEdge.uid);
-						System.out.println("Added allow uid " + lConstrainedEdge.uid + " to Edge " + lSelectedEdge.uid);
-
-					}
-				}
-				return true;
-
-			}
+			return false;
 		}
-		return false;
-	}
 
-	private boolean handleNodeCreation(LintfordCore pCore) {
-		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL) && mLeftMouseDown) {
-			// If there is already a node here, then select it
-			final var lNodeUnderMouse = getNodeAtGridLocation(mMouseGridPositionX, mMouseGridPositionY);
-			if (lNodeUnderMouse != null) {
-				if (mSelectedNodeB != null && lNodeUnderMouse != mSelectedNodeB) {
-					// There maybe a chance to connect nodes A and the just selected one together
-					createEdgeBetween(mSelectedNodeB.uid, lNodeUnderMouse.uid);
+		// if no nodes selected, then no problem
+		boolean lCreationAllowed = (mSelectedNodeA == null && mSelectedNodeB == null);
+		if (mSelectedNodeB != null) {
+			int localGridX = (int) mSelectedNodeB.x;
+			int localGridY = (int) mSelectedNodeB.y;
 
-					updateUpdateCounter();
-
-					return true;
-				}
-				return false;
+			int newRelX = (int) lMouseGridPositionX - localGridX;
+			int newRelY = (int) lMouseGridPositionY - localGridY;
+			if (mSelectedNodeB.x == lMouseGridPositionX) { // Horizontal
+				lCreationAllowed = true;
+			} else if (mSelectedNodeB.y == lMouseGridPositionY) { // vertical
+				lCreationAllowed = true;
+			} else if (Math.abs(newRelX) == Math.abs(newRelY)) { // diagonal
+				lCreationAllowed = true;
 			}
-			// if no nodes selected, then no problem
-			boolean lCreationAllowed = (mSelectedNodeA == null && mSelectedNodeB == null);
-			if (mSelectedNodeB != null) {
-				int localGridX = (int) mSelectedNodeB.x;
-				int localGridY = (int) mSelectedNodeB.y;
 
-				int newRelX = (int) mMouseGridPositionX - localGridX;
-				int newRelY = (int) mMouseGridPositionY - localGridY;
-				if (mSelectedNodeB.x == mMouseGridPositionX) { // Horizontal
-					lCreationAllowed = true;
-				} else if (mSelectedNodeB.y == mMouseGridPositionY) { // vertical
-					lCreationAllowed = true;
-				} else if (Math.abs(newRelX) == Math.abs(newRelY)) { // diagonal
-					lCreationAllowed = true;
-				}
-//				if (!lCreationAllowed)
-//					return true;
+			//if (!lCreationAllowed)
+			//	return true;
 
-				final var lNewNode = new RailTrackNode(mTrack.getNewNodeUid());
-				lNewNode.x = mMouseGridPositionX;
-				lNewNode.y = mMouseGridPositionY;
+			final var lNewNode = new RailTrackNode(mTrack.getNewNodeUid());
+			lNewNode.x = lMouseGridPositionX;
+			lNewNode.y = lMouseGridPositionY;
 
-				mTrack.nodes().add(lNewNode);
+			mTrack.nodes().add(lNewNode);
 
-				createEdgeBetween(lNewNode.uid, mSelectedNodeB.uid);
-				mSelectedNodeB = lNewNode;
+			createEdgeBetween(lNewNode.uid, mSelectedNodeB.uid);
+			mSelectedNodeB = lNewNode;
 
-				updateUpdateCounter();
+			updateUpdateCounter();
 
-				return true;
-
-			} else if (mSelectedNodeA != null) {
-				int localGridX = (int) mSelectedNodeA.x;
-				int localGridY = (int) mSelectedNodeA.y;
-
-				int newRelX = (int) mMouseGridPositionX - localGridX;
-				int newRelY = (int) mMouseGridPositionY - localGridY;
-				if (mSelectedNodeA.x == mMouseGridPositionX) { // Horizontal
-					lCreationAllowed = true;
-				} else if (mSelectedNodeA.y == mMouseGridPositionY) { // vertical
-					lCreationAllowed = true;
-				} else if (Math.abs(newRelX) == Math.abs(newRelY)) { // diagonal
-					lCreationAllowed = true;
-				}
-//				if (!lCreationAllowed)
-//					return true;
-
-				final var lNewNode = new RailTrackNode(mTrack.getNewNodeUid());
-				lNewNode.x = mMouseGridPositionX;
-				lNewNode.y = mMouseGridPositionY;
-
-				mTrack.nodes().add(lNewNode);
-
-				createEdgeBetween(lNewNode.uid, mSelectedNodeA.uid);
-				mSelectedNodeB = lNewNode;
-
-				updateUpdateCounter();
-
-				return true;
-			} else {
-				final var lNewNode = new RailTrackNode(mTrack.getNewNodeUid());
-				lNewNode.x = mMouseGridPositionX;
-				lNewNode.y = mMouseGridPositionY;
-
-				updateUpdateCounter();
-
-				mTrack.nodes().add(lNewNode);
-				mSelectedNodeB = lNewNode;
-			}
 			return true;
 
+		} else if (mSelectedNodeA != null) {
+			int localGridX = (int) mSelectedNodeA.x;
+			int localGridY = (int) mSelectedNodeA.y;
+
+			int newRelX = (int) lMouseGridPositionX - localGridX;
+			int newRelY = (int) lMouseGridPositionY - localGridY;
+			if (mSelectedNodeA.x == lMouseGridPositionX) { // Horizontal
+				lCreationAllowed = true;
+			} else if (mSelectedNodeA.y == lMouseGridPositionY) { // vertical
+				lCreationAllowed = true;
+			} else if (Math.abs(newRelX) == Math.abs(newRelY)) { // diagonal
+				lCreationAllowed = true;
+			}
+			//				if (!lCreationAllowed)
+			//					return true;
+
+			final var lNewNode = new RailTrackNode(mTrack.getNewNodeUid());
+			lNewNode.x = lMouseGridPositionX;
+			lNewNode.y = lMouseGridPositionY;
+
+			mTrack.nodes().add(lNewNode);
+
+			createEdgeBetween(lNewNode.uid, mSelectedNodeA.uid);
+			mSelectedNodeB = lNewNode;
+
+			updateUpdateCounter();
+
+			return true;
+		} else {
+			final var lNewNode = new RailTrackNode(mTrack.getNewNodeUid());
+			lNewNode.x = lMouseGridPositionX;
+			lNewNode.y = lMouseGridPositionY;
+
+			updateUpdateCounter();
+
+			mTrack.nodes().add(lNewNode);
+			mSelectedNodeB = lNewNode;
 		}
-		return false;
+		return true;
 	}
 
 	private boolean handleNodeSelection(LintfordCore pCore) {
 		if (mLeftMouseDownTimed) {
 			if (mSelectedNodeA != null && mSelectedNodeB != null) {
-				selectedSignalUid = -1;
-
 				mSelectedNodeA = null;
 				mSelectedNodeB = null;
 				return true;
@@ -502,8 +457,6 @@ public class TrackEditorController extends BaseController implements IInputProce
 			}
 			final RailTrackNode lSelectedNode = getNodeAtGridLocation(mMouseWorldPositionX, mMouseWorldPositionY);
 			if (lSelectedNode == null) {
-				selectedSignalUid = -1;
-
 				mSelectedNodeA = null;
 				mSelectedNodeB = null;
 				return true;
@@ -527,9 +480,9 @@ public class TrackEditorController extends BaseController implements IInputProce
 					activeEdgeLocalIndex = -1;
 
 				if (mSelectedNodeA.numberConnectedEdges() > 1)
-					auxilleryEdgeLocalIndex = 1;
+					auxiliaryEdgeLocalIndex = 1;
 				else
-					auxilleryEdgeLocalIndex = -1;
+					auxiliaryEdgeLocalIndex = -1;
 
 				return true;
 
@@ -548,7 +501,6 @@ public class TrackEditorController extends BaseController implements IInputProce
 			final var lNode = mTrack.nodes().get(i);
 			if (Vector2f.dst(pWorldPositionX, pWorldPositionY, lNode.x, lNode.y) < 8.f) {
 				return lNode;
-
 			}
 		}
 		return null;
@@ -577,7 +529,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 					lEdge.trackJunction.reset();
 				}
 			}
-			
+
 			// Change offset position of the lamp and box
 			if (lEdge != null && lEdge.trackJunction != null && lEdge.trackJunction.isSignalActive) {
 				if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_I)) {
@@ -591,7 +543,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 
 					}
 				}
-				
+
 				if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_B)) {
 					if (pCore.input().mouse().isMouseLeftButtonDown()) {
 						lEdge.trackJunction.signalBoxOffsetX = mMouseWorldPositionX - mSelectedNodeA.x;
@@ -651,67 +603,24 @@ public class TrackEditorController extends BaseController implements IInputProce
 		return false;
 	}
 
-	private boolean handleDeleteTrackNode(LintfordCore pCore) {
-		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_D) && pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL)) {
-			if (mSelectedNodeA != null && mSelectedNodeB != null) {
-				// remove edges from between these nodes
-				final var lCommonEdge = getCommonEdge(mSelectedNodeA.uid, mSelectedNodeB.uid);
-				if (lCommonEdge != null) {
-					deleteEdge(lCommonEdge);
-
-				} else {
-					// delete both nodes
-					deleteNode(mSelectedNodeA);
-					deleteNode(mSelectedNodeB);
-
-					mSelectedNodeA = null;
-					mSelectedNodeB = null;
-
-				}
-			} else if (mSelectedNodeA != null) {
-				deleteNode(mSelectedNodeA);
-				mSelectedNodeA = null;
-			} else if (mSelectedNodeB != null) {
-				deleteNode(mSelectedNodeB);
-				mSelectedNodeB = null;
-			}
-			updateUpdateCounter();
-
-			return true;
-		}
-		return false;
-	}
-
-	private boolean handleTrackEdgeCreation(LintfordCore pCore) {
-		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_C, this)) {
-			if (mSelectedNodeA != null && mSelectedNodeB != null) {
-				createEdgeBetween(mSelectedNodeA.uid, mSelectedNodeB.uid);
-
-			}
-			updateUpdateCounter();
-
-			return true;
-		}
-		return false;
-	}
-
 	private boolean handleEdgeSpecialCases(LintfordCore pCore) {
 		if (mSelectedNodeA == null || activeEdgeLocalIndex == -1)
 			return false;
 
 		final var lActiveEdge = mSelectedNodeA.getEdgeByIndex(activeEdgeLocalIndex);
 
-		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_2, this)) {
-			System.out.println("Setting edge name");
-			mScreenManager.toastManager().addMessage("Editor", "Setting edge name", 1500);
-			mSelectedEdge = lActiveEdge;
-			mIsCapturedTextInput = true;
-			mIsCapturingName = true;
-			mInputField.setLength(0);
-			pCore.input().keyboard().startBufferedTextCapture(this);
+		//		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_2, this)) {
+		//			System.out.println("Setting edge name");
+		//			mScreenManager.toastManager().addMessage("Editor", "Setting edge name", 1500);
+		//			mSelectedEdge = lActiveEdge;
+		//			mIsCapturedTextInput = true;
+		//			mIsCapturingName = true;
+		//			mInputField.setLength(0);
+		//			pCore.input().keyboard().startBufferedTextCapture(this);
+		//
+		//			return true;
+		//		}
 
-			return true;
-		}
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_3, this)) {
 			System.out.println("Setting edge special name");
 			mScreenManager.toastManager().addMessage("Editor", "Setting edge special name", 1500);
@@ -723,6 +632,7 @@ public class TrackEditorController extends BaseController implements IInputProce
 
 			return true;
 		}
+
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_4, this)) {
 			System.out.println("Setting player spawn edge");
 			lActiveEdge.setEdgeWithType(RailTrackSegment.EDGE_SPECIAL_TYPE_MAP_SPAWN);
@@ -781,16 +691,112 @@ public class TrackEditorController extends BaseController implements IInputProce
 
 		// TODO: Editor: slide signal blocks through [0..1]
 		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_R)) {
+
 		}
+
 		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_T)) {
+
 		}
-		if (selectedSignalUid == -1)
-			return false;
+
 		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_W)) {
+
 		}
+
 		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_E)) {
+
 		}
 		return false;
+	}
+
+	// ---------------------------------------------
+	// Editor API
+	// ---------------------------------------------
+
+	public void prevLocalPrimaryEdge() {
+		if (mSelectedNodeA != null) {
+			activeEdgeLocalIndex--;
+			if (activeEdgeLocalIndex < 0)
+				activeEdgeLocalIndex = mSelectedNodeA.numberConnectedEdges() - 1;
+		}
+	}
+
+	public void nextLocalPrimaryEdge() {
+		if (mSelectedNodeA != null) {
+			activeEdgeLocalIndex++;
+			if (activeEdgeLocalIndex >= mSelectedNodeA.numberConnectedEdges())
+				activeEdgeLocalIndex = 0;
+		}
+	}
+
+	public void prevLocalSecondaryEdge() {
+		if (mSelectedNodeA != null) {
+			auxiliaryEdgeLocalIndex--;
+			if (auxiliaryEdgeLocalIndex < 0)
+				auxiliaryEdgeLocalIndex = mSelectedNodeA.numberConnectedEdges() - 1;
+		}
+	}
+
+	public void nextLocalSecondaryEdge() {
+		if (mSelectedNodeA != null) {
+			auxiliaryEdgeLocalIndex++;
+			if (auxiliaryEdgeLocalIndex >= mSelectedNodeA.numberConnectedEdges())
+				auxiliaryEdgeLocalIndex = 0;
+		}
+	}
+
+	public void toggleSelectedEdgesTravelledAllowed() {
+		// Toggle allowed / not allowed (ref. edgeSelected)
+		if (activeEdgeLocalIndex != -1 && auxiliaryEdgeLocalIndex != -1) {
+			final var lSelectedEdge = mSelectedNodeA.getEdgeByIndex(activeEdgeLocalIndex);
+			final var lConstrainedEdge = mSelectedNodeA.getEdgeByIndex(auxiliaryEdgeLocalIndex);
+			if (lSelectedEdge.allowedEdgeConections.contains(lConstrainedEdge.uid)) {
+				lSelectedEdge.allowedEdgeConections.remove((Integer) lConstrainedEdge.uid);
+				Debug.debugManager().logger().i(getClass().getSimpleName(), "Added travel constraint to edge uid " + lConstrainedEdge.uid + " from edge uid " + lSelectedEdge.uid);
+			} else {
+				lSelectedEdge.allowedEdgeConections.add(lConstrainedEdge.uid);
+				Debug.debugManager().logger().i(getClass().getSimpleName(), "Added travelled allowed to edge uid " + lConstrainedEdge.uid + " from edge uid " + lSelectedEdge.uid);
+			}
+		}
+	}
+
+	public boolean deleteSelectedNodes() {
+		if (mSelectedNodeA != null && mSelectedNodeB != null) {
+			// remove edges from between these nodes
+			final var lCommonEdge = getCommonEdge(mSelectedNodeA.uid, mSelectedNodeB.uid);
+			if (lCommonEdge != null) {
+				deleteEdge(lCommonEdge);
+
+			} else {
+				// delete both nodes
+				deleteNode(mSelectedNodeA);
+				deleteNode(mSelectedNodeB);
+
+				mSelectedNodeA = null;
+				mSelectedNodeB = null;
+
+			}
+		} else if (mSelectedNodeA != null) {
+			deleteNode(mSelectedNodeA);
+			mSelectedNodeA = null;
+
+		} else if (mSelectedNodeB != null) {
+			deleteNode(mSelectedNodeB);
+			mSelectedNodeB = null;
+
+		}
+		updateUpdateCounter();
+
+		return true;
+	}
+
+	public boolean handleTrackEdgeCreation() {
+		if (mSelectedNodeA != null && mSelectedNodeB != null) {
+			createEdgeBetween(mSelectedNodeA.uid, mSelectedNodeB.uid);
+
+		}
+		updateUpdateCounter();
+
+		return true;
 	}
 
 	// ---------------------------------------------

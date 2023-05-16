@@ -129,7 +129,8 @@ public class EditorSignalRenderer extends BaseRenderer {
 
 			final var lDestNode = lTrack.getNodeByUid(lSignal.destinationNodeUid());
 			if (lDestNode == null)
-				return;
+				continue;
+			
 			final var lSourceNodeUid = lTrackSegment.getOtherNodeUid(lSignal.destinationNodeUid());
 			final var lSourceNode = lTrack.getNodeByUid(lSourceNodeUid);
 

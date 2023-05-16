@@ -1,4 +1,4 @@
-package lintfordpickle.mailtrain.renderers.editorhud;
+package lintfordpickle.mailtrain.renderers.editor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -426,7 +426,33 @@ public abstract class UiPanel implements IScrollBarArea, UIWindowChangeListener,
 		mIsLayerActiveToggleOn = mEditorLayer != EditorLayer.Nothing && mEditorBrushController.isLayerActive(mEditorLayer);
 	}
 
-	protected abstract void arrangeWidgets(LintfordCore core);
+	protected void arrangeWidgets(LintfordCore core) {
+		float lCurPositionX = mPanelArea.x() + mPaddingLeft;
+		float lCurPositionY = mPanelArea.y() + mPaddingTop;
+
+		float lWidgetHeight = 25.f;
+		float lVSpacing = mVerticalSpacing;
+
+		if (mRenderPanelTitle || mIsExpandable) {
+			lCurPositionY += getTitleBarHeight();
+		}
+
+		final int lNumWidgets = mWidgets.size();
+		for (int i = 0; i < lNumWidgets; i++) {
+			final var lWidget = mWidgets.get(i);
+
+			lWidget.setPosition(lCurPositionX, lCurPositionY);
+			lWidget.width(mPanelArea.width() - mPaddingLeft - mPaddingRight);
+			lWidget.height(lWidgetHeight * 1.f);
+
+			UIWidget lNextWidget = null;
+			if (i + 1 < mWidgets.size()) {
+				lNextWidget = mWidgets.get(i + 1);
+			}
+
+			lCurPositionY = increaseYPosition(lCurPositionY, lWidget, lNextWidget) + lVSpacing;
+		}
+	}
 
 	// --------------------------------------
 	// Inherited Methods

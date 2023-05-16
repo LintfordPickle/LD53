@@ -9,6 +9,7 @@ public class EditorBrush {
 	// ---------------------------------------------
 
 	private static final int NO_OWNER_HASH = -1;
+
 	public static final int NO_ACTION_UID = -1;
 
 	// ---------------------------------------------

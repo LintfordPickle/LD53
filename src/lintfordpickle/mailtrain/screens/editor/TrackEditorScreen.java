@@ -8,6 +8,10 @@ import lintfordpickle.mailtrain.ConstantsGame;
 import lintfordpickle.mailtrain.controllers.TrackEditorController;
 import lintfordpickle.mailtrain.controllers.core.GameCameraMovementController;
 import lintfordpickle.mailtrain.controllers.core.GameCameraZoomController;
+import lintfordpickle.mailtrain.controllers.editor.EditorBrush;
+import lintfordpickle.mailtrain.controllers.editor.EditorBrushController;
+import lintfordpickle.mailtrain.controllers.editor.EditorHashGridController;
+import lintfordpickle.mailtrain.controllers.editor.gui.EditorFileController;
 import lintfordpickle.mailtrain.controllers.scene.GameSceneController;
 import lintfordpickle.mailtrain.controllers.scene.SceneryController;
 import lintfordpickle.mailtrain.data.scene.GameSceneHeader;
@@ -17,6 +21,9 @@ import lintfordpickle.mailtrain.renderers.EditorSignalRenderer;
 import lintfordpickle.mailtrain.renderers.EditorTrackRenderer;
 import lintfordpickle.mailtrain.renderers.GridRenderer;
 import lintfordpickle.mailtrain.renderers.SceneryRenderer;
+import lintfordpickle.mailtrain.renderers.editor.EditorBrushRenderer;
+import lintfordpickle.mailtrain.renderers.editor.EditorHashGridRenderer;
+import lintfordpickle.mailtrain.renderers.editor.UiDockedWindow;
 import lintfordpickle.mailtrain.screens.MainMenu;
 import lintfordpickle.mailtrain.screens.MenuBackgroundScreen;
 import lintfordpickle.mailtrain.screens.dialogs.SaveTrackDialog;
@@ -59,20 +66,30 @@ public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
 	private GameWorldHeader mWorldHeader;
 	private GameSceneHeader mSceneHeader;
 	private GameSceneInstance mGameScene;
+	private EditorBrush mEditorBrush;
 
 	// Controllers
+	private EditorHashGridController mEditorHashGridController;
+	private EditorBrushController mEditorBrushController;
 	private GameSceneController mGameSceneController;
 	private GameCameraMovementController mCameraMovementController;
 	private GameCameraZoomController mCameraZoomController;
 	private TrackEditorController mTrackEditorController;
 	private SceneryController mSceneryController;
 
+	private EditorFileController mEditorFileController;
+
 	// Renderers
+	private UiDockedWindow mEditorGui;
+
 	private EditorTrackRenderer mTrackEditorRenderer;
 	private GridRenderer mGridRenderer;
 	private EditorSignalRenderer mSignalBlockRenderer;
 	private SceneryRenderer mSceneryRenderer;
 	private SaveTrackDialog mSaveTrackDialog;
+
+	private EditorHashGridRenderer mEditorHashGridRenderer;
+	private EditorBrushRenderer mEditorBrushRenderer;
 
 	// Clicky stuff
 	protected ClickAction mClickAction;
@@ -82,13 +99,16 @@ public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
 	// Constructor
 	// ---------------------------------------------
 
-	public TrackEditorScreen(ScreenManager pScreenManager, GameWorldHeader worldHeader, GameSceneHeader sceneHeader) {
-		super(pScreenManager, "");
+	public TrackEditorScreen(ScreenManager screenManager, GameWorldHeader worldHeader, GameSceneHeader sceneHeader) {
+		super(screenManager, "");
 
 		mWorldHeader = worldHeader;
 		mSceneHeader = sceneHeader;
+		
+		screenManager.contextHintManager().enabled(false);
 
 		mGameScene = new GameSceneInstance(worldHeader);
+		mEditorBrush = new EditorBrush();
 
 		mESCBackEnabled = false;
 
@@ -202,45 +222,63 @@ public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
 	// ---------------------------------------------
 
 	public void createControllers(ControllerManager controllerManager) {
-		mCameraMovementController = new GameCameraMovementController(controllerManager, mGameCamera, entityGroupUid());
-		mCameraMovementController.setPlayArea(-1400, -1100, 2800, 2200);
-		mCameraZoomController = new GameCameraZoomController(controllerManager, mGameCamera, entityGroupUid());
-		mCameraZoomController.setZoomConstraints(200, 900);
+		// Editor Controller
+		mEditorHashGridController = new EditorHashGridController(controllerManager, entityGroupUid());
+		mEditorBrushController = new EditorBrushController(controllerManager, mEditorBrush, entityGroupUid());
+		mEditorFileController = new EditorFileController(controllerManager, entityGroupUid());
+
+		// Scene Controllers
 
 		mGameSceneController = new GameSceneController(controllerManager, mWorldHeader, mSceneHeader, mGameScene, entityGroupUid());
 		mTrackEditorController = new TrackEditorController(controllerManager, screenManager(), mGameScene, entityGroupUid());
 		mSceneryController = new SceneryController(controllerManager, null, entityGroupUid());
+
+		mCameraMovementController = new GameCameraMovementController(controllerManager, mGameCamera, entityGroupUid());
+		mCameraMovementController.setPlayArea(-1400, -1100, 2800, 2200);
+		mCameraZoomController = new GameCameraZoomController(controllerManager, mGameCamera, entityGroupUid());
+		mCameraZoomController.setZoomConstraints(200, 900);
 	}
 
 	public void initializeControllers(LintfordCore core) {
+		mEditorHashGridController.initialize(core);
+		mEditorBrushController.initialize(core);
 		mTrackEditorController.initialize(core);
 		mSceneryController.initialize(core);
 		mGameSceneController.initialize(core);
 		mCameraMovementController.initialize(core);
 		mCameraZoomController.initialize(core);
+		mEditorFileController.initialize(core);
 	}
 
 	public void createRenderers(LintfordCore core) {
-		mTrackEditorRenderer = new EditorTrackRenderer(rendererManager(), entityGroupUid());
-		mGridRenderer = new GridRenderer(rendererManager(), entityGroupUid());
-		mSignalBlockRenderer = new EditorSignalRenderer(rendererManager(), entityGroupUid());
-		mSceneryRenderer = new SceneryRenderer(rendererManager(), entityGroupUid());
+		mTrackEditorRenderer = new EditorTrackRenderer(mRendererManager, entityGroupUid());
+		mGridRenderer = new GridRenderer(mRendererManager, entityGroupUid());
+		mSignalBlockRenderer = new EditorSignalRenderer(mRendererManager, entityGroupUid());
+		mSceneryRenderer = new SceneryRenderer(mRendererManager, entityGroupUid());
 
+		mEditorGui = new UiDockedWindow(mRendererManager, "Editor", entityGroupUid());
+		mEditorHashGridRenderer = new EditorHashGridRenderer(mRendererManager, entityGroupUid());
+		mEditorBrushRenderer = new EditorBrushRenderer(mRendererManager, entityGroupUid());
 	}
 
 	protected void initializeRenderers(LintfordCore core) {
 		mTrackEditorRenderer.initialize(core);
+		mEditorGui.initialize(core);
 		mGridRenderer.initialize(core);
 		mSignalBlockRenderer.initialize(core);
 		mSceneryRenderer.initialize(core);
-
+		mEditorHashGridRenderer.initialize(core);
+		mEditorBrushRenderer.initialize(core);
 	}
 
 	protected void loadRendererResources(ResourceManager resourceManager) {
 		mTrackEditorRenderer.loadResources(resourceManager);
+		mEditorGui.loadResources(resourceManager);
 		mGridRenderer.loadResources(resourceManager);
 		mSignalBlockRenderer.loadResources(resourceManager);
 		mSceneryRenderer.loadResources(resourceManager);
+		mEditorHashGridRenderer.loadResources(resourceManager);
+		mEditorBrushRenderer.loadResources(resourceManager);
 
 	}
 

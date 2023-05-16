@@ -149,6 +149,7 @@ public class RailTrackSegment extends TrackEdge {
 	// Constants
 	// ---------------------------------------------
 
+	public static final int EDGE_TYPE_NONE = -1;
 	public static final int EDGE_TYPE_STRAIGHT = 0;
 	public static final int EDGE_TYPE_CURVE = 1;
 

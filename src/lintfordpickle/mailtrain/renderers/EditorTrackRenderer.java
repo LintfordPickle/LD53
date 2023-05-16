@@ -6,7 +6,6 @@ import org.lwjgl.opengl.GL11;
 import lintfordpickle.mailtrain.ConstantsGame;
 import lintfordpickle.mailtrain.controllers.TrackEditorController;
 import lintfordpickle.mailtrain.data.scene.track.RailTrackInstance;
-import lintfordpickle.mailtrain.data.scene.track.RailTrackNode;
 import lintfordpickle.mailtrain.data.scene.track.RailTrackSegment;
 import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.ResourceManager;
@@ -50,9 +49,30 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 	protected float mUiTextScale = 1.f;
 	protected float mGameTextScale = .4f;
 
+	private boolean mDrawEditorNodes;
+	private boolean mDrawEditorSegments;
+	private boolean mDrawEditorSignals;
+	private boolean mDrawEditorJunctions;
+
 	// ---------------------------------------------
 	// Properties
 	// ---------------------------------------------
+
+	public boolean drawEditorNodes() {
+		return mDrawEditorNodes;
+	}
+
+	public void drawEditorNodes(boolean drawEditorNodes) {
+		mDrawEditorNodes = drawEditorNodes;
+	}
+
+	public boolean drawEditorSegments() {
+		return mDrawEditorSegments;
+	}
+
+	public void drawEditorSegments(boolean drawEditorSegments) {
+		mDrawEditorSegments = drawEditorSegments;
+	}
 
 	@Override
 	public boolean isInitialized() {
@@ -139,13 +159,14 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		drawMesh(pCore, mTextureBackplate);
 		drawMesh(pCore, mTextureMetal);
 
-		debugDrawEdges(pCore);
-		debugDrawNodes(pCore);
+		if (mDrawEditorSegments)
+			debugDrawEdges(pCore);
 
-		// Draw world origin
-		Debug.debugManager().drawers().drawPointImmediate(pCore.gameCamera(), 0.f, 0.f);
+		if (mDrawEditorNodes)
+			debugDrawNodes(pCore);
 
-		drawTrackSignalBlocks(pCore, mRendererManager.uiSpriteBatch(), mTrackEditorController.track());
+		if (mDrawEditorSignals)
+			drawTrackSignalBlocks(pCore, mRendererManager.uiSpriteBatch(), mTrackEditorController.track());
 
 		drawTrackInfo(pCore);
 	}
@@ -163,19 +184,6 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		final var lSelectedNodeA = mTrackEditorController.mSelectedNodeA;
 		final var lSelectedNodeB = mTrackEditorController.mSelectedNodeB;
 
-		final var lHudRect = pCore.HUD().boundingRectangle();
-		if (lSelectedNodeA != null) {
-			mGameTextFont.begin(pCore.HUD());
-			mGameTextFont.drawText("Selected Node Uid A : " + lSelectedNodeA.uid, lHudRect.left() + 5, lHudRect.top() + 5, -0.1f, ColorConstants.WHITE, mUiTextScale, -1);
-			mGameTextFont.end();
-
-		}
-		if (lSelectedNodeB != null) {
-			mGameTextFont.begin(pCore.HUD());
-			mGameTextFont.drawText("Selected Node Uid B : " + lSelectedNodeB.uid, lHudRect.left() + 5, lHudRect.top() + 25, -0.1f, ColorConstants.WHITE, mUiTextScale, -1);
-			mGameTextFont.end();
-
-		}
 		GL11.glPointSize(4.f);
 
 		mGameTextFont.begin(pCore.gameCamera());
@@ -208,14 +216,12 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 	}
 
 	public void debugDrawEdges(LintfordCore pCore) {
-		final var lHudBounds = pCore.HUD().boundingRectangle();
-
 		final var lTrack = mTrackEditorController.track();
 		final var lEdgeList = lTrack.edges();
 
 		final var lSelectedNodeA = mTrackEditorController.mSelectedNodeA;
 		final var lEdgeIndex = lSelectedNodeA != null ? mTrackEditorController.activeEdgeLocalIndex : -1;
-		final var lEdgeIndexConstraint = lSelectedNodeA != null ? mTrackEditorController.auxilleryEdgeLocalIndex : -1;
+		final var lEdgeIndexConstraint = lSelectedNodeA != null ? mTrackEditorController.auxiliaryEdgeLocalIndex : -1;
 
 		RailTrackSegment lHighlightEdge = null;
 		RailTrackSegment lConstrainEdge = null;
@@ -234,39 +240,37 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		for (int i = 0; i < lEdgeCount; i++) {
 			final var lEdge = lEdgeList.get(i);
 
-			float lTextOffsetY = 0.f;
-
 			var lNodeA = lTrack.getNodeByUid(lEdge.nodeAUid);
 			var lNodeB = lTrack.getNodeByUid(lEdge.nodeBUid);
-
-			// Render on node is the top-left most node of the two
-			RailTrackNode lRenderOnNode = lNodeA;
 
 			float lR = 1.f;
 			float lG = 1.f;
 			float lB = 1.f;
 			if (lHighlightEdge != null && lHighlightEdge.uid == lEdge.uid) {
 				lG = 0.f;
-
 			}
-			boolean lShowConstraint = false;
+
 			boolean lIsEdgeAllowed = false;
-			int lEdgeType = 0;
-			boolean lFlipped3 = false;
 			if (lHighlightEdge != null && lConstrainEdge != null && lConstrainEdge.uid == lEdge.uid) {
 				lB = 0.f;
-
-				lEdgeType = lHighlightEdge.edgeType;
-
 				lIsEdgeAllowed = lHighlightEdge.allowedEdgeConections.contains((Integer) lConstrainEdge.uid);
-				lShowConstraint = true;
+				if (lIsEdgeAllowed) {
+					lR = 0.f;
+					lG = 1.f;
+					lB = 0.f;
+				} else {
+					lR = 1.f;
+					lG = 0.f;
+					lB = 0.f;
+				}
 			}
+
 			if (lEdge.specialEdgeType != RailTrackSegment.EDGE_SPECIAL_TYPE_UNASSIGNED) {
 				lR = 1.f;
 				lG = 1.f;
 				lB = 0.f;
-
 			}
+
 			if (lEdge.edgeType == RailTrackSegment.EDGE_TYPE_STRAIGHT) { // Straight edge
 				Debug.debugManager().drawers().drawLine(lNodeA.x, lNodeA.y, lNodeB.x, lNodeB.y, lR, lG, lB);
 
@@ -276,11 +280,13 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 					lNodeB = lNodeA;
 					lNodeA = temp;
 				}
+
 				if (lNodeA.y > lNodeB.y) {
 					var temp = lNodeB;
 					lNodeB = lNodeA;
 					lNodeA = temp;
 				}
+
 				float lLastX = lNodeA.x;
 				float lLastY = lNodeA.y;
 				for (float t = 0f; t <= 1.1f; t += 0.1f) {
@@ -291,9 +297,9 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 
 					lLastX = lNewPointX;
 					lLastY = lNewPointY;
-
 				}
 			}
+
 			final float lWorldPositionX = (lNodeA.x + lNodeB.x) / 2.f;
 			final float lWorldPositionY = (lNodeA.y + lNodeB.y) / 2.f;
 
@@ -302,33 +308,13 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 			if (lEdge.trackJunction.isSignalActive)
 				drawJunctionBox(pCore, mRendererManager.uiSpriteBatch(), lTrack, lEdge);
 
-			mGameTextFont.drawText("e" + lEdge.uid, lWorldPositionX, lWorldPositionY, -0.1f, ColorConstants.WHITE, .4f, -1);
+			mGameTextFont.drawText("E:" + lEdge.uid, lWorldPositionX, lWorldPositionY, -0.1f, ColorConstants.WHITE, .4f, -1);
 
 			drawEdgeInformation(pCore, mRendererManager.uiSpriteBatch(), lTrack, lEdge);
-			if (lShowConstraint) {
-				lTextOffsetY += 8.f;
-				mGameTextFont.drawText("allowed: " + (lIsEdgeAllowed ? "yes" : "no"), lRenderOnNode.x, lRenderOnNode.y + (lTextOffsetY += 8.f), -0.01f, ColorConstants.WHITE, mGameTextScale, -1);
-				mGameTextFont.drawText("" + lEdgeType, lRenderOnNode.x, lRenderOnNode.y + (lTextOffsetY += 8.f), -0.01f, ColorConstants.WHITE, mGameTextScale, -1);
-				mGameTextFont.drawText("" + lFlipped3, lRenderOnNode.x, lRenderOnNode.y + (lTextOffsetY += 8.f), -0.01f, ColorConstants.WHITE, mGameTextScale, -1);
-
-			}
 		}
+
 		mGameTextFont.end();
-		if (lHighlightEdge != null) {
-			mGameTextFont.begin(pCore.HUD());
-			mGameTextFont.drawText("Selected Edge Uid " + lHighlightEdge.uid, lHudBounds.left() + 5.f, lHudBounds.top() + 70.f, -0.01f, ColorConstants.WHITE, mUiTextScale, -1);
-			mGameTextFont.end();
-			if (lHighlightEdge.edgeType == RailTrackSegment.EDGE_TYPE_CURVE) {
-				Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lHighlightEdge.control0X, lHighlightEdge.control0Y, 5.f);
-				Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lHighlightEdge.control1X, lHighlightEdge.control1Y, 5.f);
 
-			}
-		}
-		if (lConstrainEdge != null) {
-			mGameTextFont.begin(pCore.HUD());
-			mGameTextFont.drawText("Constrained Edge Uid " + lConstrainEdge.uid, lHudBounds.left() + 5.f, lHudBounds.top() + 90.f, -0.01f, ColorConstants.WHITE, mUiTextScale, -1);
-			mGameTextFont.end();
-		}
 		Debug.debugManager().drawers().endLineRenderer();
 	}
 
@@ -450,11 +436,6 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		// Calculate the center point of the edge
 		final float lCenterX = (lNodeA.x + lNodeB.x) * 0.5f;
 		final float lCenterY = (lNodeA.y + lNodeB.y) * 0.5f;
-		{ // Edge length (meters)
-			final var lEdgeLength = pActiveEdge.edgeLengthInMeters;
-
-			mGameTextFont.drawText(String.format("%.1fm", lEdgeLength), lCenterX, lCenterY + mGameTextFont.fontHeight() * mGameTextScale, -0.01f, ColorConstants.WHITE, mGameTextScale, -1);
-		}
 
 		if (pActiveEdge.specialEdgeType != RailTrackSegment.EDGE_SPECIAL_TYPE_UNASSIGNED) {
 			String lSpecialType = "";

@@ -42,9 +42,11 @@ public class MainMenu extends MenuScreen {
 	// Constructors
 	// ---------------------------------------------
 
-	public MainMenu(ScreenManager pScreenManager) {
-		super(pScreenManager, TITLE);
+	public MainMenu(ScreenManager screenManager) {
+		super(screenManager, TITLE);
 
+		screenManager.contextHintManager().enabled(true);
+		
 		mLayoutAlignment = LAYOUT_ALIGNMENT.LEFT;
 
 		mMainMenuListBox = new ListLayout(this);

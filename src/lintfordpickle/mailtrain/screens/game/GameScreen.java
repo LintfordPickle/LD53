@@ -95,6 +95,8 @@ public class GameScreen extends BaseGameScreen {
 	public GameScreen(ScreenManager screenManager, GameState persistentGameState, GameWorldHeader gameWorldHeader, GameSceneHeader sceneHeader) {
 		super(screenManager);
 
+		screenManager.contextHintManager().enabled(false);
+
 		mShowBackgroundScreens = true;
 
 		mGameWorldHeader = gameWorldHeader;
@@ -123,13 +125,16 @@ public class GameScreen extends BaseGameScreen {
 		} else {
 			mGameSceneController.createEmptyScene();
 		}
-		
+
 		lControllerManager.initializeControllers(lCore);
 
 		// TODO: Get the scene spawn edge:
 		// If this is the first time visiting the scene, then use TrackSegment.SPAWN_EDGE
 		// otherwise, use the last visited edge from the traversal graph
 		mPlayerTrainController.addPlayerTrain(null);
+
+		// TEST
+		mPlayerTrainController.TESTaddTrainsToMapEdges();
 
 		final int lStartingCredits = 1000;
 		final int lStartingCrew = 10;

@@ -183,6 +183,12 @@ public class PlayerTrainController extends BaseController implements IInputProce
 		return mPlayerLocomotiveTrain;
 	}
 
+	public void TESTaddTrainsToMapEdges() {
+		final var lPlayerSpawnEdge = mTrackController.track().getEdgeByUid(5);
+
+		mTrainController.addNewTrain(lPlayerSpawnEdge, 1);
+	}
+	
 	// ---
 
 	@Override
