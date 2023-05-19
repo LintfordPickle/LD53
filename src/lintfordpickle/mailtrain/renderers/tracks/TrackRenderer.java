@@ -395,4 +395,22 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 		}
 	}
 
+	@Override
+	public boolean allowKeyboardInput() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean allowGamepadInput() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean allowMouseInput() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 }

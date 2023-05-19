@@ -44,7 +44,7 @@ public class SignalsPanel extends UiPanel {
 
 		mRenderPanelTitle = true;
 		mPanelTitle = TITLE;
-		mEditorLayer = EditorLayer.Track_Segments;
+		mEditorLayer = EditorLayer.Track;
 
 		mCreateSignalAButton = new UiButton(parentWindow);
 		mCreateSignalAButton.buttonLabel("New");

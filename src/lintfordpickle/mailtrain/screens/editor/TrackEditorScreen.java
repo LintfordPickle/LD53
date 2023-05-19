@@ -230,7 +230,7 @@ public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
 		// Scene Controllers
 
 		mGameSceneController = new GameSceneController(controllerManager, mWorldHeader, mSceneHeader, mGameScene, entityGroupUid());
-		mTrackEditorController = new TrackEditorController(controllerManager, screenManager(), mGameScene, entityGroupUid());
+		mTrackEditorController = new TrackEditorController(controllerManager, mGameScene, entityGroupUid());
 		mSceneryController = new SceneryController(controllerManager, null, entityGroupUid());
 
 		mCameraMovementController = new GameCameraMovementController(controllerManager, mGameCamera, entityGroupUid());

@@ -160,6 +160,18 @@ public class RailTrackSegment extends TrackEdge {
 	public static final int EDGE_SPECIAL_TYPE_STATION = 8; // station / town for trading
 	public static final int EDGE_SPECIAL_TYPE_ENEMY_SPAWN = 16; // station / town for trading
 
+	public static String getEdgeTypeName(int edgeType) {
+		switch(edgeType) {
+		default:
+		case EDGE_TYPE_NONE:
+			return "unknown";
+		case EDGE_TYPE_STRAIGHT:
+			return "straight";
+		case EDGE_TYPE_CURVE:
+			return "curve";
+		}
+	}
+	
 	// ---------------------------------------------
 	// Variables
 	// ---------------------------------------------

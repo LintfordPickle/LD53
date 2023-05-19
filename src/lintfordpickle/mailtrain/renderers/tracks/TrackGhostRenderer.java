@@ -147,6 +147,24 @@ public class TrackGhostRenderer extends TrackMeshRenderer implements IInputProce
 		mMouseCooldownTimer = 200;
 	}
 
+	@Override
+	public boolean allowKeyboardInput() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean allowGamepadInput() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean allowMouseInput() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 
 
 }

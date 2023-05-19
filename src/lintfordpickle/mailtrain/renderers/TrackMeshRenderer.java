@@ -30,7 +30,7 @@ import net.lintford.library.core.splines.SplinePoint;
 import net.lintford.library.renderers.BaseRenderer;
 import net.lintford.library.renderers.RendererManager;
 
-public class TrackMeshRenderer extends BaseRenderer implements IInputProcessor {
+public abstract class TrackMeshRenderer extends BaseRenderer implements IInputProcessor {
 
 	public class TrackVertex {
 		float x, y, u, v;
@@ -201,23 +201,6 @@ public class TrackMeshRenderer extends BaseRenderer implements IInputProcessor {
 		}
 
 		return super.handleInput(pCore);
-	}
-
-	@Override
-	public void update(LintfordCore pCore) {
-		super.update(pCore);
-
-		// todo. not sure whats going on here - seems like the shader doesn't accept information about screen size ??
-//		final var lDesktopWidth = pCore.config().display().desktopWidth();
-//		final var lDesktopHeight = pCore.config().display().desktopHeight();
-//		mShader.screenResolutionWidth(lDesktopWidth);
-//		mShader.screenResolutionHeight(lDesktopHeight);
-//
-//		final var lCamera = pCore.gameCamera();
-//		mShader.cameraResolutionWidth(lCamera.getWidth());
-//		mShader.cameraResolutionHeight(lCamera.getHeight());
-//
-//		mShader.pixelSize(1f);
 	}
 
 	// ---------------------------------------------
@@ -517,38 +500,6 @@ public class TrackMeshRenderer extends BaseRenderer implements IInputProcessor {
 		mTrackVertexBuffer.put(v);
 
 		mVertexCount++;
-	}
-
-	// IInputProcessor
-
-	@Override
-	public boolean isCoolDownElapsed() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public void resetCoolDownTimer() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public boolean allowKeyboardInput() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean allowGamepadInput() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean allowMouseInput() {
-		// TODO Auto-generated method stub
-		return false;
 	}
 
 	@Override

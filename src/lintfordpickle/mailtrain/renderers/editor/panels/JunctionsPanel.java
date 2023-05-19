@@ -40,7 +40,7 @@ public class JunctionsPanel extends UiPanel {
 
 		mRenderPanelTitle = true;
 		mPanelTitle = TITLE;
-		mEditorLayer = EditorLayer.Track_Segments;
+		mEditorLayer = EditorLayer.Track;
 
 		mCreateJunctionButton = new UiButton(parentWindow);
 		mCreateJunctionButton.buttonLabel("New");

@@ -191,23 +191,4 @@ public class EditorBrushController extends BaseController {
 
 		mEditorBrush.brushActionUid(EditorBrush.NO_ACTION_UID);
 	}
-
-	public void setHeightProfilePoint(float mMouseX, float mMouseY) {
-//		final var lNearbyEntities = hashGrid().findNearbyEntities(mMouseY, mMouseX, 2.f);
-//
-//		// TODO: Cache results
-//
-//		final var lHeightProfileEntities = mPointHeightProfile.heightProfileEntities();
-//		lHeightProfileEntities.clear();
-//
-//		final int lNumFoundEntities = lNearbyEntities.size();
-//		for (int i = 0; i < lNumFoundEntities; i++) {
-//			final var lEntity = lNearbyEntities.get(i);
-//			if (lEntity.intersectAndGetHeight(mMouseX, mMouseY)) {
-//				lHeightProfileEntities.add(lEntity);
-//			}
-//		}
-//
-//		Collections.sort(lNearbyEntities, HeightComparer);
-	}
 }

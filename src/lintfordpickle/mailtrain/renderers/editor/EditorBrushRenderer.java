@@ -79,7 +79,6 @@ public class EditorBrushRenderer extends BaseRenderer {
 		if (mEditorBrushController.brush().isActionSet() == false) {
 			if (core.input().keyboard().isKeyDown(GLFW.GLFW_KEY_C)) {
 				mEditorBrushController.setCursor(mMouseX, mMouseY);
-				mEditorBrushController.setHeightProfilePoint(mMouseX, mMouseY);
 			}
 		}
 

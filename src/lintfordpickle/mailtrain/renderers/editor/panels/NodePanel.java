@@ -20,7 +20,8 @@ public class NodePanel extends UiPanel {
 	private static final String TITLE = "Nodes";
 
 	private static final int BUTTON_NEW_NODE = 10;
-	private static final int BUTTON_DELETE_NODE = 11;
+	private static final int BUTTON_MOVE_NODE = 11;
+	private static final int BUTTON_DELETE_NODE = 12;
 
 	// --------------------------------------
 	// Variables
@@ -31,8 +32,9 @@ public class NodePanel extends UiPanel {
 	private UiLabelledInt mSelectedNodeALabel;
 	private UiLabelledInt mSelectedNodeBLabel;
 
-	private UiButton mNewTrackButton;
-	private UiButton mDeleteNode;
+	private UiButton mNewNodeButton;
+	private UiButton mMoveNodeButton;
+	private UiButton mDeleteNodeNode;
 
 	private RailTrackNode mSelectedNodeA;
 	private RailTrackNode mSelectedNodeB;
@@ -52,23 +54,29 @@ public class NodePanel extends UiPanel {
 
 		mRenderPanelTitle = true;
 		mPanelTitle = TITLE;
-		mEditorLayer = EditorLayer.Track_Node;
+		mEditorLayer = EditorLayer.Track;
 
-		mNewTrackButton = new UiButton(parentWindow);
-		mNewTrackButton.buttonLabel("New");
-		mNewTrackButton.setClickListener(this, BUTTON_NEW_NODE);
+		mNewNodeButton = new UiButton(parentWindow);
+		mNewNodeButton.buttonLabel("New");
+		mNewNodeButton.setClickListener(this, BUTTON_NEW_NODE);
+
+		mMoveNodeButton = new UiButton(parentWindow);
+		mMoveNodeButton.buttonLabel("Move");
+		mMoveNodeButton.setClickListener(this, BUTTON_MOVE_NODE);
+		mMoveNodeButton.isEnabled(false);
 
 		mSelectedNodeALabel = new UiLabelledInt(parentWindow, "Selected Node A:");
 		mSelectedNodeBLabel = new UiLabelledInt(parentWindow, "Selected Node B:");
 
-		mDeleteNode = new UiButton(parentWindow);
-		mDeleteNode.buttonLabel("Delete");
-		mDeleteNode.setClickListener(this, BUTTON_DELETE_NODE);
+		mDeleteNodeNode = new UiButton(parentWindow);
+		mDeleteNodeNode.buttonLabel("Delete");
+		mDeleteNodeNode.setClickListener(this, BUTTON_DELETE_NODE);
 
-		addWidget(mNewTrackButton);
+		addWidget(mNewNodeButton);
+		addWidget(mMoveNodeButton);
 		addWidget(mSelectedNodeALabel);
 		addWidget(mSelectedNodeBLabel);
-		addWidget(mDeleteNode);
+		addWidget(mDeleteNodeNode);
 
 		isLayerVisible(true);
 		mIsPanelOpen = true;
@@ -95,20 +103,23 @@ public class NodePanel extends UiPanel {
 	public void update(LintfordCore core) {
 		super.update(core);
 
-		if (mSelectedNodeA != mTrackEditorController.mSelectedNodeA) {
-			mSelectedNodeA = mTrackEditorController.mSelectedNodeA;
+		// lsiten for changes to Node A selection
+		if (mSelectedNodeA != mTrackEditorController.selectedNodeA()) {
+			mSelectedNodeA = mTrackEditorController.selectedNodeA();
 
 			if (mSelectedNodeA != null) {
 				mSelectedNodeALabel.value(mSelectedNodeA.uid);
-				mDeleteNode.isEnabled(true);
+				mDeleteNodeNode.isEnabled(true);
+				mMoveNodeButton.isEnabled(true);
 			} else {
 				mSelectedNodeALabel.value(0);
-				mDeleteNode.isEnabled(false);
+				mDeleteNodeNode.isEnabled(false);
+				mMoveNodeButton.isEnabled(false);
 			}
 		}
 
-		if (mSelectedNodeB != mTrackEditorController.mSelectedNodeB) {
-			mSelectedNodeB = mTrackEditorController.mSelectedNodeB;
+		if (mSelectedNodeB != mTrackEditorController.selectedNodeB()) {
+			mSelectedNodeB = mTrackEditorController.selectedNodeB();
 
 			if (mSelectedNodeB != null) {
 				mSelectedNodeBLabel.value(mSelectedNodeB.uid);
@@ -130,15 +141,34 @@ public class NodePanel extends UiPanel {
 
 	@Override
 	public void widgetOnClick(InputManager inputManager, int entryUid) {
+		final var lIsLayerActive = mEditorBrushController.isLayerActive(mEditorLayer);
+
 		switch (entryUid) {
 		case BUTTON_NEW_NODE:
+			if (lIsLayerActive == false)
+				return;
+
 			final var lCursorPositionX = mEditorBrushController.cursorWorldX();
 			final var lCursorPositionY = mEditorBrushController.cursorWorldY();
 
-			mTrackEditorController.handleNodeCreation(lCursorPositionX, lCursorPositionY);
+			mEditorTrackRenderer.handleNodeCreation(lCursorPositionX, lCursorPositionY);
+
+			break;
+
+		case BUTTON_MOVE_NODE:
+			if (lIsLayerActive == false)
+				return;
+
+			if (mEditorBrushController.setAction(TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_NODE, "Moving Node", layerOwnerHashCode())) {
+				mEditorTrackRenderer.setMoveSelectedNode();
+			}
+
 			break;
 
 		case BUTTON_DELETE_NODE:
+			if (lIsLayerActive == false)
+				return;
+
 			if (mSelectedNodeA == null)
 				return;
 
@@ -153,7 +183,7 @@ public class NodePanel extends UiPanel {
 
 	@Override
 	public int layerOwnerHashCode() {
-		return hashCode();
+		return mEditorTrackRenderer.hashCode();
 	}
 
 	// --------------------------------------

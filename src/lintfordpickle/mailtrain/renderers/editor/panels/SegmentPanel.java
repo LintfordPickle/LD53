@@ -31,9 +31,12 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 	private static final int BUTTON_DELETE_SEGMENT = 11;
 	private static final int BUTTON_TOGGLE_ALLOWED_SEGMENT = 12;
 
-	private static final int BUTTON_PRIMRAY_PREV_LOCAL = 20;
-	private static final int BUTTON_PRIMRAY_NEXT_LOCAL = 21;
-	private static final int BUTTON_PRIMRAY_TOGGLE_TYPE = 22;
+	private static final int BUTTON_PRIMARY_PREV_LOCAL = 20;
+	private static final int BUTTON_PRIMARY_NEXT_LOCAL = 21;
+	private static final int BUTTON_PRIMARY_TOGGLE_TYPE = 22;
+
+	private static final int BUTTON_PRIMARY_CONTROL_NODE_1_MOVE = 24;
+	private static final int BUTTON_PRIMARY_CONTROL_NODE_2_MOVE = 25;
 
 	private static final int BUTTON_SECONDARY_PREV_LOCAL = 30;
 	private static final int BUTTON_SECONDARY_NEXT_LOCAL = 31;
@@ -56,13 +59,17 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 	private UiLabelledInt mSegmentPrimaryId;
 	private UiButton mPNextSegmentButton;
 	private UiLabelledFloat mSegmentDistance;
+	private UiButton mPrimaryEdgeType;
+
+	private UiHorizontalEntryGroup mControlNodeGroup;
+	private UiButton mMoveControlNodeA;
+	private UiButton mMoveControlNodeB;
 
 	private UiHorizontalEntryGroup mSHorzGroup;
 	private UiLabelledString mSecLabel;
 	private UiButton mSPrevSegmentButton;
 	private UiLabelledInt mSegmentSecondaryId;
 	private UiButton mSNextSegmentButton;
-	private UiButton mPrimaryEdgeType;
 
 	private UiHorizontalEntryGroup mTravelHorzGroup;
 	private UiLabelledString mSegmentTravelAllowed;
@@ -87,7 +94,7 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 
 		mRenderPanelTitle = true;
 		mPanelTitle = TITLE;
-		mEditorLayer = EditorLayer.Track_Segments;
+		mEditorLayer = EditorLayer.Track;
 
 		mNewSegmentButton = new UiButton(parentWindow);
 		mNewSegmentButton.buttonLabel("New");
@@ -107,7 +114,7 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 			mPPrevSegmentButton = new UiButton(parentWindow);
 			mPPrevSegmentButton.buttonLabel("<");
 			mPPrevSegmentButton.layoutWeight(0.1f);
-			mPPrevSegmentButton.setClickListener(this, BUTTON_PRIMRAY_PREV_LOCAL);
+			mPPrevSegmentButton.setClickListener(this, BUTTON_PRIMARY_PREV_LOCAL);
 
 			mSegmentPrimaryId = new UiLabelledInt(parentWindow, "");
 			mSegmentPrimaryId.layoutWeight(0.2f);
@@ -115,7 +122,7 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 			mPNextSegmentButton = new UiButton(parentWindow);
 			mPNextSegmentButton.buttonLabel(">");
 			mPNextSegmentButton.layoutWeight(0.1f);
-			mPNextSegmentButton.setClickListener(this, BUTTON_PRIMRAY_NEXT_LOCAL);
+			mPNextSegmentButton.setClickListener(this, BUTTON_PRIMARY_NEXT_LOCAL);
 
 			mPHorzGroup = new UiHorizontalEntryGroup(parentWindow);
 			mPHorzGroup.widgets().add(mPriLabel);
@@ -129,9 +136,20 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 
 			mPrimaryEdgeType = new UiButton(parentWindow);
 			mPrimaryEdgeType.buttonLabel("-");
-			mPNextSegmentButton.setClickListener(this, BUTTON_PRIMRAY_TOGGLE_TYPE);
+			mPrimaryEdgeType.setClickListener(this, BUTTON_PRIMARY_TOGGLE_TYPE);
 
-			mSegmentDistance = new UiLabelledFloat(parentWindow, "Segment Distance");
+			mControlNodeGroup = new UiHorizontalEntryGroup(parentWindow);
+			mMoveControlNodeA = new UiButton(parentWindow, "Move A");
+			mMoveControlNodeA.isEnabled(false);
+			mMoveControlNodeA.setClickListener(this, BUTTON_PRIMARY_CONTROL_NODE_1_MOVE);
+			mMoveControlNodeB = new UiButton(parentWindow, "Move B");
+			mMoveControlNodeB.isEnabled(false);
+			mMoveControlNodeB.setClickListener(this, BUTTON_PRIMARY_CONTROL_NODE_2_MOVE);
+
+			mControlNodeGroup.widgets().add(mMoveControlNodeA);
+			mControlNodeGroup.widgets().add(mMoveControlNodeB);
+
+			mSegmentDistance = new UiLabelledFloat(parentWindow, "Length:");
 
 		}
 
@@ -179,6 +197,9 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 		addWidget(mPHorzGroup);
 		addWidget(mSegmentName);
 		addWidget(mSegmentDistance);
+		addWidget(mPrimaryEdgeType);
+		addWidget(mControlNodeGroup);
+
 		addWidget(mDeleteSegmentNode);
 		addWidget(mSHorzGroup);
 		addWidget(mTravelHorzGroup);
@@ -211,12 +232,12 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 		var lNodeSelectionChanged = false;
 		var lSegmentSelectionChanged = false;
 
-		if (mTrackEditorController.mSelectedNodeA != mSelectedNodeA) {
-			mSelectedNodeA = mTrackEditorController.mSelectedNodeA;
+		if (mTrackEditorController.selectedNodeA() != mSelectedNodeA) {
+			mSelectedNodeA = mTrackEditorController.selectedNodeA();
 			lNodeSelectionChanged = true;
 		}
-		if (mTrackEditorController.mSelectedNodeB != mSelectedNodeB) {
-			mSelectedNodeB = mTrackEditorController.mSelectedNodeB;
+		if (mTrackEditorController.selectedNodeB() != mSelectedNodeB) {
+			mSelectedNodeB = mTrackEditorController.selectedNodeB();
 			lNodeSelectionChanged = true;
 		}
 
@@ -236,18 +257,18 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 			}
 
 			// update segment readings on node changes
-			mActiveEdgeLocalIndex = mTrackEditorController.activeEdgeLocalIndex;
-			mAuxiliaryEdgeLocalIndex = mTrackEditorController.auxiliaryEdgeLocalIndex;
+			mActiveEdgeLocalIndex = mTrackEditorController.activeEdgeLocalIndex();
+			mAuxiliaryEdgeLocalIndex = mTrackEditorController.auxiliaryEdgeLocalIndex();
 			lSegmentSelectionChanged = true;
 
 		} else {
-			if (mActiveEdgeLocalIndex != mTrackEditorController.activeEdgeLocalIndex) {
-				mActiveEdgeLocalIndex = mTrackEditorController.activeEdgeLocalIndex;
+			if (mActiveEdgeLocalIndex != mTrackEditorController.activeEdgeLocalIndex()) {
+				mActiveEdgeLocalIndex = mTrackEditorController.activeEdgeLocalIndex();
 				lSegmentSelectionChanged = true;
 			}
 
-			if (mAuxiliaryEdgeLocalIndex != mTrackEditorController.auxiliaryEdgeLocalIndex) {
-				mAuxiliaryEdgeLocalIndex = mTrackEditorController.auxiliaryEdgeLocalIndex;
+			if (mAuxiliaryEdgeLocalIndex != mTrackEditorController.auxiliaryEdgeLocalIndex()) {
+				mAuxiliaryEdgeLocalIndex = mTrackEditorController.auxiliaryEdgeLocalIndex();
 				lSegmentSelectionChanged = true;
 			}
 
@@ -265,11 +286,16 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 			}
 
 			if (lActiveSegment != null) {
+				mSegmentName.inputString(lActiveSegment.segmentName);
+
 				mSegmentPrimaryId.value(lActiveSegment.uid);
 				mSegmentDistance.value(lActiveSegment.edgeLengthInMeters);
+				mPrimaryEdgeType.buttonLabel(RailTrackSegment.getEdgeTypeName(lActiveSegment.edgeType));
 			} else {
+				mSegmentName.inputString("");
 				mSegmentPrimaryId.value(-1);
 				mSegmentDistance.value(0.0f);
+				mPrimaryEdgeType.buttonLabel("-");
 			}
 
 			if (lAuxilierySegment != null) {
@@ -301,6 +327,25 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 				mToggleTravelAllowed.isEnabled(false);
 			}
 		}
+
+		// Listen for changes to the properties on the active edge
+		if (mSelectedNodeA != null) {
+			final var lActiveSegment = mSelectedNodeA.getEdgeByIndex(mActiveEdgeLocalIndex);
+			if (lActiveSegment != null) {
+				if (lActiveSegment.segmentName != null && lActiveSegment.segmentName.length() != mSegmentName.inputString().length()) {
+					final var lInputString = mSegmentName.inputString().toString();
+					if (lActiveSegment.segmentName.equals(lInputString) == false) {
+						lActiveSegment.segmentName = lInputString;
+					}
+				}
+
+				else if (lActiveSegment.segmentName == null && mSegmentName.inputString().length() > 0) {
+					final var lInputString = mSegmentName.inputString().toString();
+					lActiveSegment.segmentName = lInputString;
+				}
+			}
+		}
+
 	}
 
 	// --------------------------------------
@@ -315,38 +360,87 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 
 	@Override
 	public void widgetOnClick(InputManager inputManager, int entryUid) {
+		final var lIsLayerActive = mEditorBrushController.isLayerActive(mEditorLayer);
+		final var lTrackHashCode = mEditorTrackRenderer.hashCode();
+
 		switch (entryUid) {
 		case BUTTON_SHOW_LAYER:
 			mEditorTrackRenderer.drawEditorSegments(isLayerVisible());
 			return;
 
 		case BUTTON_CREATE_SEGMENT:
-			mTrackEditorController.handleTrackEdgeCreation();
+			if (lIsLayerActive) {
+				mTrackEditorController.handleTrackEdgeCreation();
+			}
 			return;
 
 		case BUTTON_TOGGLE_ALLOWED_SEGMENT:
-			mTrackEditorController.toggleSelectedEdgesTravelledAllowed();
-			mActiveEdgeLocalIndex = -1; // force update of segments
+			if (lIsLayerActive) {
+				mTrackEditorController.toggleSelectedEdgesTravelledAllowed();
+				mActiveEdgeLocalIndex = -1; // force update of segments
+			}
 			break;
 
-		case BUTTON_PRIMRAY_PREV_LOCAL:
-			mTrackEditorController.prevLocalPrimaryEdge();
+		case BUTTON_PRIMARY_PREV_LOCAL:
+			if (lIsLayerActive) {
+				mTrackEditorController.prevLocalPrimaryEdge();
+			}
 			break;
 
-		case BUTTON_PRIMRAY_NEXT_LOCAL:
-			mTrackEditorController.nextLocalPrimaryEdge();
+		case BUTTON_PRIMARY_NEXT_LOCAL:
+			if (lIsLayerActive) {
+				mTrackEditorController.nextLocalPrimaryEdge();
+			}
 			break;
 
 		case BUTTON_SECONDARY_PREV_LOCAL:
-			mTrackEditorController.prevLocalSecondaryEdge();
+			if (lIsLayerActive) {
+				mTrackEditorController.prevLocalSecondaryEdge();
+			}
 			break;
 
 		case BUTTON_SECONDARY_NEXT_LOCAL:
-			mTrackEditorController.nextLocalSecondaryEdge();
+			if (lIsLayerActive) {
+				mTrackEditorController.nextLocalSecondaryEdge();
+			}
 			break;
-			
-		case BUTTON_PRIMRAY_TOGGLE_TYPE:
-			mTrackEditorController.togglePrimaryEdgeType();
+
+		case BUTTON_PRIMARY_TOGGLE_TYPE:
+			if (lIsLayerActive) {
+				mTrackEditorController.togglePrimaryEdgeType();
+
+				final var lActiveEdge = mTrackEditorController.getSelectedEdge();
+				if (lActiveEdge != null) {
+					mPrimaryEdgeType.buttonLabel(RailTrackSegment.getEdgeTypeName(lActiveEdge.edgeType));
+
+					final var lIsCurvedEdge = lActiveEdge.edgeType == RailTrackSegment.EDGE_TYPE_CURVE;
+					if (lIsCurvedEdge) {
+						mMoveControlNodeA.isEnabled(true);
+						mMoveControlNodeB.isEnabled(true);
+					} else {
+						mMoveControlNodeA.isEnabled(false);
+						mMoveControlNodeB.isEnabled(false);
+					}
+
+				}
+
+			}
+			break;
+
+		case BUTTON_PRIMARY_CONTROL_NODE_1_MOVE:
+			if (lIsLayerActive) {
+				if (mEditorBrushController.setAction(TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_1, "Moving Control Node 1", lTrackHashCode)) {
+					// TODO: Set mTrackEditorController.setMoveControl1Mode()
+				}
+			}
+			break;
+
+		case BUTTON_PRIMARY_CONTROL_NODE_2_MOVE:
+			if (lIsLayerActive) {
+				if (mEditorBrushController.setAction(TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_2, "Moving Control Node 2", lTrackHashCode)) {
+					// TODO: Set mTrackEditorController.setMoveControl2Mode()
+				}
+			}
 			break;
 		}
 	}
@@ -376,7 +470,7 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 	}
 
 	@Override
-	public void keyPressUpdate(int pCorePoint) {
+	public void keyPressUpdate(int corePoint) {
 
 	}
 }
