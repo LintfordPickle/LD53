@@ -271,7 +271,7 @@ public class RailTrackInstance {
 			if (lSegment.uid > edgeUidCounter)
 				edgeUidCounter = lSegment.uid;
 		}
-		
+
 		trackSignalBlocks.finalizeAfterLoading();
 		trackSignalSegments.finalizeAfterLoading();
 
@@ -316,22 +316,7 @@ public class RailTrackInstance {
 				normalizedDist = 1.f - normalizedDist;
 			}
 
-			boolean lFlipControlPoints = false;
-			if (lNodeA.x > lNodeB.x) {
-				if (lNodeA.y > lNodeB.y) {
-					lFlipControlPoints = true;
-				} else {
-					lFlipControlPoints = false;
-				}
-			} else {
-				if (lNodeA.y > lNodeB.y) {
-					lFlipControlPoints = true;
-				} else {
-					lFlipControlPoints = false;
-				}
-			}
-
-			return MathHelper.bezier4CurveTo(normalizedDist, lNodeA.x, lFlipControlPoints ? segment.control1X : segment.control0X, lFlipControlPoints ? segment.control0X : segment.control1X, lNodeB.x);
+			return MathHelper.bezier4CurveTo(normalizedDist, lNodeA.x, segment.control0X, segment.control1X, lNodeB.x);
 
 		}
 		return 0.f;
@@ -352,22 +337,7 @@ public class RailTrackInstance {
 				normalizedDist = 1.f - normalizedDist;
 			}
 
-			boolean lFlipControlPoints = false;
-			if (lNodeA.x > lNodeB.x) {
-				if (lNodeA.y > lNodeB.y) {
-					lFlipControlPoints = true;
-				} else {
-					lFlipControlPoints = false;
-				}
-			} else {
-				if (lNodeA.y > lNodeB.y) {
-					lFlipControlPoints = true;
-				} else {
-					lFlipControlPoints = false;
-				}
-			}
-
-			return MathHelper.bezier4CurveTo(normalizedDist, lNodeA.y, lFlipControlPoints ? segment.control1Y : segment.control0Y, lFlipControlPoints ? segment.control0Y : segment.control1Y, lNodeB.y);
+			return MathHelper.bezier4CurveTo(normalizedDist, lNodeA.y, segment.control0Y, segment.control1Y, lNodeB.y);
 
 		}
 		return 0.f;

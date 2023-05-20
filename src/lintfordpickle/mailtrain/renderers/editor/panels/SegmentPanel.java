@@ -329,7 +329,7 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 		}
 
 		// Listen for changes to the properties on the active edge
-		if (mSelectedNodeA != null) {
+		if (mSelectedNodeA != null && mActiveEdgeLocalIndex != -1) {
 			final var lActiveSegment = mSelectedNodeA.getEdgeByIndex(mActiveEdgeLocalIndex);
 			if (lActiveSegment != null) {
 				if (lActiveSegment.segmentName != null && lActiveSegment.segmentName.length() != mSegmentName.inputString().length()) {

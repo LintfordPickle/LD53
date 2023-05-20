@@ -474,6 +474,8 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		final var lEdgeList = lTrack.edges();
 
 		final var lSelectedNodeA = mTrackEditorController.selectedNodeA();
+		final var lSelectedEdge = mTrackEditorController.getSelectedEdge();
+
 		final var lEdgeIndex = lSelectedNodeA != null ? mTrackEditorController.activeEdgeLocalIndex() : -1;
 		final var lEdgeIndexConstraint = lSelectedNodeA != null ? mTrackEditorController.auxiliaryEdgeLocalIndex() : -1;
 
@@ -527,18 +529,6 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 				Debug.debugManager().drawers().drawLine(lNodeA.x, lNodeA.y, lNodeB.x, lNodeB.y, lR, lG, lB);
 
 			} else { // S-Curve
-				if (lNodeA.x > lNodeB.x) {
-					var temp = lNodeB;
-					lNodeB = lNodeA;
-					lNodeA = temp;
-				}
-
-				if (lNodeA.y > lNodeB.y) {
-					var temp = lNodeB;
-					lNodeB = lNodeA;
-					lNodeA = temp;
-				}
-
 				float lLastX = lNodeA.x;
 				float lLastY = lNodeA.y;
 				for (float t = 0f; t <= 1.1f; t += 0.1f) {
@@ -551,14 +541,15 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 					lLastY = lNewPointY;
 				}
 
-				Debug.debugManager().drawers().drawLine(lEdge.control0X, lEdge.control0Y, lNodeA.x, lNodeA.y, lR, lG, lB);
-				Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lEdge.control0X, lEdge.control0Y, 5, 8, GL11.GL_LINE_STRIP, 1, 1, 1, 1);
-				mGameTextFont.drawText("A", lEdge.control0X + 5, lEdge.control0Y, -0.1f, ColorConstants.WHITE, .4f, -1);
+				if (lSelectedEdge != null && lSelectedEdge.uid == lEdge.uid) {
+					Debug.debugManager().drawers().drawLine(lEdge.control0X, lEdge.control0Y, lNodeA.x, lNodeA.y, lR, lG, lB);
+					Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lEdge.control0X, lEdge.control0Y, 5, 8, GL11.GL_LINE_STRIP, 1, 1, 1, 1);
+					mGameTextFont.drawText("A", lEdge.control0X + 5, lEdge.control0Y, -0.1f, ColorConstants.WHITE, .4f, -1);
 
-				Debug.debugManager().drawers().drawLine(lEdge.control1X, lEdge.control1Y, lNodeB.x, lNodeB.y, lR, lG, lB);
-				Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lEdge.control1X, lEdge.control1Y, 5, 8, GL11.GL_LINE_STRIP, 1, 1, 1, 1);
-				mGameTextFont.drawText("B", lEdge.control1X + 5, lEdge.control1Y, -0.1f, ColorConstants.WHITE, .4f, -1);
-
+					Debug.debugManager().drawers().drawLine(lEdge.control1X, lEdge.control1Y, lNodeB.x, lNodeB.y, lR, lG, lB);
+					Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lEdge.control1X, lEdge.control1Y, 5, 8, GL11.GL_LINE_STRIP, 1, 1, 1, 1);
+					mGameTextFont.drawText("B", lEdge.control1X + 5, lEdge.control1Y, -0.1f, ColorConstants.WHITE, .4f, -1);
+				}
 			}
 
 			final float lWorldPositionX = (lNodeA.x + lNodeB.x) / 2.f;
@@ -750,7 +741,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 
 	@Override
 	public boolean allowKeyboardInput() {
-		return false;
+		return true;
 	}
 
 	@Override

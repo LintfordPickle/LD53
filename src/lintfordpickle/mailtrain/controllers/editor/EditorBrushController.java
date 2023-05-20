@@ -179,6 +179,8 @@ public class EditorBrushController extends BaseController {
 		mDoingWhatMessage = actionString;
 
 		mEditorBrush.brushActionUid(actionUid);
+		
+		System.out.println("Setting ownerhash to " + ownerHash);
 
 		return true;
 	}

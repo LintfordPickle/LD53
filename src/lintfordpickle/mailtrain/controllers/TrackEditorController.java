@@ -565,7 +565,7 @@ public class TrackEditorController extends BaseController {
 		final var lSelectedNodeA = selectedNodeA();
 		final var lSelectedEdge = getSelectedEdge();
 
-		if (lSelectedNodeA.numberConnectedEdges() == 3) {
+		if (lSelectedEdge.trackJunction == null || lSelectedEdge.trackJunction.isSignalActive == false) {
 			final int lEdgeUid0 = mSelectedNodeA.getOtherEdgeConnectionUids(lSelectedEdge.uid);
 			final int lEdgeUid1 = mSelectedNodeA.getOtherEdgeConnectionUids2(lSelectedEdge.uid);
 			lSelectedEdge.trackJunction.init(mSelectedNodeA.uid, lEdgeUid0, lEdgeUid1);

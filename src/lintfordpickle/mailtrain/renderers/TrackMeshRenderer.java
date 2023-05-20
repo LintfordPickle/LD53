@@ -274,16 +274,6 @@ public abstract class TrackMeshRenderer extends BaseRenderer implements IInputPr
 
 			var lNodeA = lTrack.getNodeByUid(lEdge.nodeAUid);
 			var lNodeB = lTrack.getNodeByUid(lEdge.nodeBUid);
-			if (lNodeA.x > lNodeB.x) {
-				var temp = lNodeB;
-				lNodeB = lNodeA;
-				lNodeA = temp;
-			}
-			if (lNodeA.y > lNodeB.y) {
-				var temp = lNodeB;
-				lNodeB = lNodeA;
-				lNodeA = temp;
-			}
 			final float lDist = Vector2f.dst(lNodeA.x, lNodeA.y, lNodeB.x, lNodeB.y);
 
 			float lOldPointX = lNodeA.x;
