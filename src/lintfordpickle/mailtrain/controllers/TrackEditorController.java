@@ -28,6 +28,8 @@ public class TrackEditorController extends BaseController {
 
 	public static final int CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_1 = 101;
 	public static final int CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_2 = 102;
+	public static final int CONTROLLER_EDITOR_ACTION_MOVE_JUNCTION_BOX = 103;
+	public static final int CONTROLLER_EDITOR_ACTION_MOVE_JUNCTION_POST = 104;
 
 	// ---------------------------------------------
 	// Variables
@@ -523,49 +525,60 @@ public class TrackEditorController extends BaseController {
 		updateUpdateCounter();
 	}
 
-	public void moveSelectedSegmentControlNode1(float worldX, float worldY) {
-		if (mSelectedNodeA == null)
+	public void moveSelectedSegmentJunctionBoxTo(float worldX, float worldY) {
+		final var lSelectedEdge = getSelectedEdge();
+		if (lSelectedEdge == null)
 			return;
 
-		if (mActiveEdgeLocalIndex != -1) {
-			final var lManipulateEdge = mSelectedNodeA.getEdgeByIndex(mActiveEdgeLocalIndex);
-
-			if (lManipulateEdge == null)
-				return;
-
-			lManipulateEdge.control0X = worldX;
-			lManipulateEdge.control0Y = worldY;
-
-			lManipulateEdge.edgeLengthInMeters = mTrack.getEdgeLength(lManipulateEdge);
-			updateUpdateCounter();
+		final var lJunction = lSelectedEdge.trackJunction;
+		if (lJunction != null) {
+			lJunction.signalBoxWorldX = worldX;
+			lJunction.signalBoxWorldY = worldY;
 		}
 	}
 
-	public void moveSelectedSegmentControlNode2(float worldX, float worldY) {
-		if (mSelectedNodeA == null)
+	public void moveSelectedSegmentJunctionPostTo(float worldX, float worldY) {
+		final var lSelectedEdge = getSelectedEdge();
+		if (lSelectedEdge == null)
 			return;
 
-		if (mActiveEdgeLocalIndex != -1) {
-			final var lManipulateEdge = mSelectedNodeA.getEdgeByIndex(mActiveEdgeLocalIndex);
-
-			if (lManipulateEdge == null)
-				return;
-
-			lManipulateEdge.control1X = worldX;
-			lManipulateEdge.control1Y = worldY;
-
-			lManipulateEdge.edgeLengthInMeters = mTrack.getEdgeLength(lManipulateEdge);
-			updateUpdateCounter();
+		final var lJunction = lSelectedEdge.trackJunction;
+		if (lJunction != null) {
+			lJunction.signalLampWorldX = worldX;
+			lJunction.signalLampWorldY = worldY;
 		}
+	}
+
+	public void moveSelectedSegmentControlNode1To(float worldX, float worldY) {
+		final var lSelectedEdge = getSelectedEdge();
+		if (lSelectedEdge == null)
+			return;
+
+		lSelectedEdge.control0X = worldX;
+		lSelectedEdge.control0Y = worldY;
+
+		lSelectedEdge.edgeLengthInMeters = mTrack.getEdgeLength(lSelectedEdge);
+		updateUpdateCounter();
+	}
+
+	public void moveSelectedSegmentControlNode2To(float worldX, float worldY) {
+		final var lSelectedEdge = getSelectedEdge();
+		if (lSelectedEdge == null)
+			return;
+
+		lSelectedEdge.control1X = worldX;
+		lSelectedEdge.control1Y = worldY;
+
+		lSelectedEdge.edgeLengthInMeters = mTrack.getEdgeLength(lSelectedEdge);
+		updateUpdateCounter();
 	}
 
 	// --- Junctions
 
 	public void toggleSelectedEdgeJunction() {
-		final var lSelectedNodeA = selectedNodeA();
 		final var lSelectedEdge = getSelectedEdge();
 
-		if (lSelectedEdge.trackJunction == null || lSelectedEdge.trackJunction.isSignalActive == false) {
+		if (lSelectedEdge.trackJunction.isSignalActive == false) {
 			final int lEdgeUid0 = mSelectedNodeA.getOtherEdgeConnectionUids(lSelectedEdge.uid);
 			final int lEdgeUid1 = mSelectedNodeA.getOtherEdgeConnectionUids2(lSelectedEdge.uid);
 			lSelectedEdge.trackJunction.init(mSelectedNodeA.uid, lEdgeUid0, lEdgeUid1);
@@ -601,8 +614,8 @@ public class TrackEditorController extends BaseController {
 		if (lSelectedEdge.trackJunction == null || lSelectedEdge.trackJunction.isSignalActive == false)
 			return;
 
-		lSelectedEdge.trackJunction.signalLampOffsetX = worldX - mSelectedNodeA.x;
-		lSelectedEdge.trackJunction.signalLampOffsetY = worldY - mSelectedNodeA.y;
+		lSelectedEdge.trackJunction.signalLampWorldX = worldX - mSelectedNodeA.x;
+		lSelectedEdge.trackJunction.signalLampWorldY = worldY - mSelectedNodeA.y;
 
 		updateUpdateCounter();
 	}
@@ -616,8 +629,8 @@ public class TrackEditorController extends BaseController {
 		if (lSelectedEdge.trackJunction == null || lSelectedEdge.trackJunction.isSignalActive == false)
 			return;
 
-		lSelectedEdge.trackJunction.signalBoxOffsetX = worldX - mSelectedNodeA.x;
-		lSelectedEdge.trackJunction.signalBoxOffsetY = worldY - mSelectedNodeA.y;
+		lSelectedEdge.trackJunction.signalBoxWorldX = worldX - mSelectedNodeA.x;
+		lSelectedEdge.trackJunction.signalBoxWorldY = worldY - mSelectedNodeA.y;
 
 		updateUpdateCounter();
 	}

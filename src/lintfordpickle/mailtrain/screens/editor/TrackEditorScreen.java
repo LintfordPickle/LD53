@@ -104,7 +104,7 @@ public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
 
 		mWorldHeader = worldHeader;
 		mSceneHeader = sceneHeader;
-		
+
 		screenManager.contextHintManager().enabled(false);
 
 		mGameScene = new GameSceneInstance(worldHeader);
@@ -191,6 +191,15 @@ public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
 		}
 
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_ESCAPE, this)) {
+			if (mEditorBrush.isActionSet()) {
+				mEditorBrush.clearAction();
+				return;
+			}
+
+			// otherwise check for changes to the map before exiting
+
+			// otherwise, exit
+
 			if (lScreenManager.getTopScreen() instanceof SaveTrackDialog) {
 				lScreenManager.removeScreen(mSaveTrackDialog);
 				return;

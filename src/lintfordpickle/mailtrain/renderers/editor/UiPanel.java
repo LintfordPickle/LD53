@@ -443,7 +443,9 @@ public abstract class UiPanel implements IScrollBarArea, UIWindowChangeListener,
 
 			lWidget.setPosition(lCurPositionX, lCurPositionY);
 			lWidget.width(mPanelArea.width() - mPaddingLeft - mPaddingRight);
-			lWidget.height(lWidgetHeight * 1.f);
+			
+			final var lNewHeight = lWidget.isDoubleHeight() ? lWidgetHeight * 2.f : lWidgetHeight;
+			lWidget.height(lNewHeight);
 
 			UIWidget lNextWidget = null;
 			if (i + 1 < mWidgets.size()) {

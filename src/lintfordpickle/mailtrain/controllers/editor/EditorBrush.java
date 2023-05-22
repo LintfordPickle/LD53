@@ -73,9 +73,11 @@ public class EditorBrush {
 			clearLayer();
 			return;
 		}
+		
+		System.out.println("Setting brush owner to hash: " + ownerHash);
+		System.out.println(ownerHash);
 
 		mOwnerHash = ownerHash;
-
 		mEditorLayer = layer;
 	}
 

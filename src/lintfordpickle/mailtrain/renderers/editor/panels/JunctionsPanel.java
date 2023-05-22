@@ -2,11 +2,13 @@ package lintfordpickle.mailtrain.renderers.editor.panels;
 
 import lintfordpickle.mailtrain.controllers.TrackEditorController;
 import lintfordpickle.mailtrain.data.editor.EditorLayer;
+import lintfordpickle.mailtrain.renderers.EditorTrackRenderer;
 import lintfordpickle.mailtrain.renderers.editor.UiPanel;
 import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.input.InputManager;
 import net.lintford.library.renderers.windows.UiWindow;
 import net.lintford.library.renderers.windows.components.UiButton;
+import net.lintford.library.renderers.windows.components.UiHorizontalEntryGroup;
 
 public class JunctionsPanel extends UiPanel {
 
@@ -16,17 +18,24 @@ public class JunctionsPanel extends UiPanel {
 
 	private static final String TITLE = "Junctions";
 
-	private static final int BUTTON_CREATE_JUNCTION = 10;
-	private static final int BUTTON_DELETE_JUNCTION = 15;
+	private static final int BUTTON_TOGGLE_JUNCTION = 10;
+	private static final int BUTTON_TOGGLE_JUNCTION_ROUTE = 15;
+	private static final int BUTTON_MOVE_BOX = 20;
+	private static final int BUTTON_MOVE_LAMP = 21;
 
 	// --------------------------------------
 	// Variables
 	// --------------------------------------
 
 	private TrackEditorController mTrackEditorController;
+	private EditorTrackRenderer mEditorTrackRenderer;
 
-	private UiButton mCreateJunctionButton;
-	private UiButton mDeleteJunctionNode;
+	private UiButton mToggleJunctionButton;
+	private UiButton mToggleMainRoute;
+
+	private UiHorizontalEntryGroup mPlacementGroup;
+	private UiButton mPlaceBox;
+	private UiButton mPlacePost;
 
 	// --------------------------------------
 	// Constructor
@@ -42,16 +51,30 @@ public class JunctionsPanel extends UiPanel {
 		mPanelTitle = TITLE;
 		mEditorLayer = EditorLayer.Track;
 
-		mCreateJunctionButton = new UiButton(parentWindow);
-		mCreateJunctionButton.buttonLabel("New");
-		mCreateJunctionButton.setClickListener(this, BUTTON_CREATE_JUNCTION);
+		mToggleJunctionButton = new UiButton(parentWindow);
+		mToggleJunctionButton.buttonLabel("Toggle Junction");
+		mToggleJunctionButton.setClickListener(this, BUTTON_TOGGLE_JUNCTION);
 
-		mDeleteJunctionNode = new UiButton(parentWindow);
-		mDeleteJunctionNode.buttonLabel("Delete");
-		mDeleteJunctionNode.setClickListener(this, BUTTON_DELETE_JUNCTION);
+		mToggleMainRoute = new UiButton(parentWindow);
+		mToggleMainRoute.buttonLabel("Toggle Main Path");
+		mToggleMainRoute.setClickListener(this, BUTTON_TOGGLE_JUNCTION_ROUTE);
 
-		addWidget(mCreateJunctionButton);
-		addWidget(mDeleteJunctionNode);
+		mPlacementGroup = new UiHorizontalEntryGroup(parentWindow);
+
+		mPlaceBox = new UiButton(parentWindow);
+		mPlaceBox.buttonLabel("Move Box");
+		mPlaceBox.setClickListener(this, BUTTON_MOVE_BOX);
+
+		mPlacePost = new UiButton(parentWindow);
+		mPlacePost.buttonLabel("Move Lamp");
+		mPlacePost.setClickListener(this, BUTTON_MOVE_LAMP);
+
+		mPlacementGroup.widgets().add(mPlaceBox);
+		mPlacementGroup.widgets().add(mPlacePost);
+
+		addWidget(mToggleJunctionButton);
+		addWidget(mToggleMainRoute);
+		addWidget(mPlacementGroup);
 
 	}
 
@@ -64,40 +87,17 @@ public class JunctionsPanel extends UiPanel {
 		super.initialize(core);
 
 		final var lControllerManager = core.controllerManager();
-
 		mTrackEditorController = (TrackEditorController) lControllerManager.getControllerByNameRequired(TrackEditorController.CONTROLLER_NAME, mEntityGroupUid);
+
+		final var lRendererManager = mParentWindow.rendererManager();
+		mEditorTrackRenderer = (EditorTrackRenderer) lRendererManager.getRenderer(EditorTrackRenderer.RENDERER_NAME);
+		mEditorTrackRenderer.drawEditorJunctions(isLayerVisible());
 
 	}
 
 	// --------------------------------------
 	// Methods
 	// --------------------------------------
-
-	@Override
-	protected void arrangeWidgets(LintfordCore core) {
-		float lCurPositionX = mPanelArea.x() + mPaddingLeft;
-		float lCurPositionY = mPanelArea.y() + mPaddingTop;
-
-		float lWidgetHeight = 25.f;
-		float lVSpacing = mVerticalSpacing;
-
-		if (mRenderPanelTitle || mIsExpandable) {
-			lCurPositionY += getTitleBarHeight();
-		}
-
-		mCreateJunctionButton.setPosition(lCurPositionX, lCurPositionY);
-		mCreateJunctionButton.width(mPanelArea.width() - mPaddingLeft - mPaddingRight);
-		mCreateJunctionButton.height(lWidgetHeight * 1.f);
-
-		lCurPositionY = increaseYPosition(lCurPositionY, mCreateJunctionButton, mDeleteJunctionNode) + lVSpacing;
-
-		mDeleteJunctionNode.setPosition(lCurPositionX, lCurPositionY);
-		mDeleteJunctionNode.width(mPanelArea.width() - mPaddingLeft - mPaddingRight);
-		mDeleteJunctionNode.height(25.f * 1.f);
-
-		lCurPositionY = increaseYPosition(lCurPositionY, mDeleteJunctionNode, null) + lVSpacing;
-
-	}
 
 	@Override
 	public void widgetOnDataChanged(InputManager inputManager, int entryUid) {
@@ -107,14 +107,37 @@ public class JunctionsPanel extends UiPanel {
 
 	@Override
 	public void widgetOnClick(InputManager inputManager, int entryUid) {
-		switch (entryUid) {
+		final var lIsLayerActive = mEditorBrushController.isLayerActive(mEditorLayer);
+		if (lIsLayerActive == false)
+			return;
 
+		final var lTrackHashCode = mEditorTrackRenderer.hashCode();
+
+		switch (entryUid) {
+		case BUTTON_TOGGLE_JUNCTION:
+			mTrackEditorController.toggleSelectedEdgeJunction();
+			break;
+
+		case BUTTON_TOGGLE_JUNCTION_ROUTE:
+			mTrackEditorController.toggleSelectedJunctionLeftRightEdges();
+			break;
+
+		case BUTTON_MOVE_BOX:
+			if (mEditorBrushController.brush().isActionSet() == false)
+				mEditorBrushController.setAction(TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_JUNCTION_BOX, "Moving Junction Box", lTrackHashCode);
+
+			break;
+
+		case BUTTON_MOVE_LAMP:
+			if (mEditorBrushController.brush().isActionSet() == false)
+				mEditorBrushController.setAction(TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_JUNCTION_POST, "Moving Junction Post", lTrackHashCode);
+			break;
 		}
 	}
 
 	@Override
 	public int layerOwnerHashCode() {
-		return hashCode();
+		return mEditorTrackRenderer.hashCode();
 	}
 
 	// --------------------------------------

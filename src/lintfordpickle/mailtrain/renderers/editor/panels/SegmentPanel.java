@@ -447,7 +447,7 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 
 	@Override
 	public int layerOwnerHashCode() {
-		return hashCode();
+		return mEditorTrackRenderer.hashCode();
 	}
 
 	// --------------------------------------

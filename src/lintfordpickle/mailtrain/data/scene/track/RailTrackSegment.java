@@ -94,7 +94,6 @@ public class RailTrackSegment extends TrackEdge {
 			Collections.sort(mSignals);
 
 			// update the segment lengths
-
 			final int lNumSegments = mSignals.size();
 			float lRemainingDist = 1.f;
 			for (int i = lNumSegments - 1; i >= 0; i--) {
@@ -399,6 +398,8 @@ public class RailTrackSegment extends TrackEdge {
 		if (lSegmentSignalCollection == null)
 			return;
 
+		
+		
 		lSegmentSignalCollection.addSignalSegment(pTrack.trackSignalSegments.getFreePooledItem(), true, lDist);
 	}
 }

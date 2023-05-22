@@ -42,6 +42,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 	private TrackEditorController mTrackEditorController;
 	private EditorBrushController mEditorBrushController;
 
+	private Texture mTextureStonebed;
 	private Texture mTextureSleepers;
 	private Texture mTextureMetal;
 	private Texture mTextureBackplate;
@@ -57,6 +58,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 	private boolean mDrawEditorNodes;
 	private boolean mDrawEditorSegments;
 	private boolean mDrawEditorSignals;
+	private boolean mDrawEditorJunctions;
 
 	private boolean mLeftMouseDownTimed;
 	private float mMouseWorldPositionX;
@@ -84,6 +86,22 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 
 	public void drawEditorSegments(boolean drawEditorSegments) {
 		mDrawEditorSegments = drawEditorSegments;
+	}
+
+	public boolean drawEditorJunctions() {
+		return mDrawEditorJunctions;
+	}
+
+	public void drawEditorJunctions(boolean drawEditorJunctions) {
+		mDrawEditorJunctions = drawEditorJunctions;
+	}
+
+	public void drawEditorSignals(boolean newValue) {
+		mDrawEditorSignals = newValue;
+	}
+
+	public boolean drawEditorSignals() {
+		return mDrawEditorSignals;
 	}
 
 	@Override
@@ -128,6 +146,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 
 		mTracksSpriteSheet = pResourceManager.spriteSheetManager().getSpriteSheet("SPRITESHEET_ENVIRONMENT", ConstantsGame.GAME_RESOURCE_GROUP_ID);
 
+		mTextureStonebed = pResourceManager.textureManager().loadTexture("TEXTURE_TRACK_STONEBED", "res/textures/textureTrackStonebed.png", GL11.GL_LINEAR, entityGroupID());
 		mTextureSleepers = pResourceManager.textureManager().loadTexture("TEXTURE_TRACK_SLEEPER", "res/textures/textureTrackSleepers.png", GL11.GL_LINEAR, entityGroupID());
 		mTextureBackplate = pResourceManager.textureManager().loadTexture("TEXTURE_TRACK_BACKPLATE", "res/textures/textureTrackBackplate.png", GL11.GL_LINEAR, entityGroupID());
 		mTextureMetal = pResourceManager.textureManager().loadTexture("TEXTURE_TRACK_METAL", "res/textures/textureTrackMetal.png", GL11.GL_LINEAR, entityGroupID());
@@ -148,9 +167,8 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 
 	@Override
 	public boolean handleInput(LintfordCore core) {
-		if (core.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_R, this)) {
+		if (core.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_R, this))
 			mTrackLogicalCounter = -1;
-		}
 
 		mLeftMouseDownTimed = core.input().mouse().isMouseLeftButtonDownTimed(this);
 
@@ -215,7 +233,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		if (!mTrackEditorController.isInitialized())
 			return;
 
-		//		drawMesh(pCore, mTextureStonebed);
+		drawMesh(core, mTextureStonebed);
 		drawMesh(core, mTextureSleepers);
 		drawMesh(core, mTextureBackplate);
 		drawMesh(core, mTextureMetal);
@@ -251,17 +269,32 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 
 			case TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_1:
 				if (mLeftMouseDownTimed) {
-					mTrackEditorController.moveSelectedSegmentControlNode1(mMouseGridPositionX, mMouseGridPositionY);
+					mTrackEditorController.moveSelectedSegmentControlNode1To(mMouseGridPositionX, mMouseGridPositionY);
 					mEditorBrushController.finishAction(hashCode());
 				}
 				break;
 
 			case TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_2:
 				if (mLeftMouseDownTimed) {
-					mTrackEditorController.moveSelectedSegmentControlNode2(mMouseGridPositionX, mMouseGridPositionY);
+					mTrackEditorController.moveSelectedSegmentControlNode2To(mMouseGridPositionX, mMouseGridPositionY);
 					mEditorBrushController.finishAction(hashCode());
 				}
 				break;
+
+			case TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_JUNCTION_BOX:
+				if (mLeftMouseDownTimed) {
+					mTrackEditorController.moveSelectedSegmentJunctionBoxTo(mMouseGridPositionX, mMouseGridPositionY);
+					mEditorBrushController.finishAction(hashCode());
+				}
+				break;
+
+			case TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_JUNCTION_POST:
+				if (mLeftMouseDownTimed) {
+					mTrackEditorController.moveSelectedSegmentJunctionPostTo(mMouseGridPositionX, mMouseGridPositionY);
+					mEditorBrushController.finishAction(hashCode());
+				}
+				break;
+
 			}
 		}
 
@@ -302,18 +335,12 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 	}
 
 	private boolean handleMoveTrackNode(LintfordCore pCore) {
-		boolean isLeftMouseDown = pCore.input().mouse().isMouseLeftButtonDown();
-
-		final float lMouseWorldSpaceX = pCore.gameCamera().getMouseWorldSpaceX();
-		final float lMouseWorldSpaceY = pCore.gameCamera().getMouseWorldSpaceY();
-
-		final float lGridPositionX = worldToGrid(lMouseWorldSpaceX);
-		final float lGridPositionY = worldToGrid(lMouseWorldSpaceY);
-		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_M) && isLeftMouseDown) {
-			mTrackEditorController.moveSelectedANode(lGridPositionX, lGridPositionY);
-
-			return true;
+		if (mEditorBrushController.brush().isActionSet() == false) {
+			if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_M)) {
+				mEditorBrushController.setAction(TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_NODE, "Move Selected Node", hashCode());
+			}
 		}
+
 		return false;
 	}
 
@@ -541,7 +568,10 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 					lLastY = lNewPointY;
 				}
 
-				if (lSelectedEdge != null && lSelectedEdge.uid == lEdge.uid) {
+				final var lIsPrimaryEdge = lHighlightEdge != null && lHighlightEdge.uid == lEdge.uid;
+				final var lIsSecondaryEdge = lConstrainEdge != null && lConstrainEdge.uid == lEdge.uid;
+
+				if (lIsPrimaryEdge || lIsSecondaryEdge/*lSelectedEdge != null && lSelectedEdge.uid == lEdge.uid*/) {
 					Debug.debugManager().drawers().drawLine(lEdge.control0X, lEdge.control0Y, lNodeA.x, lNodeA.y, lR, lG, lB);
 					Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lEdge.control0X, lEdge.control0Y, 5, 8, GL11.GL_LINE_STRIP, 1, 1, 1, 1);
 					mGameTextFont.drawText("A", lEdge.control0X + 5, lEdge.control0Y, -0.1f, ColorConstants.WHITE, .4f, -1);
@@ -638,41 +668,38 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		if (lActiveEdgeUid == -1)
 			return;
 		final var lActiveEdge = pTrack.getEdgeByUid(lActiveEdgeUid);
+
 		if (lActiveEdge == null) {
 			// FIXME: This still occurs during editing
 			return;
 		}
-		final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(pActiveEdge, lActiveEdge);
-
-		final var lActiveNode = pTrack.getNodeByUid(pCommonNodeUid);
 
 		final var lWorldTexture = mTracksSpriteSheet.texture();
 		pTextureBatch.begin(pCore.gameCamera());
 		{
-			// signal post
+			// Junction post
 			final var lSignalBounds = lIsLeftSignalActive ? mTracksSpriteSheet.getSpriteFrame(mTracksSpriteSheet.getSpriteFrameIndexByName("TEXTURESIGNALLEFT"))
 					: mTracksSpriteSheet.getSpriteFrame(mTracksSpriteSheet.getSpriteFrameIndexByName("TEXTURESIGNALRIGHT"));
 
-			final float lLampOffsetX = pActiveEdge.trackJunction.signalLampOffsetX;
-			final float lLampOffsetY = pActiveEdge.trackJunction.signalLampOffsetY;
+			final float lPostWorldX = pActiveEdge.trackJunction.signalLampWorldX;
+			final float lPostWorldY = pActiveEdge.trackJunction.signalLampWorldY;
 
 			final float lWidth = lSignalBounds.width();
 			final float lHeight = lSignalBounds.height();
 
-			pTextureBatch.draw(lWorldTexture, lSignalBounds, lActiveNode.x - lWidth * .5f + lLampOffsetX, lActiveNode.y - lHeight + lLampOffsetY, lWidth, lHeight, -0.01f, ColorConstants.WHITE);
+			pTextureBatch.draw(lWorldTexture, lSignalBounds, lPostWorldX - lWidth * .5f, lPostWorldY - lHeight * .5f, lWidth, lHeight, -0.01f, ColorConstants.WHITE);
 		}
 		{
-			// signal box
-
+			// Junction box
 			final var lSignalBox = mTracksSpriteSheet.getSpriteFrame(mTracksSpriteSheet.getSpriteFrameIndexByName("TEXTURESIGNALBOX"));
 
-			final float lBoxOffsetX = pActiveEdge.trackJunction.signalBoxOffsetX;
-			final float lBoxOffsetY = pActiveEdge.trackJunction.signalBoxOffsetY;
+			final float lBoxWorldX = pActiveEdge.trackJunction.signalBoxWorldX;
+			final float lBoxWorldY = pActiveEdge.trackJunction.signalBoxWorldY;
 
 			final float lWidth = lSignalBox.width();
 			final float lHeight = lSignalBox.height();
 
-			pTextureBatch.draw(lWorldTexture, lSignalBox, lActiveNode.x - lWidth * .5f + lBoxOffsetX, lActiveNode.y - lHeight * .5f + lBoxOffsetY, lWidth, lHeight, -0.01f, ColorConstants.WHITE);
+			pTextureBatch.draw(lWorldTexture, lSignalBox, lBoxWorldX - lWidth * .5f, lBoxWorldY - lHeight * .5f, lWidth, lHeight, -0.01f, ColorConstants.WHITE);
 
 		}
 		pTextureBatch.end();

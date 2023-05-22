@@ -147,8 +147,8 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 				if (lEdge != null && lEdge.trackJunction != null && lEdge.trackJunction.isSignalActive) {
 					final var lSignalNode = lTrack.getNodeByUid(lEdge.trackJunction.signalNodeUid);
 
-					final var lBoxPosX = lSignalNode.x + lEdge.trackJunction.signalBoxOffsetX;
-					final var lBoxPosY = lSignalNode.y + lEdge.trackJunction.signalBoxOffsetY;
+					final var lBoxPosX = lSignalNode.x + lEdge.trackJunction.signalBoxWorldX;
+					final var lBoxPosY = lSignalNode.y + lEdge.trackJunction.signalBoxWorldY;
 					if (lEdge != null && Vector2f.dst(lMouseWorldSpaceX, lMouseWorldSpaceY, lBoxPosX, lBoxPosY) < 10.f) {
 						lEdge.trackJunction.toggleSignal();
 
@@ -312,8 +312,8 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 
 			final var lSignalBounds = lIsLeftSignalActive ? mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALLEFT") : mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALRIGHT");
 
-			final float lLampOffsetX = pActiveEdge.trackJunction.signalLampOffsetX;
-			final float lLampOffsetY = pActiveEdge.trackJunction.signalLampOffsetY;
+			final float lLampOffsetX = pActiveEdge.trackJunction.signalLampWorldX;
+			final float lLampOffsetY = pActiveEdge.trackJunction.signalLampWorldY;
 
 			final float lWidth = lSignalBounds.width();
 			final float lHeight = lSignalBounds.height();
@@ -325,8 +325,8 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 
 			final var lSignalBox = mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALBOX");
 
-			final float lBoxOffsetX = pActiveEdge.trackJunction.signalBoxOffsetX;
-			final float lBoxOffsetY = pActiveEdge.trackJunction.signalBoxOffsetY;
+			final float lBoxOffsetX = pActiveEdge.trackJunction.signalBoxWorldX;
+			final float lBoxOffsetY = pActiveEdge.trackJunction.signalBoxWorldY;
 
 			final float lWidth = lSignalBox.width();
 			final float lHeight = lSignalBox.height();
@@ -368,8 +368,8 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 		{
 			// signal lamp
 
-			final float lLampOffsetX = pActiveEdge.trackJunction.signalLampOffsetX;
-			final float lLampOffsetY = pActiveEdge.trackJunction.signalLampOffsetY;
+			final float lLampOffsetX = pActiveEdge.trackJunction.signalLampWorldX;
+			final float lLampOffsetY = pActiveEdge.trackJunction.signalLampWorldY;
 
 			final var lSignalBounds = lIsLeftSignalActive ? mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALLEFT") : mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALRIGHT");
 
@@ -382,8 +382,8 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 		{
 			// signal box (clickable bit)
 
-			final float lBoxOffsetX = pActiveEdge.trackJunction.signalBoxOffsetX;
-			final float lBoxOffsetY = pActiveEdge.trackJunction.signalBoxOffsetY;
+			final float lBoxOffsetX = pActiveEdge.trackJunction.signalBoxWorldX;
+			final float lBoxOffsetY = pActiveEdge.trackJunction.signalBoxWorldY;
 
 			final var lSignalBounds = mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALBOX");
 

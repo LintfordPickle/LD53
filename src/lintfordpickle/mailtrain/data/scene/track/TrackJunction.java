@@ -10,18 +10,19 @@ public class TrackJunction {
 	// ---------------------------------------------
 
 	public boolean isSignalActive; // not all nodes are walkable
+	
 	public int leftEdgeUid = -1;
 	public int rightEdgeUid = -1;
 	public int signalNodeUid = -1;
 	public boolean leftEnabled;
 
 	// Visual part
-	public float signalLampOffsetX = 0.f;
-	public float signalLampOffsetY = 0.f;
+	public float signalLampWorldX = 0.f;
+	public float signalLampWorldY = 0.f;
 
 	// Clickable part
-	public float signalBoxOffsetX = 0.f;
-	public float signalBoxOffsetY = 0.f;
+	public float signalBoxWorldX = 0.f;
+	public float signalBoxWorldY = 0.f;
 
 	// ---------------------------------------------
 	// Properties
@@ -70,11 +71,11 @@ public class TrackJunction {
 		leftEnabled = saveDef.leftEnabled;
 		signalNodeUid = saveDef.signalNodeUid;
 
-		signalLampOffsetX = saveDef.lampOffsetX;
-		signalLampOffsetY = saveDef.lampOffsetY;
+		signalLampWorldX = saveDef.lampOffsetX;
+		signalLampWorldY = saveDef.lampOffsetY;
 
-		signalBoxOffsetX = saveDef.boxOffsetX;
-		signalBoxOffsetY = saveDef.boxOffsetY;
+		signalBoxWorldX = saveDef.boxOffsetX;
+		signalBoxWorldY = saveDef.boxOffsetY;
 	}
 
 	public void saveIntoDef(TrackJunctionSaveDefinition saveDef) {
@@ -84,10 +85,10 @@ public class TrackJunction {
 		saveDef.leftEnabled = leftEnabled;
 		saveDef.signalNodeUid = signalNodeUid;
 
-		saveDef.lampOffsetX = signalLampOffsetX;
-		saveDef.lampOffsetY = signalLampOffsetY;
+		saveDef.lampOffsetX = signalLampWorldX;
+		saveDef.lampOffsetY = signalLampWorldY;
 
-		saveDef.boxOffsetX = signalBoxOffsetX;
-		saveDef.boxOffsetY = signalBoxOffsetY;
+		saveDef.boxOffsetX = signalBoxWorldX;
+		saveDef.boxOffsetY = signalBoxWorldY;
 	}
 }
