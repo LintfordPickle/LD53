@@ -1,6 +1,6 @@
 package lintfordpickle.mailtrain.screens;
 
-import lintfordpickle.mailtrain.screens.editor.EditorTrackSelectionScreen;
+import lintfordpickle.mailtrain.screens.editor.EditorSelectionScreen;
 import lintfordpickle.mailtrain.screens.game.LevelSelectionScreen;
 import lintfordpickle.mailtrain.screens.menu.HelpScreen;
 import lintfordpickle.mailtrain.screens.menu.OptionsScreen;
@@ -134,7 +134,7 @@ public class MainMenu extends MenuScreen {
 		}
 
 		case SCREEN_BUTTON_EDITOR: {
-			screenManager().addScreen(new EditorTrackSelectionScreen(mScreenManager));
+			screenManager().addScreen(new EditorSelectionScreen(mScreenManager));
 			break;
 		}
 

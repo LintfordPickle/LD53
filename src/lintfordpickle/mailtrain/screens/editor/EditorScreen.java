@@ -5,7 +5,7 @@ import java.io.File;
 import org.lwjgl.glfw.GLFW;
 
 import lintfordpickle.mailtrain.ConstantsGame;
-import lintfordpickle.mailtrain.controllers.TrackEditorController;
+import lintfordpickle.mailtrain.controllers.EditorTrackController;
 import lintfordpickle.mailtrain.controllers.core.GameCameraMovementController;
 import lintfordpickle.mailtrain.controllers.core.GameCameraZoomController;
 import lintfordpickle.mailtrain.controllers.editor.EditorBrush;
@@ -42,7 +42,7 @@ import net.lintford.library.screenmanager.ScreenManager;
 import net.lintford.library.screenmanager.entries.EntryInteractions;
 import net.lintford.library.screenmanager.screens.LoadingScreen;
 
-public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
+public class EditorScreen extends MenuScreen implements EntryInteractions {
 
 	// ---------------------------------------------
 	// Constants
@@ -74,7 +74,7 @@ public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
 	private GameSceneController mGameSceneController;
 	private GameCameraMovementController mCameraMovementController;
 	private GameCameraZoomController mCameraZoomController;
-	private TrackEditorController mTrackEditorController;
+	private EditorTrackController mTrackEditorController;
 	private SceneryController mSceneryController;
 
 	private EditorFileController mEditorFileController;
@@ -99,7 +99,7 @@ public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
 	// Constructor
 	// ---------------------------------------------
 
-	public TrackEditorScreen(ScreenManager screenManager, GameWorldHeader worldHeader, GameSceneHeader sceneHeader) {
+	public EditorScreen(ScreenManager screenManager, GameWorldHeader worldHeader, GameSceneHeader sceneHeader) {
 		super(screenManager, "");
 
 		mWorldHeader = worldHeader;
@@ -239,7 +239,7 @@ public class TrackEditorScreen extends MenuScreen implements EntryInteractions {
 		// Scene Controllers
 
 		mGameSceneController = new GameSceneController(controllerManager, mWorldHeader, mSceneHeader, mGameScene, entityGroupUid());
-		mTrackEditorController = new TrackEditorController(controllerManager, mGameScene, entityGroupUid());
+		mTrackEditorController = new EditorTrackController(controllerManager, mGameScene, entityGroupUid());
 		mSceneryController = new SceneryController(controllerManager, null, entityGroupUid());
 
 		mCameraMovementController = new GameCameraMovementController(controllerManager, mGameCamera, entityGroupUid());

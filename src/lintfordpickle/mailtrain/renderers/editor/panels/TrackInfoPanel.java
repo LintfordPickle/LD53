@@ -1,6 +1,6 @@
 package lintfordpickle.mailtrain.renderers.editor.panels;
 
-import lintfordpickle.mailtrain.controllers.TrackEditorController;
+import lintfordpickle.mailtrain.controllers.EditorTrackController;
 import lintfordpickle.mailtrain.renderers.editor.UiPanel;
 import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.input.InputManager;
@@ -19,7 +19,7 @@ public class TrackInfoPanel extends UiPanel {
 	// Variables
 	// --------------------------------------
 
-	private TrackEditorController mTrackEditorController;
+	private EditorTrackController mTrackEditorController;
 
 	private UiLabelledInt mNumberNodes;
 	private UiLabelledInt mNumberSegments;
@@ -58,7 +58,7 @@ public class TrackInfoPanel extends UiPanel {
 
 		final var lControllerManager = core.controllerManager();
 
-		mTrackEditorController = (TrackEditorController) lControllerManager.getControllerByNameRequired(TrackEditorController.CONTROLLER_NAME, mEntityGroupUid);
+		mTrackEditorController = (EditorTrackController) lControllerManager.getControllerByNameRequired(EditorTrackController.CONTROLLER_NAME, mEntityGroupUid);
 	}
 
 	@Override

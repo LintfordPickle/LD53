@@ -4,7 +4,7 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 
 import lintfordpickle.mailtrain.ConstantsGame;
-import lintfordpickle.mailtrain.controllers.TrackEditorController;
+import lintfordpickle.mailtrain.controllers.EditorTrackController;
 import lintfordpickle.mailtrain.controllers.editor.EditorBrush;
 import lintfordpickle.mailtrain.controllers.editor.EditorBrushController;
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
@@ -39,7 +39,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 	// ---------------------------------------------
 
 	private SpriteSheetDefinition mTracksSpriteSheet;
-	private TrackEditorController mTrackEditorController;
+	private EditorTrackController mTrackEditorController;
 	private EditorBrushController mEditorBrushController;
 
 	private Texture mTextureStonebed;
@@ -136,7 +136,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 	public void initialize(LintfordCore core) {
 		final var lControllerManager = core.controllerManager();
 
-		mTrackEditorController = (TrackEditorController) lControllerManager.getControllerByNameRequired(TrackEditorController.CONTROLLER_NAME, entityGroupID());
+		mTrackEditorController = (EditorTrackController) lControllerManager.getControllerByNameRequired(EditorTrackController.CONTROLLER_NAME, entityGroupID());
 		mEditorBrushController = (EditorBrushController) lControllerManager.getControllerByNameRequired(EditorBrushController.CONTROLLER_NAME, entityGroupID());
 	}
 
@@ -260,28 +260,28 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		final int lCurrentBrushAction = mEditorBrushController.brush().brushActionUid();
 		if (lCurrentBrushAction != EditorBrush.NO_ACTION_UID) {
 			switch (lCurrentBrushAction) {
-			case TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_NODE:
+			case EditorTrackController.CONTROLLER_EDITOR_ACTION_MOVE_NODE:
 				if (mLeftMouseDownTimed) {
 					mTrackEditorController.moveSelectedANode(mMouseGridPositionX, mMouseGridPositionY);
 					mEditorBrushController.finishAction(hashCode());
 				}
 				break;
 
-			case TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_1:
+			case EditorTrackController.CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_1:
 				if (mLeftMouseDownTimed) {
 					mTrackEditorController.moveSelectedSegmentControlNode1To(mMouseGridPositionX, mMouseGridPositionY);
 					mEditorBrushController.finishAction(hashCode());
 				}
 				break;
 
-			case TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_2:
+			case EditorTrackController.CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_2:
 				if (mLeftMouseDownTimed) {
 					mTrackEditorController.moveSelectedSegmentControlNode2To(mMouseGridPositionX, mMouseGridPositionY);
 					mEditorBrushController.finishAction(hashCode());
 				}
 				break;
 
-			case TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_JUNCTION_BOX:
+			case EditorTrackController.CONTROLLER_EDITOR_ACTION_MOVE_JUNCTION_BOX:
 				if (mLeftMouseDownTimed) {
 					mTrackEditorController.moveSelectedSegmentJunctionBoxTo(mMouseGridPositionX, mMouseGridPositionY);
 					mEditorBrushController.finishAction(hashCode());
@@ -330,7 +330,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 	private boolean handleMoveTrackNode(LintfordCore pCore) {
 		if (mEditorBrushController.brush().isActionSet() == false) {
 			if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_M)) {
-				mEditorBrushController.setAction(TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_NODE, "Move Selected Node", hashCode());
+				mEditorBrushController.setAction(EditorTrackController.CONTROLLER_EDITOR_ACTION_MOVE_NODE, "Move Selected Node", hashCode());
 			}
 		}
 
@@ -432,7 +432,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		if (lCurrentActionUid == EditorBrush.NO_ACTION_UID)
 			return;
 
-		if (lCurrentActionUid == TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_1) {
+		if (lCurrentActionUid == EditorTrackController.CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_1) {
 			final var lSelectedSegment = mTrackEditorController.getSelectedSegment();
 			if (lSelectedSegment != null) {
 				final float lWorldMouseX = core.gameCamera().getMouseWorldSpaceX();
@@ -441,7 +441,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 				Debug.debugManager().drawers().drawLineImmediate(core.gameCamera(), lSelectedSegment.control0X, lSelectedSegment.control0Y, lWorldMouseX, lWorldMouseY);
 			}
 
-		} else if (lCurrentActionUid == TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_2) {
+		} else if (lCurrentActionUid == EditorTrackController.CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_2) {
 			final var lSelectedSegment = mTrackEditorController.getSelectedSegment();
 			if (lSelectedSegment != null) {
 				final float lWorldMouseX = core.gameCamera().getMouseWorldSpaceX();
@@ -450,7 +450,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 				Debug.debugManager().drawers().drawLineImmediate(core.gameCamera(), lSelectedSegment.control1X, lSelectedSegment.control1Y, lWorldMouseX, lWorldMouseY);
 			}
 
-		} else if (lCurrentActionUid == TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_NODE) {
+		} else if (lCurrentActionUid == EditorTrackController.CONTROLLER_EDITOR_ACTION_MOVE_NODE) {
 			final var lSelectedNode = mTrackEditorController.selectedNodeA();
 			if (lSelectedNode != null) {
 				final float lWorldMouseX = core.gameCamera().getMouseWorldSpaceX();

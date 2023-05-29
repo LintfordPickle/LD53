@@ -13,7 +13,7 @@ import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.maths.MathHelper;
 import net.lintford.library.core.maths.Vector2f;
 
-public class TrackEditorController extends BaseController {
+public class EditorTrackController extends BaseController {
 
 	// ---------------------------------------------
 	// Constants
@@ -111,7 +111,7 @@ public class TrackEditorController extends BaseController {
 	// Constructor
 	// ---------------------------------------------
 
-	public TrackEditorController(ControllerManager pControllerManager, GameSceneInstance gameScene, int pEntityGroupUid) {
+	public EditorTrackController(ControllerManager pControllerManager, GameSceneInstance gameScene, int pEntityGroupUid) {
 		super(pControllerManager, CONTROLLER_NAME, pEntityGroupUid);
 
 		mGameScene = gameScene;

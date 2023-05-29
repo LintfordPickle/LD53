@@ -21,7 +21,7 @@ import net.lintford.library.screenmanager.entries.MenuLabelEntry;
 import net.lintford.library.screenmanager.layouts.ListLayout;
 import net.lintford.library.screenmanager.screens.LoadingScreen;
 
-public class EditorTrackSelectionScreen extends MenuScreen {
+public class EditorSelectionScreen extends MenuScreen {
 
 	// ---------------------------------------------
 	// Constants
@@ -64,7 +64,7 @@ public class EditorTrackSelectionScreen extends MenuScreen {
 	// Constructor
 	// ---------------------------------------------
 
-	public EditorTrackSelectionScreen(ScreenManager pScreenManager) {
+	public EditorSelectionScreen(ScreenManager pScreenManager) {
 		super(pScreenManager, "");
 
 		final var lListLayout = new ListLayout(this);
@@ -263,7 +263,7 @@ public class EditorTrackSelectionScreen extends MenuScreen {
 				return;
 			
 			mSelectedSceneHeader.sceneFilename(lSelectedSceneEntry.value.sceneFilename());
-			screenManager().createLoadingScreen(new LoadingScreen(screenManager(), true, new TrackEditorScreen(screenManager(), mSelectedGameWorldHeader, mSelectedSceneHeader)));
+			screenManager().createLoadingScreen(new LoadingScreen(screenManager(), true, new EditorScreen(screenManager(), mSelectedGameWorldHeader, mSelectedSceneHeader)));
 			break;
 
 		case BUTTON_SCENE_DELETE_ID:
@@ -319,7 +319,7 @@ public class EditorTrackSelectionScreen extends MenuScreen {
 		}
 
 		final var lNewSceneHeader = new GameSceneHeader();
-		screenManager().createLoadingScreen(new LoadingScreen(screenManager(), true, new TrackEditorScreen(screenManager(), mSelectedGameWorldHeader, lNewSceneHeader)));
+		screenManager().createLoadingScreen(new LoadingScreen(screenManager(), true, new EditorScreen(screenManager(), mSelectedGameWorldHeader, lNewSceneHeader)));
 	}
 
 	private void deleteFolder(File fileToDelete) throws IOException {

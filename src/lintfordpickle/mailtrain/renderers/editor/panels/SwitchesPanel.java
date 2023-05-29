@@ -1,6 +1,6 @@
 package lintfordpickle.mailtrain.renderers.editor.panels;
 
-import lintfordpickle.mailtrain.controllers.TrackEditorController;
+import lintfordpickle.mailtrain.controllers.EditorTrackController;
 import lintfordpickle.mailtrain.data.editor.EditorLayer;
 import lintfordpickle.mailtrain.data.scene.track.RailTrackNode;
 import lintfordpickle.mailtrain.renderers.EditorTrackRenderer;
@@ -28,7 +28,7 @@ public class SwitchesPanel extends UiPanel {
 	// Variables
 	// --------------------------------------
 
-	private TrackEditorController mTrackEditorController;
+	private EditorTrackController mTrackEditorController;
 	private EditorTrackRenderer mEditorTrackRenderer;
 
 	private UiLabelledInt mMainSegmentUidLabel;
@@ -97,7 +97,7 @@ public class SwitchesPanel extends UiPanel {
 		super.initialize(core);
 
 		final var lControllerManager = core.controllerManager();
-		mTrackEditorController = (TrackEditorController) lControllerManager.getControllerByNameRequired(TrackEditorController.CONTROLLER_NAME, mEntityGroupUid);
+		mTrackEditorController = (EditorTrackController) lControllerManager.getControllerByNameRequired(EditorTrackController.CONTROLLER_NAME, mEntityGroupUid);
 
 		final var lRendererManager = mParentWindow.rendererManager();
 		mEditorTrackRenderer = (EditorTrackRenderer) lRendererManager.getRenderer(EditorTrackRenderer.RENDERER_NAME);
@@ -165,7 +165,7 @@ public class SwitchesPanel extends UiPanel {
 
 		case BUTTON_MOVE_BOX:
 			if (mEditorBrushController.brush().isActionSet() == false)
-				mEditorBrushController.setAction(TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_JUNCTION_BOX, "Moving Junction Box", lTrackHashCode);
+				mEditorBrushController.setAction(EditorTrackController.CONTROLLER_EDITOR_ACTION_MOVE_JUNCTION_BOX, "Moving Junction Box", lTrackHashCode);
 
 			break;
 		}

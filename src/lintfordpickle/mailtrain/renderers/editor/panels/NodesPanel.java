@@ -1,6 +1,6 @@
 package lintfordpickle.mailtrain.renderers.editor.panels;
 
-import lintfordpickle.mailtrain.controllers.TrackEditorController;
+import lintfordpickle.mailtrain.controllers.EditorTrackController;
 import lintfordpickle.mailtrain.data.editor.EditorLayer;
 import lintfordpickle.mailtrain.data.scene.track.RailTrackNode;
 import lintfordpickle.mailtrain.renderers.EditorTrackRenderer;
@@ -27,7 +27,7 @@ public class NodesPanel extends UiPanel {
 	// Variables
 	// --------------------------------------
 
-	private TrackEditorController mTrackEditorController;
+	private EditorTrackController mTrackEditorController;
 
 	private UiLabelledInt mSelectedNodeALabel;
 	private UiLabelledInt mSelectedNodeBLabel;
@@ -92,7 +92,7 @@ public class NodesPanel extends UiPanel {
 
 		final var lControllerManager = core.controllerManager();
 
-		mTrackEditorController = (TrackEditorController) lControllerManager.getControllerByNameRequired(TrackEditorController.CONTROLLER_NAME, mEntityGroupUid);
+		mTrackEditorController = (EditorTrackController) lControllerManager.getControllerByNameRequired(EditorTrackController.CONTROLLER_NAME, mEntityGroupUid);
 
 		final var lRendererManager = mParentWindow.rendererManager();
 		mEditorTrackRenderer = (EditorTrackRenderer) lRendererManager.getRenderer(EditorTrackRenderer.RENDERER_NAME);
@@ -159,7 +159,7 @@ public class NodesPanel extends UiPanel {
 			if (lIsLayerActive == false)
 				return;
 
-			if (mEditorBrushController.setAction(TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_NODE, "Moving Node", layerOwnerHashCode())) {
+			if (mEditorBrushController.setAction(EditorTrackController.CONTROLLER_EDITOR_ACTION_MOVE_NODE, "Moving Node", layerOwnerHashCode())) {
 				mEditorTrackRenderer.setMoveSelectedNode();
 			}
 

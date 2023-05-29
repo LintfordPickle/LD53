@@ -1,7 +1,7 @@
 package lintfordpickle.mailtrain.renderers;
 
 import lintfordpickle.mailtrain.ConstantsGame;
-import lintfordpickle.mailtrain.controllers.TrackEditorController;
+import lintfordpickle.mailtrain.controllers.EditorTrackController;
 import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.ResourceManager;
 import net.lintford.library.core.graphics.ColorConstants;
@@ -28,7 +28,7 @@ public class EditorSignalRenderer extends BaseRenderer {
 	// ---------------------------------------------
 
 	private SpriteSheetDefinition mTrackSpriteSheet; // junctions and signals
-	private TrackEditorController mTrackEditorController;
+	private EditorTrackController mTrackEditorController;
 
 	private SpriteFrame wiresTextureFrame;
 	private SpriteFrame openSignalTextureFrame;
@@ -63,7 +63,7 @@ public class EditorSignalRenderer extends BaseRenderer {
 
 	@Override
 	public void initialize(LintfordCore pCore) {
-		mTrackEditorController = (TrackEditorController) pCore.controllerManager().getControllerByNameRequired(TrackEditorController.CONTROLLER_NAME, entityGroupID());
+		mTrackEditorController = (EditorTrackController) pCore.controllerManager().getControllerByNameRequired(EditorTrackController.CONTROLLER_NAME, entityGroupID());
 	}
 
 	@Override

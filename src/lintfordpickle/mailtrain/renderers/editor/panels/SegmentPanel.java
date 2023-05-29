@@ -1,6 +1,6 @@
 package lintfordpickle.mailtrain.renderers.editor.panels;
 
-import lintfordpickle.mailtrain.controllers.TrackEditorController;
+import lintfordpickle.mailtrain.controllers.EditorTrackController;
 import lintfordpickle.mailtrain.data.editor.EditorLayer;
 import lintfordpickle.mailtrain.data.scene.track.RailTrackInstance;
 import lintfordpickle.mailtrain.data.scene.track.RailTrackNode;
@@ -46,7 +46,7 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 	// --------------------------------------
 
 	private RailTrackInstance mTrack;
-	private TrackEditorController mTrackEditorController;
+	private EditorTrackController mTrackEditorController;
 	private EditorTrackRenderer mEditorTrackRenderer;
 
 	private UiButton mNewSegmentButton;
@@ -217,7 +217,7 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 		super.initialize(core);
 
 		final var lControllerManager = core.controllerManager();
-		mTrackEditorController = (TrackEditorController) lControllerManager.getControllerByNameRequired(TrackEditorController.CONTROLLER_NAME, mEntityGroupUid);
+		mTrackEditorController = (EditorTrackController) lControllerManager.getControllerByNameRequired(EditorTrackController.CONTROLLER_NAME, mEntityGroupUid);
 		mTrack = mTrackEditorController.track();
 
 		final var lRendererManager = mParentWindow.rendererManager();
@@ -442,7 +442,7 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 
 		case BUTTON_PRIMARY_CONTROL_NODE_1_MOVE:
 			if (lIsLayerActive) {
-				if (mEditorBrushController.setAction(TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_1, "Moving Control Node 1", lTrackHashCode)) {
+				if (mEditorBrushController.setAction(EditorTrackController.CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_1, "Moving Control Node 1", lTrackHashCode)) {
 					// TODO: Set mTrackEditorController.setMoveControl1Mode()
 				}
 			}
@@ -450,7 +450,7 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 
 		case BUTTON_PRIMARY_CONTROL_NODE_2_MOVE:
 			if (lIsLayerActive) {
-				if (mEditorBrushController.setAction(TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_2, "Moving Control Node 2", lTrackHashCode)) {
+				if (mEditorBrushController.setAction(EditorTrackController.CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_2, "Moving Control Node 2", lTrackHashCode)) {
 					// TODO: Set mTrackEditorController.setMoveControl2Mode()
 				}
 			}

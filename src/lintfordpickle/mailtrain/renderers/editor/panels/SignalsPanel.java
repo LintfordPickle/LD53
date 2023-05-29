@@ -1,6 +1,6 @@
 package lintfordpickle.mailtrain.renderers.editor.panels;
 
-import lintfordpickle.mailtrain.controllers.TrackEditorController;
+import lintfordpickle.mailtrain.controllers.EditorTrackController;
 import lintfordpickle.mailtrain.data.editor.EditorLayer;
 import lintfordpickle.mailtrain.renderers.EditorTrackRenderer;
 import lintfordpickle.mailtrain.renderers.editor.UiPanel;
@@ -31,7 +31,7 @@ public class SignalsPanel extends UiPanel {
 	// Variables
 	// --------------------------------------
 
-	private TrackEditorController mTrackEditorController;
+	private EditorTrackController mTrackEditorController;
 
 	private UiLabelledInt mSelectedSegmentLabel;
 	private UiHorizontalEntryGroup mHorizonalSegment;
@@ -112,7 +112,7 @@ public class SignalsPanel extends UiPanel {
 		super.initialize(core);
 
 		final var lControllerManager = core.controllerManager();
-		mTrackEditorController = (TrackEditorController) lControllerManager.getControllerByNameRequired(TrackEditorController.CONTROLLER_NAME, mEntityGroupUid);
+		mTrackEditorController = (EditorTrackController) lControllerManager.getControllerByNameRequired(EditorTrackController.CONTROLLER_NAME, mEntityGroupUid);
 
 		final var lRendererManager = mParentWindow.rendererManager();
 		mEditorTrackRenderer = (EditorTrackRenderer) lRendererManager.getRenderer(EditorTrackRenderer.RENDERER_NAME);
