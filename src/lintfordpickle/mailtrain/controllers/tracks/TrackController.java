@@ -64,18 +64,18 @@ public class TrackController extends BaseController implements IInputProcessor {
 		return mGameScene.trackManager().track();
 	}
 
-	public float worldToGrid(final float pWorldCoord) {
-		return RailTrackInstance.worldToGrid(pWorldCoord, GRID_SIZE_DEPRECATED);
+	public float worldToGrid(float worldCoord) {
+		return RailTrackInstance.worldToGrid(worldCoord, GRID_SIZE_DEPRECATED);
 	}
 
 	// ---------------------------------------------
 	// Constructor
 	// ---------------------------------------------
 
-	public TrackController(ControllerManager pControllerManager, GameSceneInstance pGameWorld, int pEntityGroupUid) {
-		super(pControllerManager, CONTROLLER_NAME, pEntityGroupUid);
+	public TrackController(ControllerManager controllerManager, GameSceneInstance gameWorld, int entityGroupUid) {
+		super(controllerManager, CONTROLLER_NAME, entityGroupUid);
 
-		mGameScene = pGameWorld;
+		mGameScene = gameWorld;
 	}
 
 	// ---------------------------------------------
@@ -91,27 +91,13 @@ public class TrackController extends BaseController implements IInputProcessor {
 	}
 
 	@Override
-	public void update(LintfordCore pCore) {
-		super.update(pCore);
+	public void update(LintfordCore core) {
+		super.update(core);
 		if (track().areSignalsDirty) {
-			rebuildTrackSignalBlocks(pCore, track());
+			rebuildTrackSignalBlocks(core, track());
 		} else {
-			updateSignals(pCore, track());
+			updateSignals(core, track());
 		}
-	}
-
-	@Override
-	public boolean handleInput(LintfordCore pCore) {
-		// TODO: Restore this later to save from within game (needs the world + scene)
-
-		//		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_F4, this)) {
-		//			final var lTrackFilename = mGameWorld.gameWorldHeader().trackFilename();
-		//			Debug.debugManager().logger().i(getClass().getSimpleName(), "Saving track to " + lTrackFilename);
-		//			saveTrack(lTrackFilename);
-		//			return true;
-		//		}
-
-		return super.handleInput(pCore);
 	}
 
 	// ---------------------------------------------
@@ -124,9 +110,9 @@ public class TrackController extends BaseController implements IInputProcessor {
 		// TODO:
 	}
 
-	private void updateSignals(LintfordCore pCore, RailTrackInstance pTrack) {
+	private void updateSignals(LintfordCore core, RailTrackInstance trackInstance) {
 		// open all signals
-		pTrack.trackSignalBlocks.openSignalSegmentStates();
+		trackInstance.trackSignalBlocks.openSignalSegmentStates();
 
 		// iterate over the trains and set the newly occupied blocks
 		final var lTrainManager = mTrainController.trainManager();
@@ -136,13 +122,13 @@ public class TrackController extends BaseController implements IInputProcessor {
 			for (int j = 0; j < lTrain.getNumberOfCarsInTrain(); j++) {
 				final var lCar = lTrain.getCarByIndex(j);
 
-				updateSignalSegment(pCore, pTrack, lCar.frontAxle);
-				updateSignalSegment(pCore, pTrack, lCar.rearAxle);
+				updateSignalSegment(core, trackInstance, lCar.frontAxle);
+				updateSignalSegment(core, trackInstance, lCar.rearAxle);
 
 			}
 		}
 		// iterate over the signal blocks and update the warning and danger segments
-		final int lNumSegments = pTrack.getNumberTrackEdges();
+		final int lNumSegments = trackInstance.getNumberTrackSegments();
 		for (int i = 0; i < lNumSegments; i++) {
 			// iterate the whole track and update the signal blocks
 			// TODO:
@@ -150,10 +136,11 @@ public class TrackController extends BaseController implements IInputProcessor {
 		}
 	}
 
-	private void updateSignalSegment(LintfordCore pCore, RailTrackInstance pTrack, TrainAxle pAxle) {
-		final var lAxleTrackSegment = pAxle.currentEdge;
-		final var lDestinationNodeUid = pAxle.destinationNodeUid;
-		final var lDistanceIntoSegment = pAxle.normalizedDistanceAlongEdge;
+	private void updateSignalSegment(LintfordCore core, RailTrackInstance trackInstance, TrainAxle axle) {
+		final var lAxleTrackSegment = axle.currentSegment;
+		final var lDestinationNodeUid = axle.destinationNodeUid;
+		final var lDistanceIntoSegment = axle.normalizedDistanceAlongSegment;
+
 		if (lAxleTrackSegment != null) {
 			lAxleTrackSegment.setBothSignalStates(lDestinationNodeUid, lDistanceIntoSegment, SignalState.Occupied);
 
@@ -162,32 +149,32 @@ public class TrackController extends BaseController implements IInputProcessor {
 
 	// ---------------------------------------------
 
-	public float getDistanceToNextSignalBlock(RailTrackSegment pTrackSegment, float pDist, int pDestNodeUid) {
+	public float getDistanceToNextSignalBlock(RailTrackSegment trackSegment, float dist, int destNodeUid) {
 		final var lTrack = track();
 
 		float lDistanceAccumalated = 0.f;
 
-		var lDestinationNodeUid = pDestNodeUid;
-		var lCurrentTrackSegment = pTrackSegment;
-		var lSignalSegments = lCurrentTrackSegment.getSignalsList(pDestNodeUid);
-		var lOurSignalSegment = lSignalSegments.getSignal(pDist);
+		var lDestinationNodeUid = destNodeUid;
+		var lCurrentTrackSegment = trackSegment;
+		var lSignalSegments = lCurrentTrackSegment.getSignalsList(destNodeUid);
+		var lOurSignalSegment = lSignalSegments.getSignal(dist);
 		final var lOurSignalBlock = lOurSignalSegment.signalBlock;
 		if (lOurSignalBlock == null) {
 			return 0.f;
 		}
 		final var lOrignalSignalBlockUid = lOurSignalBlock.uid;
 
-		final float lOffsetDistanceIntoFirstSegment = (pDist - lOurSignalSegment.startDistance()) / (1.f / lCurrentTrackSegment.edgeLengthInMeters);
+		final float lOffsetDistanceIntoFirstSegment = (dist - lOurSignalSegment.startDistance()) / (1.f / lCurrentTrackSegment.segmentLengthInMeters);
 
 		// Iterate the current path, until we reach a track segment with a different signal block on it
 		while (lOurSignalSegment != null) {
-			lDistanceAccumalated += lOurSignalSegment.length() / (1.f / lCurrentTrackSegment.edgeLengthInMeters);
+			lDistanceAccumalated += lOurSignalSegment.length() / (1.f / lCurrentTrackSegment.segmentLengthInMeters);
 
 			// get next signal
 			lOurSignalSegment = lSignalSegments.getNextSignal(lOurSignalSegment);
 			if (lOurSignalSegment == null) {
 				// Get the first signal from the next track segment
-				lCurrentTrackSegment = lTrack.getNextEdge(lCurrentTrackSegment, lDestinationNodeUid);
+				lCurrentTrackSegment = lTrack.getNextSegment(lCurrentTrackSegment, lDestinationNodeUid);
 				if (lCurrentTrackSegment != null) {
 					lDestinationNodeUid = lCurrentTrackSegment.getOtherNodeUid(lDestinationNodeUid);
 					lSignalSegments = lCurrentTrackSegment.getSignalsList(lDestinationNodeUid);
@@ -206,13 +193,13 @@ public class TrackController extends BaseController implements IInputProcessor {
 		return lDistanceAccumalated - lOffsetDistanceIntoFirstSegment;
 	}
 
-	public RailTrackSignalBlock getNextSignalBlock(RailTrackSegment pTrackSegment, float pDist, int pDestNodeUid) {
+	public RailTrackSignalBlock getNextSignalBlock(RailTrackSegment trackSegment, float dist, int destNodeUid) {
 		final var lTrack = track();
 
-		var lDestinationNodeUid = pDestNodeUid;
-		var lCurrentTrackSegment = pTrackSegment;
-		var lSignalSegments = lCurrentTrackSegment.getSignalsList(pDestNodeUid);
-		var lOurSignalSegment = lSignalSegments.getSignal(pDist);
+		var lDestinationNodeUid = destNodeUid;
+		var lCurrentTrackSegment = trackSegment;
+		var lSignalSegments = lCurrentTrackSegment.getSignalsList(destNodeUid);
+		var lOurSignalSegment = lSignalSegments.getSignal(dist);
 		final var lOurSignalBlock = lOurSignalSegment.signalBlock;
 		if (lOurSignalBlock == null) {
 			return null;
@@ -229,7 +216,7 @@ public class TrackController extends BaseController implements IInputProcessor {
 			lOurSignalSegment = lSignalSegments.getNextSignal(lOurSignalSegment);
 			if (lOurSignalSegment == null) {
 				// Get the first signal from the next track segment
-				lCurrentTrackSegment = lTrack.getNextEdge(lCurrentTrackSegment, lDestinationNodeUid);
+				lCurrentTrackSegment = lTrack.getNextSegment(lCurrentTrackSegment, lDestinationNodeUid);
 				if (lCurrentTrackSegment != null) {
 					lDestinationNodeUid = lCurrentTrackSegment.getOtherNodeUid(lDestinationNodeUid);
 					lSignalSegments = lCurrentTrackSegment.getSignalsList(lDestinationNodeUid);
@@ -252,22 +239,23 @@ public class TrackController extends BaseController implements IInputProcessor {
 
 	// ---------------------------------------------
 
-	public static float getEdgeLength(RailTrackInstance pTrack, RailTrackSegment pEdge) {
-		final var lNodeA = pTrack.getNodeByUid(pEdge.nodeAUid);
-		final var lNodeB = pTrack.getNodeByUid(pEdge.nodeBUid);
+	public static float getSegmentLength(RailTrackInstance trackInstance, RailTrackSegment segment) {
+		final var lNodeA = trackInstance.getNodeByUid(segment.nodeAUid);
+		final var lNodeB = trackInstance.getNodeByUid(segment.nodeBUid);
 
-		// TODO: Edge length needs to consider curves
+		// TODO: Segment length needs to consider curves
+
 		return Vector2f.dst(lNodeA.x, lNodeA.y, lNodeB.x, lNodeB.y);
 	}
 
-	public void rebuildTrackSignalBlocks(LintfordCore pCore, RailTrackInstance pTrack) {
+	public void rebuildTrackSignalBlocks(LintfordCore core, RailTrackInstance trackInstance) {
 		mTrackBuildLogicalCounter++;
 
 		// unassign all blocks
-		pTrack.trackSignalBlocks.resetSignalSegments();
+		trackInstance.trackSignalBlocks.resetSignalSegments();
 
 		// Rebuild the track signal blocks.
-		final var lTrackSegments = pTrack.edges();
+		final var lTrackSegments = trackInstance.segments();
 		final int lNumTrackSegments = lTrackSegments.size();
 		for (int i = 0; i < lNumTrackSegments; i++) {
 			final var lTrackSegment = lTrackSegments.get(i);
@@ -282,18 +270,18 @@ public class TrackController extends BaseController implements IInputProcessor {
 			if (lTrackSegment.signalsA.logicalUpdateCounter() < mTrackBuildLogicalCounter) {
 				lTrackSegment.signalsA.logicalUpdateCounter(mTrackBuildLogicalCounter);
 
-				updateBuildSignalBlock(pCore, pTrack, lTrackSegment, lTrackSegment.signalsA, mTrackBuildLogicalCounter);
+				updateBuildSignalBlock(core, trackInstance, lTrackSegment, lTrackSegment.signalsA, mTrackBuildLogicalCounter);
 
 			}
 			// Update TrackSegmentB Signals
 			if (lTrackSegment.signalsB.logicalUpdateCounter() < mTrackBuildLogicalCounter) {
 				lTrackSegment.signalsB.logicalUpdateCounter(mTrackBuildLogicalCounter);
 
-				updateBuildSignalBlock(pCore, pTrack, lTrackSegment, lTrackSegment.signalsB, mTrackBuildLogicalCounter);
+				updateBuildSignalBlock(core, trackInstance, lTrackSegment, lTrackSegment.signalsB, mTrackBuildLogicalCounter);
 
 			}
 		}
-		pTrack.areSignalsDirty = false;
+		trackInstance.areSignalsDirty = false;
 
 		//		final var lBlockInstances = pTrack.trackSignalBlocks.instances();
 		//		final int lNumBlocks = lBlockInstances.size();
@@ -316,28 +304,28 @@ public class TrackController extends BaseController implements IInputProcessor {
 		//		}
 	}
 
-	private void updateBuildSignalBlock(LintfordCore pCore, RailTrackInstance pTrack, RailTrackSegment pTrackSegment, SegmentSignalsCollection pSegmentSignals, int pLUCounter) {
+	private void updateBuildSignalBlock(LintfordCore core, RailTrackInstance trackInstance, RailTrackSegment trackSegment, SegmentSignalsCollection segmentSignals, int pLUCounter) {
 		// -------- Get the ball rolling
 
-		var lCurrentSignal = pSegmentSignals.getSignal(0.0f);
-		var lCurrentSignalBlock = pTrack.trackSignalBlocks.getFreePooledItem();
+		var lCurrentSignal = segmentSignals.getSignal(0.0f);
+		var lCurrentSignalBlock = trackInstance.trackSignalBlocks.getFreePooledItem();
 
 		lCurrentSignalBlock.signalSegments().add(lCurrentSignal);
 		lCurrentSignal.signalBlock = lCurrentSignalBlock;
 
 		// -------- Link to prev segment(s)
 
-		final var lSourceNodeUid = pTrackSegment.getOtherNodeUid(pSegmentSignals.destinationNodeUid());
-		final var lSourceNode = pTrack.getNodeByUid(lSourceNodeUid);
+		final var lSourceNodeUid = trackSegment.getOtherNodeUid(segmentSignals.destinationNodeUid());
+		final var lSourceNode = trackInstance.getNodeByUid(lSourceNodeUid);
 
-		final int lNumSourceSideEdges = lSourceNode.trackSwitch.numberConnectedSegments();
-		for (int i = 0; i < lNumSourceSideEdges; i++) {
-			final var lOtherSourceEdge = lSourceNode.trackSwitch.connectedSegments().get(i);
-			if (lOtherSourceEdge == pTrackSegment)
+		final int lNumSourceSideSegments = lSourceNode.trackSwitch.numberConnectedSegments();
+		for (int i = 0; i < lNumSourceSideSegments; i++) {
+			final var lOtherSourceSegment = lSourceNode.trackSwitch.connectedSegments().get(i);
+			if (lOtherSourceSegment == trackSegment)
 				continue;
 
 			// Can we merge with a signal block from a source node?
-			final var lSignalsOtherNode = lOtherSourceEdge.getSignalsList(lSourceNodeUid);
+			final var lSignalsOtherNode = lOtherSourceSegment.getSignalsList(lSourceNodeUid);
 			final var lLastSignalOtherNode = lSignalsOtherNode.getSignal(1.f);
 			if (lLastSignalOtherNode != null && lLastSignalOtherNode.signalBlock != null) {
 				// merge *their* signals into our list. Finish by recycling the signal block.
@@ -346,17 +334,17 @@ public class TrackController extends BaseController implements IInputProcessor {
 					lCurrentSignalBlock.acquireOtherBlock(lOtherSignalBlock);
 					lOtherSignalBlock.reset();
 
-					pTrack.trackSignalBlocks.returnPooledItem(lOtherSignalBlock);
+					trackInstance.trackSignalBlocks.returnPooledItem(lOtherSignalBlock);
 
 				}
 			}
 		}
 		// -------- Iterate this track segment
 
-		final var lNextSignal = pSegmentSignals.getNextSignal(lCurrentSignal);
+		final var lNextSignal = segmentSignals.getNextSignal(lCurrentSignal);
 		if (lNextSignal != null) {
 			if (lNextSignal.isSignalHead()) {
-				lCurrentSignalBlock = pTrack.trackSignalBlocks.getFreePooledItem();
+				lCurrentSignalBlock = trackInstance.trackSignalBlocks.getFreePooledItem();
 
 			}
 			lCurrentSignalBlock.signalSegments().add(lNextSignal);
@@ -365,17 +353,17 @@ public class TrackController extends BaseController implements IInputProcessor {
 		}
 		// -------- Link to next segment(s)
 
-		int pDestinationUid = pSegmentSignals.destinationNodeUid();
-		final var lDestinationNode = pTrack.getNodeByUid(pDestinationUid);
+		int pDestinationUid = segmentSignals.destinationNodeUid();
+		final var lDestinationNode = trackInstance.getNodeByUid(pDestinationUid);
 
-		final int lNumDestinationSideEdges = lDestinationNode.trackSwitch.numberConnectedSegments();
-		for (int i = 0; i < lNumDestinationSideEdges; i++) {
-			final var lOtherSourceEdge = lDestinationNode.trackSwitch.connectedSegments().get(i);
-			if (lOtherSourceEdge == pTrackSegment)
+		final int lNumDestinationSideSegments = lDestinationNode.trackSwitch.numberConnectedSegments();
+		for (int i = 0; i < lNumDestinationSideSegments; i++) {
+			final var lOtherSourceSegment = lDestinationNode.trackSwitch.connectedSegments().get(i);
+			if (lOtherSourceSegment == trackSegment)
 				continue;
 
 			// Can we merge with a signal block from a destination node?
-			final var lSignalsOtherNode = lOtherSourceEdge.getSignalsList(lOtherSourceEdge.getOtherNodeUid(pDestinationUid));
+			final var lSignalsOtherNode = lOtherSourceSegment.getSignalsList(lOtherSourceSegment.getOtherNodeUid(pDestinationUid));
 			final var lLastSignalOtherNode = lSignalsOtherNode.getSignal(0.f);
 			if (lLastSignalOtherNode != null && lLastSignalOtherNode.signalBlock != null) {
 				// merge *their* signals into our list and recycle them
@@ -384,7 +372,7 @@ public class TrackController extends BaseController implements IInputProcessor {
 					lCurrentSignalBlock.acquireOtherBlock(lOtherSignalBlock);
 					lOtherSignalBlock.reset();
 
-					pTrack.trackSignalBlocks.returnPooledItem(lOtherSignalBlock);
+					trackInstance.trackSignalBlocks.returnPooledItem(lOtherSignalBlock);
 
 				}
 			}

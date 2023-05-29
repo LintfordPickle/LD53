@@ -142,12 +142,12 @@ public class TrainController extends BaseController implements ITrainWhisperer, 
 
 			// Check for stops on special zone segments
 			if (lTrain.getSpeed() == 0) {
-				final var lEdge = lTrain.leadCar.frontAxle.currentEdge;
-				if (lEdge != null) {
+				final var lSegment = lTrain.leadCar.frontAxle.currentSegment;
+				if (lSegment != null) {
 
 					// TODO: The triggering basics are there - but more thought needed as to segment types/names/triggers etc.
-					if (lEdge.isEdgeOfType(RailTrackSegment.EDGE_SPECIAL_TYPE_STATION)) {
-						final var lName = lEdge.segmentName;
+					if (lSegment.isSegmentOfType(RailTrackSegment.SEGMENT_SPECIAL_TYPE_STATION)) {
+						final var lName = lSegment.segmentName;
 						if (lName != null) {
 							mTriggerController.setTrigger(TriggerController.TRIGGER_TYPE_NEW_SCENE, -1, lName);
 						}
@@ -161,13 +161,13 @@ public class TrainController extends BaseController implements ITrainWhisperer, 
 	// Methods
 	// ---------------------------------------------
 
-	public Train addNewTrain(RailTrackSegment pSpawnEdge) {
-		return addNewTrain(pSpawnEdge, 0);
+	public Train addNewTrain(RailTrackSegment spawnTrackSegment) {
+		return addNewTrain(spawnTrackSegment, 0);
 	}
 
-	public Train addNewTrain(RailTrackSegment pSpawnEdge, int pNumCarriages) {
+	public Train addNewTrain(RailTrackSegment spawnSegment, int numCarriages) {
 		if (ConstantsGame.DEBUG_FORCE_NO_CARRIAGES)
-			pNumCarriages = 0;
+			numCarriages = 0;
 
 		final int lNewTrainNumber = getNewTrainNumber();
 
@@ -178,19 +178,19 @@ public class TrainController extends BaseController implements ITrainWhisperer, 
 		// Add a locomotive engine to the front of the train
 		final var lLocomotiveCar = createNewTrainCar(lNewTrain, null, TrainCarDefinition.Locomotive00Definition);
 		var lFollowingCar = lLocomotiveCar;
-		for (int i = 0; i < pNumCarriages; i++) {
+		for (int i = 0; i < numCarriages; i++) {
 			lFollowingCar = createNewTrainCar(lNewTrain, lFollowingCar, TrainCarDefinition.Cannon00Definition);
 		}
 
-		if (pSpawnEdge == null) {
+		if (spawnSegment == null) {
 			Debug.debugManager().logger().e(getClass().getSimpleName(), "The track doesn't contain a spawn point!");
-			pSpawnEdge = mTrackController.track().edges().get(0);
+			spawnSegment = mTrackController.track().segments().get(0);
 		}
 
 		lNewTrain.drivingForward(true);
-		placeTrainOnTracks(lNewTrain, pSpawnEdge, pSpawnEdge.nodeAUid, 1.0f);
+		placeTrainOnTracks(lNewTrain, spawnSegment, spawnSegment.nodeAUid, 1.0f);
 
-		lNewTrain.addFollowEdge(pSpawnEdge, pSpawnEdge.nodeAUid);
+		lNewTrain.addFollowSegment(spawnSegment, spawnSegment.nodeAUid);
 
 		mTrainManager.activeTrains().add(lNewTrain);
 		if (ConstantsGame.SOUNDS_ENABLED) {
@@ -200,12 +200,12 @@ public class TrainController extends BaseController implements ITrainWhisperer, 
 		return lNewTrain;
 	}
 
-	private TrainCar createNewTrainCar(Train pParentTrain, TrainCar pTrainCarInFront, TrainCarDefinition pDefinition) {
+	private TrainCar createNewTrainCar(Train pParentTrain, TrainCar trainCarInFront, TrainCarDefinition trainCarDefinition) {
 		final var lNewTrainCar = new TrainCar(mTrainCarPoolUidCounter++);
 
 		lNewTrainCar.train = pParentTrain;
 
-		lNewTrainCar.init(pDefinition);
+		lNewTrainCar.init(trainCarDefinition);
 		lNewTrainCar.trainCallbackListener(this);
 
 		pParentTrain.addTrainCarsToBackOfTrain(lNewTrainCar.frontHitch);
@@ -213,44 +213,44 @@ public class TrainController extends BaseController implements ITrainWhisperer, 
 		return lNewTrainCar;
 	}
 
-	private void placeTrainOnTracks(Train pTrain, RailTrackSegment pSpawnEdge, int pDestinationNodeUid, float pDistanceAlongEdge) {
-		final float lEdgeLength = pSpawnEdge.edgeLengthInMeters;
-		final float lEdgeUnit = (1.f / lEdgeLength);
+	private void placeTrainOnTracks(Train train, RailTrackSegment spawnSegment, int destinationNodeUid, float distanceAlongSegment) {
+		final float lSegmentLength = spawnSegment.segmentLengthInMeters;
+		final float lSegmentUnit = (1.f / lSegmentLength);
 
-		// Axle length starts at front of edge
-		float lAxleLocation = pDistanceAlongEdge;
+		// Axle length starts at front of segment
+		float lAxleLocation = distanceAlongSegment;
 
-		final int lNumCarsInTrain = pTrain.getNumberOfCarsInTrain();
+		final int lNumCarsInTrain = train.getNumberOfCarsInTrain();
 		for (int i = 0; i < lNumCarsInTrain; i++) {
-			final var lTrainCar = pTrain.getCarByIndex(i);
+			final var lTrainCar = train.getCarByIndex(i);
 
 			// TODO: Issue when spawn platform is not long enough for the train (rear carriages have incorrect node info).
 
-			lAxleLocation -= lEdgeUnit * TRAIN_DISTANCE_BETWEEN_FRONT_AND_AXLE;
+			lAxleLocation -= lSegmentUnit * TRAIN_DISTANCE_BETWEEN_FRONT_AND_AXLE;
 
-			lTrainCar.frontAxle.currentEdge = pSpawnEdge;
-			lTrainCar.frontAxle.destinationNodeUid = pSpawnEdge.nodeAUid;
-			lTrainCar.frontAxle.normalizedDistanceAlongEdge = lAxleLocation;
+			lTrainCar.frontAxle.currentSegment = spawnSegment;
+			lTrainCar.frontAxle.destinationNodeUid = spawnSegment.nodeAUid;
+			lTrainCar.frontAxle.normalizedDistanceAlongSegment = lAxleLocation;
 
-			// Fill the next follow edge with the information about the edge we start on (in spawn case)
-			lTrainCar.frontAxle.nextFollowEdge.edge = pSpawnEdge;
-			lTrainCar.frontAxle.nextFollowEdge.targetNodeUid = pDestinationNodeUid;
+			// Fill the next follow segment with the information about the segment we start on (in spawn case)
+			lTrainCar.frontAxle.nextFollowSegment.Segment = spawnSegment;
+			lTrainCar.frontAxle.nextFollowSegment.targetNodeUid = destinationNodeUid;
 
-			lAxleLocation -= lEdgeUnit * TRAIN_DISTANCE_BETWEEN_AXLES;
+			lAxleLocation -= lSegmentUnit * TRAIN_DISTANCE_BETWEEN_AXLES;
 
-			lTrainCar.rearAxle.currentEdge = pSpawnEdge;
-			lTrainCar.rearAxle.destinationNodeUid = pSpawnEdge.nodeAUid;
-			lTrainCar.rearAxle.normalizedDistanceAlongEdge = lAxleLocation;
+			lTrainCar.rearAxle.currentSegment = spawnSegment;
+			lTrainCar.rearAxle.destinationNodeUid = spawnSegment.nodeAUid;
+			lTrainCar.rearAxle.normalizedDistanceAlongSegment = lAxleLocation;
 
-			// Fill the next follow edge with the information about the edge we start on (in spawn case)
-			lTrainCar.rearAxle.nextFollowEdge.edge = pSpawnEdge;
-			lTrainCar.rearAxle.nextFollowEdge.targetNodeUid = pDestinationNodeUid;
+			// Fill the next follow segment with the information about the segment we start on (in spawn case)
+			lTrainCar.rearAxle.nextFollowSegment.Segment = spawnSegment;
+			lTrainCar.rearAxle.nextFollowSegment.targetNodeUid = destinationNodeUid;
 
-			lAxleLocation -= lEdgeUnit * TRAIN_DISTANCE_BETWEEN_REAR_AND_AXLE;
-			lAxleLocation -= lEdgeUnit * DISTANCE_BETWEENCONNECTED_TRAINS;
+			lAxleLocation -= lSegmentUnit * TRAIN_DISTANCE_BETWEEN_REAR_AND_AXLE;
+			lAxleLocation -= lSegmentUnit * DISTANCE_BETWEENCONNECTED_TRAINS;
 
-			pTrain.updateAxleWorldPosition(mTrackController.track(), lTrainCar.frontAxle);
-			pTrain.updateAxleWorldPosition(mTrackController.track(), lTrainCar.rearAxle);
+			train.updateAxleWorldPosition(mTrackController.track(), lTrainCar.frontAxle);
+			train.updateAxleWorldPosition(mTrackController.track(), lTrainCar.rearAxle);
 		}
 	}
 
@@ -365,8 +365,8 @@ public class TrainController extends BaseController implements ITrainWhisperer, 
 		final var lLeadAxle = pTrain.drivingForward() ? lTrainCar.frontAxle : lTrainCar.getAxleOnFreeHitch();
 
 		final var lDestNodeUid = lLeadAxle.destinationNodeUid;
-		final var lDistance = lLeadAxle.normalizedDistanceAlongEdge;
-		final var lCurrentSegment = lLeadAxle.currentEdge;
+		final var lDistance = lLeadAxle.normalizedDistanceAlongSegment;
+		final var lCurrentSegment = lLeadAxle.currentSegment;
 
 		return mTrackController.getDistanceToNextSignalBlock(lCurrentSegment, lDistance, lDestNodeUid);
 	}

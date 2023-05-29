@@ -125,7 +125,7 @@ public class EditorSignalRenderer extends BaseRenderer {
 			if (lTrackSegment == null)
 				continue;
 
-			final var lTrackSegmentLength = lTrackSegment.edgeLengthInMeters;
+			final var lTrackSegmentLength = lTrackSegment.segmentLengthInMeters;
 
 			final var lDestNode = lTrack.getNodeByUid(lSignal.destinationNodeUid());
 			if (lDestNode == null)
@@ -149,8 +149,8 @@ public class EditorSignalRenderer extends BaseRenderer {
 			final float lNormX = lVectorX / lTrackSegmentLength;
 			final float lNormY = lVectorY / lTrackSegmentLength;
 
-			final float lWorldX = lTrack.getPositionAlongEdgeX(lTrackSegment, lSourceNodeUid, lDistanceIntoNode);
-			final float lWorldY = lTrack.getPositionAlongEdgeY(lTrackSegment, lSourceNodeUid, lDistanceIntoNode);
+			final float lWorldX = lTrack.getPositionAlongSegmentX(lTrackSegment, lSourceNodeUid, lDistanceIntoNode);
+			final float lWorldY = lTrack.getPositionAlongSegmentY(lTrackSegment, lSourceNodeUid, lDistanceIntoNode);
 
 			final float lOffAmtWires = -6.f;
 			final float lOffAmtSignal = 10.f;

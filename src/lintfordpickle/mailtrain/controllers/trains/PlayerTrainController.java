@@ -109,7 +109,7 @@ public class PlayerTrainController extends BaseController implements IInputProce
 		if (pCore.input().keyboard().isKeyDown(GLFW.GLFW_KEY_7)) {
 			// 1. get the distance from the current main train to the start of the next signals
 			final var lDestNodeUid = playerLocomotive().leadCar.frontAxle.destinationNodeUid;
-			final var lCurrentSegment = playerLocomotive().leadCar.frontAxle.currentEdge;
+			final var lCurrentSegment = playerLocomotive().leadCar.frontAxle.currentSegment;
 			final var lSignalSegments = lCurrentSegment.getSignalsList(lDestNodeUid);
 
 			final var lDistanceToNextSignalBlock = mTrainController.getDistanceToNextSignalBlock(lSignalSegments, playerLocomotive());
@@ -169,26 +169,23 @@ public class PlayerTrainController extends BaseController implements IInputProce
 	// Methods
 	// ---------------------------------------------
 
-	// TODO: Need to pass in the spawn edge (World->Scene)
-	public Train addPlayerTrain(String startingEdge) {
-		RailTrackSegment lPlayerSpawnEdge;
+	public Train addPlayerTrain(RailTrackSegment startingSegment) {
+		var lPlayerSpawnSegment = startingSegment;
 
-		if (startingEdge == null) {
-			lPlayerSpawnEdge = mTrackController.track().getEdgeByUid(0);
-		} else {
-			lPlayerSpawnEdge = mTrackController.track().getEdgeByName(startingEdge);
+		if (startingSegment == null) {
+			lPlayerSpawnSegment = mTrackController.track().getSegmentByUid(0);
 		}
 
-		mPlayerLocomotiveTrain = mTrainController.addNewTrain(lPlayerSpawnEdge, 1);
+		mPlayerLocomotiveTrain = mTrainController.addNewTrain(lPlayerSpawnSegment, 1);
 		return mPlayerLocomotiveTrain;
 	}
 
-	public void TESTaddTrainsToMapEdges() {
-		final var lPlayerSpawnEdge = mTrackController.track().getEdgeByUid(5);
+	public void TESTaddTrainsToMapSegments() {
+		final var lPlayerSpawnSegment = mTrackController.track().getSegmentByUid(5);
 
-		mTrainController.addNewTrain(lPlayerSpawnEdge, 1);
+		mTrainController.addNewTrain(lPlayerSpawnSegment, 1);
 	}
-	
+
 	// ---
 
 	@Override

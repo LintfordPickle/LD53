@@ -71,7 +71,7 @@ public class TrackSaveManager implements Serializable {
 		}
 
 		// Save Track Segments
-		final var lTrackSegments = railTrackInstance.edges();
+		final var lTrackSegments = railTrackInstance.segments();
 		final int lNumSegments = lTrackSegments.size();
 		for (int i = 0; i < lNumSegments; i++) {
 			final var railTrackSegment = lTrackSegments.get(i);

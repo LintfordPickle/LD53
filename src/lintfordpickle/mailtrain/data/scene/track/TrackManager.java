@@ -71,12 +71,12 @@ public class TrackManager extends BaseInstanceManager {
 			mTrack.trackSignalSegments.addSignalSegment(lNewSignalSegment);
 		}
 
-		final var lEdgesToLoad = lRailTrackSaveDefinition.railTrackSegments;
-		final var lNumEdgesToLoad = lEdgesToLoad.size();
-		for (int i = 0; i < lNumEdgesToLoad; i++) {
-			final var lEdgeToLoad = lEdgesToLoad.get(i);
-			final var lNewSegment = new RailTrackSegment(lEdgeToLoad);
-			mTrack.edges().add(lNewSegment);
+		final var lSegmentsToLoad = lRailTrackSaveDefinition.railTrackSegments;
+		final var lNumSegmentsToLoad = lSegmentsToLoad.size();
+		for (int i = 0; i < lNumSegmentsToLoad; i++) {
+			final var lSegmentToLoad = lSegmentsToLoad.get(i);
+			final var lNewSegment = new RailTrackSegment(lSegmentToLoad);
+			mTrack.segments().add(lNewSegment);
 		}
 
 		final var lNodesToLoad = lRailTrackSaveDefinition.railTrackNodes;

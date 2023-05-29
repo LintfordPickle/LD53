@@ -17,12 +17,12 @@ public class RailTrackNode extends MapEntity {
 	// Properties
 	// ---------------------------------------------
 
-	public void addEdgeToNode(RailTrackSegment edge) {
-		trackSwitch.addSegmentToSwitch(edge);
+	public void addSegmentToNode(RailTrackSegment segment) {
+		trackSwitch.addSegmentToSwitch(segment);
 	}
 
-	public void removeEdgeByUid(int edgeUid) {
-		trackSwitch.removeSegmentByUid(edgeUid);
+	public void removeSegmentByUid(int segmentUid) {
+		trackSwitch.removeSegmentByUid(segmentUid);
 	}
 
 	public boolean getIsEndNode() {

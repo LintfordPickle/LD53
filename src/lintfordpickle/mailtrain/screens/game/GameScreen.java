@@ -17,6 +17,7 @@ import lintfordpickle.mailtrain.data.GameState;
 import lintfordpickle.mailtrain.data.scanline.ScanlineManager;
 import lintfordpickle.mailtrain.data.scene.GameSceneHeader;
 import lintfordpickle.mailtrain.data.scene.GameSceneInstance;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackSegment;
 import lintfordpickle.mailtrain.data.world.GameWorldHeader;
 import lintfordpickle.mailtrain.renderers.GridRenderer;
 import lintfordpickle.mailtrain.renderers.TrackSignalRenderer;
@@ -128,13 +129,13 @@ public class GameScreen extends BaseGameScreen {
 
 		lControllerManager.initializeControllers(lCore);
 
-		// TODO: Get the scene spawn edge:
-		// If this is the first time visiting the scene, then use TrackSegment.SPAWN_EDGE
-		// otherwise, use the last visited edge from the traversal graph
-		mPlayerTrainController.addPlayerTrain(null);
+		final var lTrackManager = mGameScene.trackManager();
+		final var lPlayerSpawnSegment = lTrackManager.track().getSegmentByType(RailTrackSegment.SEGMENT_SPECIAL_TYPE_MAP_SPAWN);
+
+		mPlayerTrainController.addPlayerTrain(lPlayerSpawnSegment);
 
 		// TEST
-		// mPlayerTrainController.TESTaddTrainsToMapEdges();
+		// mPlayerTrainController.TESTaddTrainsToMapSegments();
 
 		final int lStartingCredits = 1000;
 		final int lStartingCrew = 10;
@@ -150,15 +151,15 @@ public class GameScreen extends BaseGameScreen {
 	}
 
 	@Override
-	public void loadResources(ResourceManager pResourceManager) {
-		super.loadResources(pResourceManager);
+	public void loadResources(ResourceManager resourceManager) {
+		super.loadResources(resourceManager);
 
 		// Load the SpriteSheet resources
 
-		pResourceManager.audioManager().loadAudioFile("SOUND_BACKGROUND", "res/sounds/soundBackground.wav", false);
+		resourceManager.audioManager().loadAudioFile("SOUND_BACKGROUND", "res/sounds/soundBackground.wav", false);
 
-		mAudioDataBufferBackground = pResourceManager.audioManager().getAudioDataBufferByName("SOUND_BACKGROUND");
-		mBackgroundAudioSource = pResourceManager.audioManager().getAudioSource(hashCode(), AudioManager.AUDIO_SOURCE_TYPE_SOUNDFX);
+		mAudioDataBufferBackground = resourceManager.audioManager().getAudioDataBufferByName("SOUND_BACKGROUND");
+		mBackgroundAudioSource = resourceManager.audioManager().getAudioSource(hashCode(), AudioManager.AUDIO_SOURCE_TYPE_SOUNDFX);
 
 		// todo. font loading
 		// pResourceManager.fontManager().load.loadNewFont("FONT_GAME_TEXT", "/res/fonts/Rajdhani-Bold.ttf", 28, true, true);
@@ -199,9 +200,9 @@ public class GameScreen extends BaseGameScreen {
 	}
 
 	@Override
-	public void update(LintfordCore pCore, boolean pOtherScreenHasFocus, boolean pCoveredByOtherScreen) {
-		super.update(pCore, pOtherScreenHasFocus, pCoveredByOtherScreen);
-		if (!pOtherScreenHasFocus && !pCoveredByOtherScreen) {
+	public void update(LintfordCore core, boolean otherScreenHasFocus, boolean coveredByOtherScreen) {
+		super.update(core, otherScreenHasFocus, coveredByOtherScreen);
+		if (!otherScreenHasFocus && !coveredByOtherScreen) {
 
 			final var lNextTrigger = mTriggerController.getNextTrigger();
 			if (lNextTrigger != null) {
@@ -248,16 +249,16 @@ public class GameScreen extends BaseGameScreen {
 	}
 
 	@Override
-	public void draw(LintfordCore pCore) {
-		super.draw(pCore);
+	public void draw(LintfordCore core) {
+		super.draw(core);
 
 		if (mCameraMovementController != null)
-			Debug.debugManager().drawers().drawRectImmediate(pCore.gameCamera(), mCameraMovementController.playArea());
+			Debug.debugManager().drawers().drawRectImmediate(core.gameCamera(), mCameraMovementController.playArea());
 
-		final var lHudBounds = pCore.HUD().boundingRectangle();
+		final var lHudBounds = core.HUD().boundingRectangle();
 
 		final var lTitleFont = mRendererManager.uiTitleFont();
-		lTitleFont.begin(pCore.HUD());
+		lTitleFont.begin(core.HUD());
 		lTitleFont.drawText("Scene: " + mSceneHeader.sceneName(), lHudBounds.left() + 5.f, lHudBounds.top() + 5.f, -0.01f, 1.f);
 		lTitleFont.end();
 

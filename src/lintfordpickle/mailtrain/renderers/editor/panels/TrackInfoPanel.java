@@ -66,7 +66,7 @@ public class TrackInfoPanel extends UiPanel {
 		super.update(core);
 
 		mNumberNodes.value(mTrackEditorController.track().getNumberTrackNodes());
-		mNumberSegments.value(mTrackEditorController.track().getNumberTrackEdges());
+		mNumberSegments.value(mTrackEditorController.track().getNumberTrackSegments());
 		mNumberSignals.value(mTrackEditorController.track().trackSignalSegments.numInstances());
 	}
 

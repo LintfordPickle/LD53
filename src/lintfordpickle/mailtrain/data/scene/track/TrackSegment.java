@@ -1,6 +1,6 @@
 package lintfordpickle.mailtrain.data.scene.track;
 
-public class TrackEdge {
+public class TrackSegment {
 
 	// ---------------------------------------------
 	// Variables
@@ -25,33 +25,33 @@ public class TrackEdge {
 	// Constructors
 	// ---------------------------------------------
 
-	public TrackEdge() {
+	public TrackSegment() {
 
 	}
 
-	public TrackEdge(int pUid) {
-		uid = pUid;
+	public TrackSegment(int uid) {
+		this.uid = uid;
 	}
 
-	public TrackEdge(int pUid, int pNodeAUid, int pNodeBUid) {
-		uid = pUid;
+	public TrackSegment(int uid, int nodeAUid, int nodeBUid) {
+		this.uid = uid;
 
-		nodeAUid = pNodeAUid;
-		nodeBUid = pNodeBUid;
+		this.nodeAUid = nodeAUid;
+		this.nodeBUid = nodeBUid;
 	}
 
 	// ---------------------------------------------
 	// Methods
 	// ---------------------------------------------
 
-	public float getNodeAngle(int pNodeUid) {
-		if (pNodeUid == nodeAUid)
+	public float getNodeAngle(int nodeUid) {
+		if (nodeUid == nodeAUid)
 			return nodeAAngle;
 		return nodeBAngle;
 	}
 
-	public void setNodesUids(int pNodeAUid, int pNodeBUid) {
+	public void setNodesUids(int pNodeAUid, int nodeBUid) {
 		nodeAUid = pNodeAUid;
-		nodeBUid = pNodeBUid;
+		this.nodeBUid = nodeBUid;
 	}
 }

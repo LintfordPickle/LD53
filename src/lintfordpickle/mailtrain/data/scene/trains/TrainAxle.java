@@ -10,14 +10,14 @@ public class TrainAxle {
 	// ---------------------------------------------
 
 	public final TrainCar parentTrainCar;
-	public final TrainFollowEdge nextFollowEdge = new TrainFollowEdge();
+	public final TrainFollowSegment nextFollowSegment = new TrainFollowSegment();
 
-	public RailTrackSegment currentEdge; // ref to edge
+	public RailTrackSegment currentSegment;
 	public int destinationNodeUid = -1; // going to
-	public float normalizedDistanceAlongEdge; // distance into
+	public float normalizedDistanceAlongSegment; // distance into
 	public float overshootDistanceInMeters;
 
-	// World position of this axle. This is derived from the current position on the track (node + edge + distance into edge).
+	// World position of this axle. This is derived from the current position on the track (node + segment + distance into segment).
 	public float worldPositionX;
 	public float worldPositionY;
 
@@ -42,7 +42,7 @@ public class TrainAxle {
 	}
 
 	public boolean hasArrived() {
-		return normalizedDistanceAlongEdge < 0.0f || normalizedDistanceAlongEdge >= 1.f;
+		return normalizedDistanceAlongSegment < 0.0f || normalizedDistanceAlongSegment >= 1.f;
 	}
 
 	// ---------------------------------------------
@@ -62,19 +62,19 @@ public class TrainAxle {
 
 	/** Returns true if end of track reached (without applying any movement) */
 	public boolean driveAxleForward(RailTrackInstance pTrack, float pDriveDistInMeters) {
-		if (currentEdge == null)
+		if (currentSegment == null)
 			return true;
 
 		// Always progressing from 0 -> 1
 
-		final float lThisSegmentLength = currentEdge.edgeLengthInMeters;
+		final float lThisSegmentLength = currentSegment.segmentLengthInMeters;
 		final float lThisSegmentUnit = (1.f / lThisSegmentLength);
 
 		// normalize the distance in meters into segment space
 		final float lHowLongToDriveThisSegment = (pDriveDistInMeters + overshootDistanceInMeters) * lThisSegmentUnit;
 		overshootDistanceInMeters = 0.f;
 
-		final float lAmountRemaining = 1.0f - normalizedDistanceAlongEdge;
+		final float lAmountRemaining = 1.0f - normalizedDistanceAlongSegment;
 		final float lAmtDriveThisSegment = (float) Math.min(lAmountRemaining, lHowLongToDriveThisSegment);
 
 		if (lThisSegmentUnit > 0.f) {
@@ -84,14 +84,14 @@ public class TrainAxle {
 
 		final var lDestNode = pTrack.getNodeByUid(destinationNodeUid);
 
-		// Would the next update push us over the edge?
+		// Would the next update push us over the segment?
 		if (lDestNode.getIsEndNode() && lAmountRemaining < lHowLongToDriveThisSegment) {
-			normalizedDistanceAlongEdge = 1.f;
+			normalizedDistanceAlongSegment = 1.f;
 			return true;
 		}
 
-		normalizedDistanceAlongEdge += lAmtDriveThisSegment;
-		if (normalizedDistanceAlongEdge > 1.f)
+		normalizedDistanceAlongSegment += lAmtDriveThisSegment;
+		if (normalizedDistanceAlongSegment > 1.f)
 			return true;
 
 		// If we overshoot this tick, then carry over the adjustment amount to the next tick/segment
@@ -104,12 +104,12 @@ public class TrainAxle {
 	}
 
 	public void reset() {
-		nextFollowEdge.edge = null;
-		nextFollowEdge.logicalCounter = -1;
+		nextFollowSegment.Segment = null;
+		nextFollowSegment.logicalCounter = -1;
 
-		currentEdge = null;
+		currentSegment = null;
 		destinationNodeUid = -1;
 
-		normalizedDistanceAlongEdge = 0.f;
+		normalizedDistanceAlongSegment = 0.f;
 	}
 }

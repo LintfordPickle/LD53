@@ -17,7 +17,7 @@ public class TrackSwitchSaveDefinition implements Serializable {
 	// ---------------------------------------------
 
 	public int mainSegmentLocalIndex;
-	public List<Integer> connectedEdgeUids = new ArrayList<>();
+	public List<Integer> connectedSegmentUids = new ArrayList<>();
 	public int activeAuxiliarySegmentLocalIndex;
 
 	public float boxOffsetX;

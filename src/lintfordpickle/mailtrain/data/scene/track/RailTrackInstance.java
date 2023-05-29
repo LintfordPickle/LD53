@@ -83,13 +83,13 @@ public class RailTrackInstance {
 
 	private List<RailTrackNode> mNodes;
 
-	private List<RailTrackSegment> mEdges;
+	private List<RailTrackSegment> mSegments;
 
 	private int mTrackLogicalCounter;
 
 	private int nodeUidCounter = 0;
 
-	private int edgeUidCounter = 0;
+	private int segmentUidCounter = 0;
 
 	public transient boolean areSignalsDirty; // signals are initially dirty (after deserialization) or signal insertion
 
@@ -113,110 +113,124 @@ public class RailTrackInstance {
 		return mNodes;
 	}
 
-	public int getNumberTrackEdges() {
-		return mEdges.size();
+	public int getNumberTrackSegments() {
+		return mSegments.size();
 	}
 
-	public List<RailTrackSegment> edges() {
-		return mEdges;
+	public List<RailTrackSegment> segments() {
+		return mSegments;
 	}
 
 	public void setNodeUidCounter(int nodeUidCounter) {
 		this.nodeUidCounter = nodeUidCounter;
 	}
 
-	public void setEdgeUidCounter(int edgeUidCounter) {
-		this.edgeUidCounter = edgeUidCounter;
+	public void setSegmentUidCounter(int segmentUidCounter) {
+		this.segmentUidCounter = segmentUidCounter;
 	}
 
 	public int getNodeUidCounter() {
 		return nodeUidCounter;
 	}
 
-	public int getEdgeUidCounter() {
-		return edgeUidCounter;
+	public int getSegmentUidCounter() {
+		return segmentUidCounter;
 	}
 
 	public int getNewNodeUid() {
 		return nodeUidCounter++;
 	}
 
-	public int getNewEdgeUid() {
-		return edgeUidCounter++;
+	public int getNewSegmentUid() {
+		return segmentUidCounter++;
 	}
 
-	public RailTrackSegment getEdgeByUid(final int pUid) {
-		final int edgeCount = mEdges.size();
-		for (int i = 0; i < edgeCount; i++) {
-			if (mEdges.get(i).uid == pUid)
-				return mEdges.get(i);
+	public RailTrackSegment getSegmentByUid(final int pUid) {
+		final int lSegmentCount = mSegments.size();
+		for (int i = 0; i < lSegmentCount; i++) {
+			if (mSegments.get(i).uid == pUid)
+				return mSegments.get(i);
 
 		}
 		return null;
 	}
 
-	public RailTrackSegment getEdgeByName(final String segmentName) {
-		final int edgeCount = mEdges.size();
-		for (int i = 0; i < edgeCount; i++) {
-			if (mEdges.get(i).segmentName == null)
+	public RailTrackSegment getSegmentByName(final String segmentName) {
+		final int lSegmentCount = mSegments.size();
+		for (int i = 0; i < lSegmentCount; i++) {
+			if (mSegments.get(i).segmentName == null)
 				continue;
 
-			if (mEdges.get(i).segmentName.equals(segmentName))
-				return mEdges.get(i);
+			if (mSegments.get(i).segmentName.equals(segmentName))
+				return mSegments.get(i);
 
 		}
 		return null;
 	}
 
-	public RailTrackNode getNodeByUid(final int pUid) {
+	public RailTrackSegment getSegmentByType(int segmentType) {
+		final int lSegmentCount = mSegments.size();
+		for (int i = 0; i < lSegmentCount; i++) {
+			final var lSegment = mSegments.get(i);
+			if (lSegment.segmentName == null)
+				continue;
+
+			if (lSegment.isSegmentOfType(segmentType))
+				return lSegment;
+
+		}
+		return null;
+	}
+
+	public RailTrackNode getNodeByUid(final int nodeUid) {
 		final int nodeCount = mNodes.size();
 		for (int i = 0; i < nodeCount; i++) {
-			if (mNodes.get(i).uid == pUid)
+			if (mNodes.get(i).uid == nodeUid)
 				return mNodes.get(i);
 
 		}
 		return null;
 	}
 
-	public boolean edgeExistsBetween(int pUidA, int pUidB) {
-		return getEdgeBetweenNodes(pUidA, pUidB) != null;
+	public boolean doesSegmentExistsBetween(int nodeUidA, int nodeUidB) {
+		return getSegmentBetweenNodes(nodeUidA, nodeUidB) != null;
 	}
 
-	public RailTrackSegment getEdgeBetweenNodes(int pUidA, int pUidB) {
-		if (pUidA == pUidB)
+	public RailTrackSegment getSegmentBetweenNodes(int nodeUidA, int nodeUidB) {
+		if (nodeUidA == nodeUidB)
 			return null;
 
-		final int edgeCount = mEdges.size();
-		for (int i = 0; i < edgeCount; i++) {
-			final int lEdgeNodeA = mEdges.get(i).nodeAUid;
-			final int lEdgeNodeB = mEdges.get(i).nodeBUid;
-			if ((lEdgeNodeA == pUidA || lEdgeNodeA == pUidB)) {
-				if ((lEdgeNodeB == pUidA || lEdgeNodeB == pUidB)) {
-					return mEdges.get(i);
+		final int lSegmentCount = mSegments.size();
+		for (int i = 0; i < lSegmentCount; i++) {
+			final int lSegmentNodeA = mSegments.get(i).nodeAUid;
+			final int lSegmentNodeB = mSegments.get(i).nodeBUid;
+			if ((lSegmentNodeA == nodeUidA || lSegmentNodeA == nodeUidB)) {
+				if ((lSegmentNodeB == nodeUidA || lSegmentNodeB == nodeUidB)) {
+					return mSegments.get(i);
 				}
 			}
 		}
 		return null;
 	}
 
-	public static float worldToGrid(final float pWorldCoord, final float pGridSizeInPixels) {
-		return pWorldCoord - (pWorldCoord % pGridSizeInPixels) - (pWorldCoord < 0.f ? pGridSizeInPixels : 0) + pGridSizeInPixels * .5f;
+	public static float worldToGrid(final float worldCoord, final float gridSizeInPixels) {
+		return worldCoord - (worldCoord % gridSizeInPixels) - (worldCoord < 0.f ? gridSizeInPixels : 0) + gridSizeInPixels * .5f;
 	}
 
-	public float getEdgeLength(RailTrackSegment pEdge) {
-		var lNodeA = getNodeByUid(pEdge.nodeAUid);
-		var lNodeB = getNodeByUid(pEdge.nodeBUid);
-		if (pEdge.edgeType == RailTrackSegment.EDGE_TYPE_CURVE) {
+	public float getSegmentLength(RailTrackSegment segment) {
+		var lNodeA = getNodeByUid(segment.nodeAUid);
+		var lNodeB = getNodeByUid(segment.nodeBUid);
+		if (segment.segmentType == RailTrackSegment.SEGMENT_TYPE_CURVE) {
 			float lDist = 0.f;
 
-			float lLastPointX = MathHelper.bezier4CurveTo(0, lNodeA.x, pEdge.control0X, pEdge.control1X, lNodeB.x);
-			float lLastPointY = MathHelper.bezier4CurveTo(0, lNodeA.y, pEdge.control0Y, pEdge.control1Y, lNodeB.y);
+			float lLastPointX = MathHelper.bezier4CurveTo(0, lNodeA.x, segment.control0X, segment.control1X, lNodeB.x);
+			float lLastPointY = MathHelper.bezier4CurveTo(0, lNodeA.y, segment.control0Y, segment.control1Y, lNodeB.y);
 
 			// Same code as in TrackEditorRenderer - consider moving to a helper class I guess
 			final float lStepSize = 0.01f;
 			for (float t = lStepSize; t <= 1.f; t += lStepSize) {
-				final float lNewPointX = MathHelper.bezier4CurveTo(t, lNodeA.x, pEdge.control0X, pEdge.control1X, lNodeB.x);
-				final float lNewPointY = MathHelper.bezier4CurveTo(t, lNodeA.y, pEdge.control0Y, pEdge.control1Y, lNodeB.y);
+				final float lNewPointX = MathHelper.bezier4CurveTo(t, lNodeA.x, segment.control0X, segment.control1X, lNodeB.x);
+				final float lNewPointY = MathHelper.bezier4CurveTo(t, lNodeA.y, segment.control0Y, segment.control1Y, lNodeB.y);
 
 				lDist += Vector2f.dst(lLastPointX, lLastPointY, lNewPointX, lNewPointY);
 
@@ -236,19 +250,19 @@ public class RailTrackInstance {
 
 	public RailTrackInstance() {
 		mNodes = new ArrayList<>();
-		mEdges = new ArrayList<>();
+		mSegments = new ArrayList<>();
 	}
 
 	public void reset() {
 		nodeUidCounter = 0;
-		edgeUidCounter = 0;
+		segmentUidCounter = 0;
 	}
 
 	// ---------------------------------------------
 	// Methods
 	// ---------------------------------------------
 
-	public void finalizeAfterLoading(Object pParent) {
+	public void finalizeAfterLoading(Object parent) {
 		resolveTrackComponents();
 	}
 
@@ -263,23 +277,23 @@ public class RailTrackInstance {
 		}
 
 		// Resolve signal segments
-		final int lSegmentCount = mEdges.size();
+		final int lSegmentCount = mSegments.size();
 		for (int i = 0; i < lSegmentCount; i++) {
-			final var lSegment = mEdges.get(i);
+			final var lSegment = mSegments.get(i);
 			lSegment.finalizeAfterLoading(this);
 
-			if (lSegment.uid > edgeUidCounter)
-				edgeUidCounter = lSegment.uid;
+			if (lSegment.uid > segmentUidCounter)
+				segmentUidCounter = lSegment.uid;
 		}
 
 		trackSignalBlocks.finalizeAfterLoading();
 		trackSignalSegments.finalizeAfterLoading();
 
 		nodeUidCounter++;
-		edgeUidCounter++;
+		segmentUidCounter++;
 	}
 
-	public RailTrackSegment getNextEdge(RailTrackSegment currentSegment, int destinationNodeUid) {
+	public RailTrackSegment getNextSegment(RailTrackSegment currentSegment, int destinationNodeUid) {
 		final var lDestinationNode = getNodeByUid(destinationNodeUid);
 
 		final var lDestinationSegmentUid = lDestinationNode.trackSwitch.getOutSegmentUid(currentSegment.uid);
@@ -287,20 +301,20 @@ public class RailTrackInstance {
 			return null; // no available connecting lines
 		}
 
-		return getEdgeByUid(lDestinationSegmentUid);
+		return getSegmentByUid(lDestinationSegmentUid);
 	}
 
-	public float getPositionAlongEdgeX(RailTrackSegment segment, int fromUid, float normalizedDist) {
+	public float getPositionAlongSegmentX(RailTrackSegment segment, int fromUid, float normalizedDist) {
 		var lNodeA = getNodeByUid(segment.nodeAUid);
 		var lNodeB = getNodeByUid(segment.nodeBUid);
-		switch (segment.edgeType) {
-		case RailTrackSegment.EDGE_TYPE_STRAIGHT:
+		switch (segment.segmentType) {
+		case RailTrackSegment.SEGMENT_TYPE_STRAIGHT:
 			if (segment.nodeAUid != fromUid)
 				normalizedDist = 1.f - normalizedDist;
 
 			final float lLength = lNodeB.x - lNodeA.x;
 			return lNodeA.x + lLength * normalizedDist;
-		case RailTrackSegment.EDGE_TYPE_CURVE:
+		case RailTrackSegment.SEGMENT_TYPE_CURVE:
 			if (segment.nodeAUid != fromUid) {
 				normalizedDist = 1.f - normalizedDist;
 			}
@@ -311,17 +325,17 @@ public class RailTrackInstance {
 		return 0.f;
 	}
 
-	public float getPositionAlongEdgeY(RailTrackSegment segment, int fromUid, float normalizedDist) {
+	public float getPositionAlongSegmentY(RailTrackSegment segment, int fromUid, float normalizedDist) {
 		var lNodeA = getNodeByUid(segment.nodeAUid);
 		var lNodeB = getNodeByUid(segment.nodeBUid);
-		switch (segment.edgeType) {
-		case RailTrackSegment.EDGE_TYPE_STRAIGHT:
+		switch (segment.segmentType) {
+		case RailTrackSegment.SEGMENT_TYPE_STRAIGHT:
 			if (segment.nodeAUid != fromUid)
 				normalizedDist = 1.f - normalizedDist;
 
 			final float lLength = lNodeB.y - lNodeA.y;
 			return lNodeA.y + lLength * normalizedDist;
-		case RailTrackSegment.EDGE_TYPE_CURVE:
+		case RailTrackSegment.SEGMENT_TYPE_CURVE:
 			if (segment.nodeAUid != fromUid) {
 				normalizedDist = 1.f - normalizedDist;
 			}

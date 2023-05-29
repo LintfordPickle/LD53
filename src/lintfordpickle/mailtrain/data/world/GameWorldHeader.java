@@ -125,7 +125,7 @@ public class GameWorldHeader {
 		var lStartScene = entryPointNames().get("GAME_SPAWN");
 
 		if (lStartScene == null) {
-			Debug.debugManager().logger().w(getClass().getSimpleName(), "World doesn't contain any edges named 'GAME_SPAWN'");
+			Debug.debugManager().logger().w(getClass().getSimpleName(), "World doesn't contain any segments named 'GAME_SPAWN'");
 			lStartScene = mSceneHeaders.get(0);
 		}
 

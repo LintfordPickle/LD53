@@ -197,7 +197,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 			if (handleClearEditor(core))
 				return true;
 
-			if (handleEdgeSpecialCases(core))
+			if (handleSegmentSpecialCases(core))
 				return true;
 
 			if (handleSignalBlockControls(core))
@@ -239,7 +239,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		drawMesh(core, mTextureMetal);
 
 		if (mDrawEditorSegments)
-			debugDrawEdges(core);
+			debugDrawSegments(core);
 
 		if (mDrawEditorNodes)
 			debugDrawNodes(core);
@@ -312,9 +312,9 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 	}
 
 	private boolean handleSignalBoxes(LintfordCore pCore) {
-		final var lEdge = mTrackEditorController.getSelectedEdge();
+		final var lSegment = mTrackEditorController.getSelectedSegment();
 
-		if (lEdge == null)
+		if (lSegment == null)
 			return false;
 
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_U, this)) {
@@ -348,47 +348,47 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		return false;
 	}
 
-	private boolean handleEdgeSpecialCases(LintfordCore pCore) {
-		final var lActiveEdge = mTrackEditorController.getSelectedEdge(); // mSelectedNodeA.getEdgeByIndex(activeEdgeLocalIndex);
+	private boolean handleSegmentSpecialCases(LintfordCore pCore) {
+		final var lActiveSegment = mTrackEditorController.getSelectedSegment();
 
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_4, this)) {
-			System.out.println("Setting player spawn edge");
-			lActiveEdge.setEdgeWithType(RailTrackSegment.EDGE_SPECIAL_TYPE_MAP_SPAWN);
+			System.out.println("Setting player spawn segment");
+			lActiveSegment.setSegmentWithType(RailTrackSegment.SEGMENT_SPECIAL_TYPE_MAP_SPAWN);
 			return true;
 		}
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_5, this)) {
-			System.out.println("Setting player exit edge");
-			lActiveEdge.setEdgeWithType(RailTrackSegment.EDGE_SPECIAL_TYPE_MAP_EXIT);
+			System.out.println("Setting player exit segment");
+			lActiveSegment.setSegmentWithType(RailTrackSegment.SEGMENT_SPECIAL_TYPE_MAP_EXIT);
 			return true;
 		}
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_6, this)) {
-			System.out.println("Setting map edge");
-			lActiveEdge.setEdgeWithType(RailTrackSegment.EDGE_SPECIAL_TYPE_MAP_EDGE);
+			System.out.println("Setting map segment");
+			lActiveSegment.setSegmentWithType(RailTrackSegment.SEGMENT_SPECIAL_TYPE_MAP_EDGE);
 			return true;
 		}
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_7, this)) {
 			System.out.println("Setting station");
-			lActiveEdge.setEdgeWithType(RailTrackSegment.EDGE_SPECIAL_TYPE_STATION);
+			lActiveSegment.setSegmentWithType(RailTrackSegment.SEGMENT_SPECIAL_TYPE_STATION);
 			return true;
 		}
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_8, this)) {
-			System.out.println("Setting enemy spawn edge");
-			lActiveEdge.setEdgeWithType(RailTrackSegment.EDGE_SPECIAL_TYPE_ENEMY_SPAWN);
+			System.out.println("Setting enemy spawn segment");
+			lActiveSegment.setSegmentWithType(RailTrackSegment.SEGMENT_SPECIAL_TYPE_ENEMY_SPAWN);
 			return true;
 		}
 
 		// Reset the edge's special flags
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_0, this)) {
-			System.out.println("Resetting edge's special flags");
-			lActiveEdge.setEdgeBitFlag(0);
+			System.out.println("Resetting segment special flags");
+			lActiveSegment.setSegmentBitFlag(0);
 			return true;
 		}
 		return false;
 	}
 
 	private boolean handleSignalBlockControls(LintfordCore pCore) {
-		// Need to get the active edge
-		if (mTrackEditorController.editorPrimaryEdgeLocalIndex() == -1)
+		// Need to get the active segment
+		if (mTrackEditorController.editorPrimarySegmentLocalIndex() == -1)
 			return false;
 
 		// Need to get the active node (A)
@@ -396,11 +396,11 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 			return false;
 
 		final var lSelectedNodeA = mTrackEditorController.selectedNodeA();
-		final var lActiveEdge = lSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(mTrackEditorController.editorPrimaryEdgeLocalIndex());
+		final var lActiveSegment = lSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(mTrackEditorController.editorPrimarySegmentLocalIndex());
 
 		// Check for signal creation
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_Q, this)) {
-			lActiveEdge.addTrackSignal(mTrackEditorController.track(), /* RandomNumbers.random(0.f, 1.f) */ .5f, lActiveEdge.getOtherNodeUid(lSelectedNodeA.uid));
+			lActiveSegment.addTrackSignal(mTrackEditorController.track(), /* RandomNumbers.random(0.f, 1.f) */ .5f, lActiveSegment.getOtherNodeUid(lSelectedNodeA.uid));
 
 			mTrackEditorController.track().areSignalsDirty = true;
 
@@ -433,21 +433,21 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 			return;
 
 		if (lCurrentActionUid == TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_1) {
-			final var lSelectedEdge = mTrackEditorController.getSelectedEdge();
-			if (lSelectedEdge != null) {
+			final var lSelectedSegment = mTrackEditorController.getSelectedSegment();
+			if (lSelectedSegment != null) {
 				final float lWorldMouseX = core.gameCamera().getMouseWorldSpaceX();
 				final float lWorldMouseY = core.gameCamera().getMouseWorldSpaceY();
 
-				Debug.debugManager().drawers().drawLineImmediate(core.gameCamera(), lSelectedEdge.control0X, lSelectedEdge.control0Y, lWorldMouseX, lWorldMouseY);
+				Debug.debugManager().drawers().drawLineImmediate(core.gameCamera(), lSelectedSegment.control0X, lSelectedSegment.control0Y, lWorldMouseX, lWorldMouseY);
 			}
 
 		} else if (lCurrentActionUid == TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_2) {
-			final var lSelectedEdge = mTrackEditorController.getSelectedEdge();
-			if (lSelectedEdge != null) {
+			final var lSelectedSegment = mTrackEditorController.getSelectedSegment();
+			if (lSelectedSegment != null) {
 				final float lWorldMouseX = core.gameCamera().getMouseWorldSpaceX();
 				final float lWorldMouseY = core.gameCamera().getMouseWorldSpaceY();
 
-				Debug.debugManager().drawers().drawLineImmediate(core.gameCamera(), lSelectedEdge.control1X, lSelectedEdge.control1Y, lWorldMouseX, lWorldMouseY);
+				Debug.debugManager().drawers().drawLineImmediate(core.gameCamera(), lSelectedSegment.control1X, lSelectedSegment.control1Y, lWorldMouseX, lWorldMouseY);
 			}
 
 		} else if (lCurrentActionUid == TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_NODE) {
@@ -487,59 +487,59 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 			mGameTextFont.drawText("n" + lNode.uid, lNode.x, lNode.y - 16.f, -0.01f, ColorConstants.WHITE, .4f, -1);
 
 			//if (mDrawEditorJunctions)
-				drawSwitchBox(core, mRendererManager.uiSpriteBatch(), mTrackEditorController.track(), lNode);
+			drawSwitchBox(core, mRendererManager.uiSpriteBatch(), mTrackEditorController.track(), lNode);
 
 		}
 		mGameTextFont.end();
 	}
 
-	public void debugDrawEdges(LintfordCore pCore) {
+	public void debugDrawSegments(LintfordCore core) {
 		final var lTrack = mTrackEditorController.track();
-		final var lEdgeList = lTrack.edges();
+		final var lSegmentList = lTrack.segments();
 
 		final var lSelectedNodeA = mTrackEditorController.selectedNodeA();
 
-		final var lSelectedNodeMainLineEdgeUid = lSelectedNodeA != null ? lSelectedNodeA.trackSwitch.mainSegmentUid() : -1;
-		final var lSelectedNodeAuxLineEdgeUid = lSelectedNodeA != null ? lSelectedNodeA.trackSwitch.activeAuxiliarySegmentUid() : -1;
+		final var lSelectedNodeMainLineSegmentUid = lSelectedNodeA != null ? lSelectedNodeA.trackSwitch.mainSegmentUid() : -1;
+		final var lSelectedNodeAuxLineSegmnetUid = lSelectedNodeA != null ? lSelectedNodeA.trackSwitch.activeAuxiliarySegmentUid() : -1;
 
-		final var lEditorPrimaryHighlightIndex = lSelectedNodeA != null ? mTrackEditorController.editorPrimaryEdgeLocalIndex() : -1;
-		final var lEditorSecondaryHighlightIndex = lSelectedNodeA != null ? mTrackEditorController.editorSecondaryEdgeLocalIndex() : -1;
+		final var lEditorPrimaryHighlightIndex = lSelectedNodeA != null ? mTrackEditorController.editorPrimarySegmentLocalIndex() : -1;
+		final var lEditorSecondaryHighlightIndex = lSelectedNodeA != null ? mTrackEditorController.editorSecondarySegmentLocalIndex() : -1;
 
-		RailTrackSegment lHighlightEdge = null;
-		RailTrackSegment lConstrainEdge = null;
+		RailTrackSegment lHighlightSegment = null;
+		RailTrackSegment lConstrainSegment = null;
 
 		if (lSelectedNodeA != null && lEditorPrimaryHighlightIndex != -1)
-			lHighlightEdge = lSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(lEditorPrimaryHighlightIndex);
+			lHighlightSegment = lSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(lEditorPrimaryHighlightIndex);
 
 		if (lSelectedNodeA != null && lEditorSecondaryHighlightIndex != -1)
-			lConstrainEdge = lSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(lEditorSecondaryHighlightIndex);
+			lConstrainSegment = lSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(lEditorSecondaryHighlightIndex);
 
-		Debug.debugManager().drawers().beginLineRenderer(pCore.gameCamera(), GL11.GL_LINES, 2.f);
+		Debug.debugManager().drawers().beginLineRenderer(core.gameCamera(), GL11.GL_LINES, 2.f);
 
-		mGameTextFont.begin(pCore.gameCamera());
+		mGameTextFont.begin(core.gameCamera());
 
-		final var lEdgeCount = lEdgeList.size();
-		for (int i = 0; i < lEdgeCount; i++) {
-			final var lEdge = lEdgeList.get(i);
+		final var lSegmentCount = lSegmentList.size();
+		for (int i = 0; i < lSegmentCount; i++) {
+			final var lSegment = lSegmentList.get(i);
 
-			var lNodeA = lTrack.getNodeByUid(lEdge.nodeAUid);
-			var lNodeB = lTrack.getNodeByUid(lEdge.nodeBUid);
+			var lNodeA = lTrack.getNodeByUid(lSegment.nodeAUid);
+			var lNodeB = lTrack.getNodeByUid(lSegment.nodeBUid);
 
-			var isMainLine = lSelectedNodeMainLineEdgeUid != -1 && lSelectedNodeMainLineEdgeUid == lEdge.uid;
-			var isAuxiliaryLine = lSelectedNodeAuxLineEdgeUid != -1 && lSelectedNodeAuxLineEdgeUid == lEdge.uid;
+			var isMainLine = lSelectedNodeMainLineSegmentUid != -1 && lSelectedNodeMainLineSegmentUid == lSegment.uid;
+			var isAuxiliaryLine = lSelectedNodeAuxLineSegmnetUid != -1 && lSelectedNodeAuxLineSegmnetUid == lSegment.uid;
 
 			float lR = 1.f;
 			float lG = 1.f;
 			float lB = 1.f;
-			if (lHighlightEdge != null && lHighlightEdge.uid == lEdge.uid)
+			if (lHighlightSegment != null && lHighlightSegment.uid == lSegment.uid)
 				lG = 0.f;
 
-			boolean lIsEdgeAllowed = false;
-			if (lHighlightEdge != null && lConstrainEdge != null && lConstrainEdge.uid == lEdge.uid) {
+			boolean lIsSegmentAllowed = false;
+			if (lHighlightSegment != null && lConstrainSegment != null && lConstrainSegment.uid == lSegment.uid) {
 				lB = 0.f;
-				// TOOD: update this
-				lIsEdgeAllowed = false; // lHighlightEdge.allowedEdgeConections.contains((Integer) lConstrainEdge.uid);
-				if (lIsEdgeAllowed) {
+				// TODO: update this
+				lIsSegmentAllowed = false; // lHighlightSegment.allowedSegmentConections.contains((Integer) lConstrainSegment.uid);
+				if (lIsSegmentAllowed) {
 					lR = 0.f;
 					lG = 1.f;
 					lB = 0.f;
@@ -550,13 +550,13 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 				}
 			}
 
-			if (lEdge.specialEdgeType != RailTrackSegment.EDGE_SPECIAL_TYPE_UNASSIGNED) {
+			if (lSegment.specialSegmentType != RailTrackSegment.SEGMENT_SPECIAL_TYPE_UNASSIGNED) {
 				lR = 1.f;
 				lG = 1.f;
 				lB = 0.f;
 			}
 
-			if (lEdge.edgeType == RailTrackSegment.EDGE_TYPE_STRAIGHT) { // Straight edge
+			if (lSegment.segmentType == RailTrackSegment.SEGMENT_TYPE_STRAIGHT) { // Straight segment
 				Debug.debugManager().drawers().drawLine(lNodeA.x, lNodeA.y, lNodeB.x, lNodeB.y, lR, lG, lB);
 
 				if (isMainLine) {
@@ -576,8 +576,8 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 				float lLastX = lNodeA.x;
 				float lLastY = lNodeA.y;
 				for (float t = 0f; t <= 1.1f; t += 0.1f) {
-					final float lNewPointX = MathHelper.bezier4CurveTo(t, lNodeA.x, lEdge.control0X, lEdge.control1X, lNodeB.x);
-					final float lNewPointY = MathHelper.bezier4CurveTo(t, lNodeA.y, lEdge.control0Y, lEdge.control1Y, lNodeB.y);
+					final float lNewPointX = MathHelper.bezier4CurveTo(t, lNodeA.x, lSegment.control0X, lSegment.control1X, lNodeB.x);
+					final float lNewPointY = MathHelper.bezier4CurveTo(t, lNodeA.y, lSegment.control0Y, lSegment.control1Y, lNodeB.y);
 
 					Debug.debugManager().drawers().drawLine(lLastX, lLastY, lNewPointX, lNewPointY, lR, lG, lB);
 
@@ -598,28 +598,28 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 					Debug.debugManager().drawers().drawLine(lNodeA.x, lNodeA.y, lHx, lHY, 1, 0, 1);
 				}
 
-				final var lIsPrimaryEdge = lHighlightEdge != null && lHighlightEdge.uid == lEdge.uid;
-				final var lIsSecondaryEdge = lConstrainEdge != null && lConstrainEdge.uid == lEdge.uid;
+				final var lIsPrimarySegment = lHighlightSegment != null && lHighlightSegment.uid == lSegment.uid;
+				final var lIsSecondarySegment = lConstrainSegment != null && lConstrainSegment.uid == lSegment.uid;
 
-				if (lIsPrimaryEdge || lIsSecondaryEdge/*lSelectedEdge != null && lSelectedEdge.uid == lEdge.uid*/) {
-					Debug.debugManager().drawers().drawLine(lEdge.control0X, lEdge.control0Y, lNodeA.x, lNodeA.y, lR, lG, lB);
-					Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lEdge.control0X, lEdge.control0Y, 5, 8, GL11.GL_LINE_STRIP, 1, 1, 1, 1);
-					mGameTextFont.drawText("A", lEdge.control0X + 5, lEdge.control0Y, -0.1f, ColorConstants.WHITE, .4f, -1);
+				if (lIsPrimarySegment || lIsSecondarySegment) {
+					Debug.debugManager().drawers().drawLine(lSegment.control0X, lSegment.control0Y, lNodeA.x, lNodeA.y, lR, lG, lB);
+					Debug.debugManager().drawers().drawCircleImmediate(core.gameCamera(), lSegment.control0X, lSegment.control0Y, 5, 8, GL11.GL_LINE_STRIP, 1, 1, 1, 1);
+					mGameTextFont.drawText("A", lSegment.control0X + 5, lSegment.control0Y, -0.1f, ColorConstants.WHITE, .4f, -1);
 
-					Debug.debugManager().drawers().drawLine(lEdge.control1X, lEdge.control1Y, lNodeB.x, lNodeB.y, lR, lG, lB);
-					Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lEdge.control1X, lEdge.control1Y, 5, 8, GL11.GL_LINE_STRIP, 1, 1, 1, 1);
-					mGameTextFont.drawText("B", lEdge.control1X + 5, lEdge.control1Y, -0.1f, ColorConstants.WHITE, .4f, -1);
+					Debug.debugManager().drawers().drawLine(lSegment.control1X, lSegment.control1Y, lNodeB.x, lNodeB.y, lR, lG, lB);
+					Debug.debugManager().drawers().drawCircleImmediate(core.gameCamera(), lSegment.control1X, lSegment.control1Y, 5, 8, GL11.GL_LINE_STRIP, 1, 1, 1, 1);
+					mGameTextFont.drawText("B", lSegment.control1X + 5, lSegment.control1Y, -0.1f, ColorConstants.WHITE, .4f, -1);
 				}
 			}
 
 			final float lWorldPositionX = (lNodeA.x + lNodeB.x) / 2.f;
 			final float lWorldPositionY = (lNodeA.y + lNodeB.y) / 2.f;
 
-			debugDrawEdgeSignal(pCore, lTrack, lEdge);
+			debugDrawSegmentSignal(core, lTrack, lSegment);
 
-			mGameTextFont.drawText("E:" + lEdge.uid, lWorldPositionX, lWorldPositionY, -0.1f, ColorConstants.WHITE, .4f, -1);
+			mGameTextFont.drawText("E:" + lSegment.uid, lWorldPositionX, lWorldPositionY, -0.1f, ColorConstants.WHITE, .4f, -1);
 
-			drawEdgeInformation(pCore, mRendererManager.uiSpriteBatch(), lTrack, lEdge);
+			drawSegmentInformation(core, mRendererManager.uiSpriteBatch(), lTrack, lSegment);
 		}
 
 		mGameTextFont.end();
@@ -627,13 +627,13 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		Debug.debugManager().drawers().endLineRenderer();
 	}
 
-	private void debugDrawEdgeSignal(LintfordCore pCore, RailTrackInstance pTrack, RailTrackSegment pEdge) {
-		//		if (pEdge.trackJunction != null && pEdge.trackJunction.isSignalActive) {
+	private void debugDrawSegmentSignal(LintfordCore core, RailTrackInstance trackInstance, RailTrackSegment segment) {
+		//		if (segment.trackJunction != null && segment.trackJunction.isSignalActive) {
 		//			{
-		//				final var lLeftEdgeUid = pEdge.trackJunction.leftEdgeUid;
+		//				final var lLeftEdgeUid = segment.trackJunction.leftEdgeUid;
 		//				final var lLeftEdge = pTrack.getEdgeByUid(lLeftEdgeUid);
 		//
-		//				final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(pEdge, lLeftEdge);
+		//				final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(segment, lLeftEdge);
 		//
 		//				final var lActiveNode = pTrack.getNodeByUid(pCommonNodeUid);
 		//				final var lOtherNodeUid = lLeftEdge.getOtherNodeUid(lActiveNode.uid);
@@ -648,12 +648,12 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		//			}
 		//
 		//			{
-		//				final var lRightEdgeUid = pEdge.trackJunction.rightEdgeUid;
+		//				final var lRightEdgeUid = segment.trackJunction.rightEdgeUid;
 		//				final var lRightEdge = pTrack.getEdgeByUid(lRightEdgeUid);
 		//				if (lRightEdge == null) {
 		//					return;
 		//				}
-		//				final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(pEdge, lRightEdge);
+		//				final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(segment, lRightEdge);
 		//
 		//				final var lActiveNode = pTrack.getNodeByUid(pCommonNodeUid);
 		//				final var lOtherNodeUid = lRightEdge.getOtherNodeUid(lActiveNode.uid);
@@ -675,12 +675,12 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 
 		final var lTrack = mTrackEditorController.track();
 		final var lNodeCount = lTrack.getNumberTrackNodes();
-		final var lEdgeCount = lTrack.getNumberTrackEdges();
+		final var lSegmentCount = lTrack.getNumberTrackSegments();
 		final var lSignals = lTrack.trackSignalSegments.instances().size();
 
 		lFontUnit.begin(pCore.HUD());
 		lFontUnit.drawText("Nodes: " + lNodeCount, lHudRect.right() - 120.f, lHudRect.top() + 10, -0.01f, ColorConstants.WHITE, 1.f);
-		lFontUnit.drawText("Edges: " + lEdgeCount, lHudRect.right() - 120.f, lHudRect.top() + 30, -0.01f, ColorConstants.WHITE, 1.f);
+		lFontUnit.drawText("Segments: " + lSegmentCount, lHudRect.right() - 120.f, lHudRect.top() + 30, -0.01f, ColorConstants.WHITE, 1.f);
 		lFontUnit.drawText("SignalSegments: " + lSignals, lHudRect.right() - 180.f, lHudRect.top() + 50, -0.01f, ColorConstants.WHITE, 1.f);
 		lFontUnit.end();
 	}
@@ -713,29 +713,29 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		textureBatch.end();
 	}
 
-	private void drawEdgeInformation(LintfordCore pCore, TextureBatchPCT pTextureBatch, RailTrackInstance pTrack, RailTrackSegment pActiveEdge) {
-		final var lNodeA = pTrack.getNodeByUid(pActiveEdge.nodeAUid);
-		final var lNodeB = pTrack.getNodeByUid(pActiveEdge.nodeBUid);
+	private void drawSegmentInformation(LintfordCore core, TextureBatchPCT textureBatch, RailTrackInstance trackInstance, RailTrackSegment activeSegment) {
+		final var lNodeA = trackInstance.getNodeByUid(activeSegment.nodeAUid);
+		final var lNodeB = trackInstance.getNodeByUid(activeSegment.nodeBUid);
 
 		// Calculate the center point of the edge
 		final float lCenterX = (lNodeA.x + lNodeB.x) * 0.5f;
 		final float lCenterY = (lNodeA.y + lNodeB.y) * 0.5f;
 
-		if (pActiveEdge.specialEdgeType != RailTrackSegment.EDGE_SPECIAL_TYPE_UNASSIGNED) {
+		if (activeSegment.specialSegmentType != RailTrackSegment.SEGMENT_SPECIAL_TYPE_UNASSIGNED) {
 			String lSpecialType = "";
-			if (pActiveEdge.isEdgeOfType(RailTrackSegment.EDGE_SPECIAL_TYPE_MAP_SPAWN)) {
+			if (activeSegment.isSegmentOfType(RailTrackSegment.SEGMENT_SPECIAL_TYPE_MAP_SPAWN)) {
 				lSpecialType += "PLAYER SPAWN";
 			}
 
-			if (pActiveEdge.isEdgeOfType(RailTrackSegment.EDGE_SPECIAL_TYPE_MAP_EXIT)) {
+			if (activeSegment.isSegmentOfType(RailTrackSegment.SEGMENT_SPECIAL_TYPE_MAP_EXIT)) {
 				lSpecialType += "  PLAYER EXIT";
 			}
 
-			if (pActiveEdge.isEdgeOfType(RailTrackSegment.EDGE_SPECIAL_TYPE_MAP_EDGE)) {
+			if (activeSegment.isSegmentOfType(RailTrackSegment.SEGMENT_SPECIAL_TYPE_MAP_EDGE)) {
 				lSpecialType += "  MAP EDGE";
 			}
 
-			if (pActiveEdge.isEdgeOfType(RailTrackSegment.EDGE_SPECIAL_TYPE_STATION)) {
+			if (activeSegment.isSegmentOfType(RailTrackSegment.SEGMENT_SPECIAL_TYPE_STATION)) {
 				lSpecialType += "  STATION";
 			}
 
@@ -745,18 +745,18 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 			mGameTextFont.drawText(lSpecialType, lCenterX - lTextWidthHalf, lCenterY - lTextHeight, -0.01f, ColorConstants.WHITE, mGameTextScale, -1);
 		}
 
-		if (pActiveEdge.segmentName != null && pActiveEdge.segmentName.length() > 0) {
-			final float lTextWidthHalf = mGameTextFont.getStringWidth(pActiveEdge.segmentName, mGameTextScale) * .5f;
-			final float lTextHeight = mGameTextFont.getStringHeight(pActiveEdge.segmentName, mGameTextScale);
+		if (activeSegment.segmentName != null && activeSegment.segmentName.length() > 0) {
+			final float lTextWidthHalf = mGameTextFont.getStringWidth(activeSegment.segmentName, mGameTextScale) * .5f;
+			final float lTextHeight = mGameTextFont.getStringHeight(activeSegment.segmentName, mGameTextScale);
 
-			mGameTextFont.drawText(pActiveEdge.segmentName, lCenterX - lTextWidthHalf, lCenterY - lTextHeight * 2, -0.01f, ColorConstants.GREEN, mGameTextScale, -1);
+			mGameTextFont.drawText(activeSegment.segmentName, lCenterX - lTextWidthHalf, lCenterY - lTextHeight * 2, -0.01f, ColorConstants.GREEN, mGameTextScale, -1);
 		}
 
-		if (pActiveEdge.specialName != null && pActiveEdge.specialName.length() > 0) {
-			final float lTextWidthHalf = mGameTextFont.getStringWidth(pActiveEdge.specialName, mGameTextScale) * .5f;
-			final float lTextHeight = mGameTextFont.getStringHeight(pActiveEdge.specialName, mGameTextScale);
+		if (activeSegment.specialName != null && activeSegment.specialName.length() > 0) {
+			final float lTextWidthHalf = mGameTextFont.getStringWidth(activeSegment.specialName, mGameTextScale) * .5f;
+			final float lTextHeight = mGameTextFont.getStringHeight(activeSegment.specialName, mGameTextScale);
 
-			mGameTextFont.drawText(pActiveEdge.specialName, lCenterX - lTextWidthHalf, lCenterY - lTextHeight * 3, -0.01f, ColorConstants.GREEN, mGameTextScale, -1);
+			mGameTextFont.drawText(activeSegment.specialName, lCenterX - lTextWidthHalf, lCenterY - lTextHeight * 3, -0.01f, ColorConstants.GREEN, mGameTextScale, -1);
 		}
 	}
 
@@ -790,4 +790,3 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 	}
 
 }
-	

@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 import lintfordpickle.mailtrain.data.scene.track.RailTrackSegment;
 
-public class TrainFollowEdge implements Serializable {
+public class TrainFollowSegment implements Serializable {
 
 	// ---------------------------------------------
 	// Constants
@@ -16,7 +16,7 @@ public class TrainFollowEdge implements Serializable {
 	// Variables
 	// ---------------------------------------------
 
-	public RailTrackSegment edge;
+	public RailTrackSegment Segment;
 	public int targetNodeUid;
 	public int logicalCounter;
 
@@ -24,12 +24,12 @@ public class TrainFollowEdge implements Serializable {
 	// Constructors
 	// ---------------------------------------------
 
-	public TrainFollowEdge() {
+	public TrainFollowSegment() {
 
 	}
 
-	public TrainFollowEdge(RailTrackSegment pEdge, int pDestNodeUid, int pTicker) {
-		edge = pEdge;
+	public TrainFollowSegment(RailTrackSegment pEdge, int pDestNodeUid, int pTicker) {
+		Segment = pEdge;
 		targetNodeUid = pDestNodeUid;
 
 		logicalCounter = pTicker;

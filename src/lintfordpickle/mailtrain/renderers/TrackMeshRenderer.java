@@ -256,7 +256,7 @@ public abstract class TrackMeshRenderer extends BaseRenderer implements IInputPr
 		mTrackIndexArray.clear();
 
 		final var lTrack = pTrack;
-		final var lEdgeList = lTrack.edges();
+		final var lSegmentList = lTrack.segments();
 
 		var lTempVector = new Vector2f();
 		var tempDriveDirection = new SplinePoint();
@@ -266,21 +266,21 @@ public abstract class TrackMeshRenderer extends BaseRenderer implements IInputPr
 
 		int lCurrentIndex = 0;
 
-		final var lEdgeCount = lEdgeList.size();
-		for (int i = 0; i < lEdgeCount; i++) {
-			final var lEdge = lEdgeList.get(i);
+		final var lSegmentCount = lSegmentList.size();
+		for (int i = 0; i < lSegmentCount; i++) {
+			final var lSegment = lSegmentList.get(i);
 
 			float v = 0.f;
 
-			var lNodeA = lTrack.getNodeByUid(lEdge.nodeAUid);
-			var lNodeB = lTrack.getNodeByUid(lEdge.nodeBUid);
+			var lNodeA = lTrack.getNodeByUid(lSegment.nodeAUid);
+			var lNodeB = lTrack.getNodeByUid(lSegment.nodeBUid);
 			final float lDist = Vector2f.dst(lNodeA.x, lNodeA.y, lNodeB.x, lNodeB.y);
 
 			float lOldPointX = lNodeA.x;
 			float lOldPointY = lNodeA.y;
 
 			// Straight segment or curved
-			if (lEdge.edgeType == RailTrackSegment.EDGE_TYPE_STRAIGHT) {
+			if (lSegment.segmentType == RailTrackSegment.SEGMENT_TYPE_STRAIGHT) {
 				tempDriveDirection.x = lNodeB.x - lOldPointX;
 				tempDriveDirection.y = lNodeB.y - lOldPointY;
 
@@ -338,12 +338,12 @@ public abstract class TrackMeshRenderer extends BaseRenderer implements IInputPr
 				final float lStepSize = 0.01f;
 
 				final float textureIncV = (lDist * 1.4f) * lStepSize * (1.f / 32.f);
-				{ // add the first edge
+				{ // add the first segment
 					lOldPointX = lNodeA.x;
 					lOldPointY = lNodeA.y;
 
-					final float lNewPointX = MathHelper.bezier4CurveTo(lStepSize, lNodeA.x, lEdge.control0X, lEdge.control1X, lNodeB.x);
-					final float lNewPointY = MathHelper.bezier4CurveTo(lStepSize, lNodeA.y, lEdge.control0Y, lEdge.control1Y, lNodeB.y);
+					final float lNewPointX = MathHelper.bezier4CurveTo(lStepSize, lNodeA.x, lSegment.control0X, lSegment.control1X, lNodeB.x);
+					final float lNewPointY = MathHelper.bezier4CurveTo(lStepSize, lNodeA.y, lSegment.control0Y, lSegment.control1Y, lNodeB.y);
 
 					tempDriveDirection.x = lNewPointX - lOldPointX;
 					tempDriveDirection.y = lNewPointY - lOldPointY;
@@ -378,8 +378,8 @@ public abstract class TrackMeshRenderer extends BaseRenderer implements IInputPr
 
 				}
 				for (float t = lStepSize * 2f; t <= 1f + lStepSize; t += lStepSize) {
-					final float lNewPointX = MathHelper.bezier4CurveTo(t, lNodeA.x, lEdge.control0X, lEdge.control1X, lNodeB.x);
-					final float lNewPointY = MathHelper.bezier4CurveTo(t, lNodeA.y, lEdge.control0Y, lEdge.control1Y, lNodeB.y);
+					final float lNewPointX = MathHelper.bezier4CurveTo(t, lNodeA.x, lSegment.control0X, lSegment.control1X, lNodeB.x);
+					final float lNewPointY = MathHelper.bezier4CurveTo(t, lNodeA.y, lSegment.control0Y, lSegment.control1Y, lNodeB.y);
 
 					tempDriveDirection.x = lNewPointX - lOldPointX;
 					tempDriveDirection.y = lNewPointY - lOldPointY;
@@ -508,6 +508,23 @@ public abstract class TrackMeshRenderer extends BaseRenderer implements IInputPr
 	public void draw(LintfordCore core) {
 		// TODO Auto-generated method stub
 
+	}
+
+	// ---------------------------------------------
+
+	@Override
+	public boolean allowKeyboardInput() {
+		return false;
+	}
+
+	@Override
+	public boolean allowGamepadInput() {
+		return false;
+	}
+
+	@Override
+	public boolean allowMouseInput() {
+		return false;
 	}
 
 }

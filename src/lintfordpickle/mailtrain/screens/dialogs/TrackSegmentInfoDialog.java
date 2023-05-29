@@ -6,7 +6,7 @@ import net.lintford.library.screenmanager.dialogs.ConfirmationDialog;
 import net.lintford.library.screenmanager.entries.MenuInputEntry;
 import net.lintford.library.screenmanager.layouts.BaseLayout;
 
-public class TrackEdgeInfoDialog extends ConfirmationDialog {
+public class TrackSegmentInfoDialog extends ConfirmationDialog {
 
 	// --------------------------------------
 	// Constants
@@ -38,7 +38,7 @@ public class TrackEdgeInfoDialog extends ConfirmationDialog {
 	// Constructor
 	// --------------------------------------
 
-	public TrackEdgeInfoDialog(ScreenManager pScreenManager, MenuScreen pParentScreen) {
+	public TrackSegmentInfoDialog(ScreenManager pScreenManager, MenuScreen pParentScreen) {
 		super(pScreenManager, pParentScreen, DIALOG_TITLE, DIALOG_MESSAGE, true);
 	}
 

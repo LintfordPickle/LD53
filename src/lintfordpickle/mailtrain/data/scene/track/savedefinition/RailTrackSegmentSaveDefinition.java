@@ -8,7 +8,7 @@ public class RailTrackSegmentSaveDefinition implements Serializable {
 
 	private static final long serialVersionUID = 621571731065042770L;
 
-	// TrackEdge
+	// TrackSegment
 	public int uid;
 
 	public int nodeAUid;
@@ -24,12 +24,12 @@ public class RailTrackSegmentSaveDefinition implements Serializable {
 	public float control1Y;
 
 	// RailTrackSegment
-	public float edgeLengthInMeters;
+	public float segmentLengthInMeters;
 
-	public int edgeType;
-	public int specialEdgeType;
+	public int segmentType;
+	public int specialSegmentType;
 
-	public float edgeAngle;
+	public float segmentAngle;
 
 	public String segmentName;
 	public String specialName;
@@ -38,6 +38,6 @@ public class RailTrackSegmentSaveDefinition implements Serializable {
 	public final RailTrackSegmentSignalSaveDefinition signalsB = new RailTrackSegmentSignalSaveDefinition();
 	public int logicalUpdateCounter;
 
-	public final List<Integer> allowedEdgeConnections = new ArrayList<>();
+	public final List<Integer> allowedSegmentConnections = new ArrayList<>();
 
 }

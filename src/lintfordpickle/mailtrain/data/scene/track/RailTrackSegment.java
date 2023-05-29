@@ -8,7 +8,7 @@ import lintfordpickle.mailtrain.data.scene.track.savedefinition.RailTrackSegment
 import lintfordpickle.mailtrain.data.scene.track.signals.RailTrackSignalBlock.SignalState;
 import lintfordpickle.mailtrain.data.scene.track.signals.RailTrackSignalSegment;
 
-public class RailTrackSegment extends TrackEdge {
+public class RailTrackSegment extends TrackSegment {
 
 	// |---------- Track Segment --------------|
 	// |-SS-||-----Signal Segment -----||--SS--|
@@ -68,7 +68,7 @@ public class RailTrackSegment extends TrackEdge {
 		public void initialize(RailTrackInstance railTrackInstance) {
 			mSignals = new ArrayList<>();
 
-			mParentTrackSegment = railTrackInstance.getEdgeByUid(mParentTrackSegmentUid);
+			mParentTrackSegment = railTrackInstance.getSegmentByUid(mParentTrackSegmentUid);
 
 			// Need to resolve the trackSignalSegment uid references
 			final int lNumSignalSegmentReferences = mSignalSegmentUids.size();
@@ -148,25 +148,25 @@ public class RailTrackSegment extends TrackEdge {
 	// Constants
 	// ---------------------------------------------
 
-	public static final int EDGE_TYPE_NONE = -1;
-	public static final int EDGE_TYPE_STRAIGHT = 0;
-	public static final int EDGE_TYPE_CURVE = 1;
+	public static final int SEGMENT_TYPE_NONE = -1;
+	public static final int SEGMENT_TYPE_STRAIGHT = 0;
+	public static final int SEGMENT_TYPE_CURVE = 1;
 
-	public static final int EDGE_SPECIAL_TYPE_UNASSIGNED = 0; // nothing
-	public static final int EDGE_SPECIAL_TYPE_MAP_SPAWN = 1; // player map spawn (edge needs name)
-	public static final int EDGE_SPECIAL_TYPE_MAP_EXIT = 2; // player map exit point (edge needs special name)
-	public static final int EDGE_SPECIAL_TYPE_MAP_EDGE = 4; // edge of map (enemy spawn / leave)
-	public static final int EDGE_SPECIAL_TYPE_STATION = 8; // station / town for trading
-	public static final int EDGE_SPECIAL_TYPE_ENEMY_SPAWN = 16; // station / town for trading
+	public static final int SEGMENT_SPECIAL_TYPE_UNASSIGNED = 0; 	// nothing
+	public static final int SEGMENT_SPECIAL_TYPE_MAP_SPAWN = 1; 	// player map spawn (Segment needs name)
+	public static final int SEGMENT_SPECIAL_TYPE_MAP_EXIT = 2; 		// player map exit point (edge needs special name)
+	public static final int SEGMENT_SPECIAL_TYPE_MAP_EDGE = 4; 		// edge of map (enemy spawn / leave)
+	public static final int SEGMENT_SPECIAL_TYPE_STATION = 8; 		// station / town for trading
+	public static final int SEGMENT_SPECIAL_TYPE_ENEMY_SPAWN = 16; 	// station / town for trading
 
-	public static String getEdgeTypeName(int edgeType) {
-		switch (edgeType) {
+	public static String getSegmentTypeName(int segmentType) {
+		switch (segmentType) {
 		default:
-		case EDGE_TYPE_NONE:
+		case SEGMENT_TYPE_NONE:
 			return "unknown";
-		case EDGE_TYPE_STRAIGHT:
+		case SEGMENT_TYPE_STRAIGHT:
 			return "straight";
-		case EDGE_TYPE_CURVE:
+		case SEGMENT_TYPE_CURVE:
 			return "curve";
 		}
 	}
@@ -175,12 +175,12 @@ public class RailTrackSegment extends TrackEdge {
 	// Variables
 	// ---------------------------------------------
 
-	public float edgeLengthInMeters;
+	public float segmentLengthInMeters;
 
-	public int specialEdgeType = EDGE_SPECIAL_TYPE_UNASSIGNED;
-	public int edgeType = EDGE_TYPE_STRAIGHT;
+	public int specialSegmentType = SEGMENT_SPECIAL_TYPE_UNASSIGNED;
+	public int segmentType = SEGMENT_TYPE_STRAIGHT;
 
-	public float edgeAngle; // tolerence check
+	public float segmentAngle; // tolerence check
 
 	public String segmentName;
 	public String specialName;
@@ -193,32 +193,32 @@ public class RailTrackSegment extends TrackEdge {
 	// Properties
 	// ---------------------------------------------
 
-	public void setEdgeBitFlag(int pTypeToSet) {
-		specialEdgeType = pTypeToSet;
+	public void setSegmentBitFlag(int typeToSet) {
+		specialSegmentType = typeToSet;
 	}
 
-	public void setEdgeWithType(int pTypeToSet) {
-		specialEdgeType |= pTypeToSet;
+	public void setSegmentWithType(int typeToSet) {
+		specialSegmentType |= typeToSet;
 	}
 
-	public boolean isEdgeOfType(int pTypeToCheck) {
-		return (specialEdgeType & pTypeToCheck) == pTypeToCheck;
+	public boolean isSegmentOfType(int typeToCheck) {
+		return (specialSegmentType & typeToCheck) == typeToCheck;
 	}
 
 	// ---------------------------------------------
 	// Constructors
 	// ---------------------------------------------
 
-	public RailTrackSegment(RailTrackInstance pTrack, final int pUid, int pNodeAUid, int pNodeBUid, float pEdgeAngle) {
-		super(pUid, pNodeAUid, pNodeBUid);
+	public RailTrackSegment(RailTrackInstance trackInstance, final int segmentUid, int nodeAUid, int nodeBUid, float segmentAngle) {
+		super(segmentUid, nodeAUid, nodeBUid);
 
-		edgeAngle = pEdgeAngle;
+		this.segmentAngle = segmentAngle;
 
 		signalsA.mDestinationUid = nodeAUid;
-		signalsA.addSignalSegment(pTrack.trackSignalSegments.getFreePooledItem(), false, 0);
+		signalsA.addSignalSegment(trackInstance.trackSignalSegments.getFreePooledItem(), false, 0);
 
 		signalsB.mDestinationUid = nodeBUid;
-		signalsB.addSignalSegment(pTrack.trackSignalSegments.getFreePooledItem(), false, 0);
+		signalsB.addSignalSegment(trackInstance.trackSignalSegments.getFreePooledItem(), false, 0);
 	}
 
 	public RailTrackSegment(RailTrackSegmentSaveDefinition saveDef) {
@@ -233,8 +233,8 @@ public class RailTrackSegment extends TrackEdge {
 		control1X = saveDef.control1X;
 		control1Y = saveDef.control1Y;
 
-		edgeLengthInMeters = saveDef.edgeLengthInMeters;
-		edgeType = saveDef.edgeType;
+		segmentLengthInMeters = saveDef.segmentLengthInMeters;
+		segmentType = saveDef.segmentType;
 
 		signalsA.mSignalSegmentUids.addAll(saveDef.signalsA.signalSegmentUids);
 		signalsA.mDestinationUid = saveDef.signalsA.destinationUid;
@@ -247,7 +247,7 @@ public class RailTrackSegment extends TrackEdge {
 	// ---------------------------------------------
 
 	public void loadFromDef(RailTrackSegmentSaveDefinition saveDef) {
-		// TrackEdge variables
+		// TrackSegmentvariables
 		uid = saveDef.uid;
 
 		nodeAUid = saveDef.nodeAUid;
@@ -263,16 +263,16 @@ public class RailTrackSegment extends TrackEdge {
 		control1Y = saveDef.control1Y;
 
 		// RailTrackSegment variables
-		edgeLengthInMeters = saveDef.edgeLengthInMeters;
-		specialEdgeType = saveDef.specialEdgeType;
-		edgeType = saveDef.edgeType;
-		edgeAngle = saveDef.edgeAngle;
+		segmentLengthInMeters = saveDef.segmentLengthInMeters;
+		specialSegmentType = saveDef.specialSegmentType;
+		segmentType = saveDef.segmentType;
+		segmentAngle = saveDef.segmentAngle;
 		segmentName = saveDef.segmentName;
 		specialName = saveDef.specialName;
 	}
 
 	public void saveIntoDef(RailTrackSegmentSaveDefinition saveDef) {
-		// TrackEdge variables
+		// TrackSegment variables
 		saveDef.uid = uid;
 
 		saveDef.nodeAUid = nodeAUid;
@@ -288,10 +288,10 @@ public class RailTrackSegment extends TrackEdge {
 		saveDef.control1Y = control1Y;
 
 		// RailTrackSegment variables
-		saveDef.edgeLengthInMeters = edgeLengthInMeters;
-		saveDef.specialEdgeType = specialEdgeType;
-		saveDef.edgeType = edgeType;
-		saveDef.edgeAngle = edgeAngle;
+		saveDef.segmentLengthInMeters = segmentLengthInMeters;
+		saveDef.specialSegmentType = specialSegmentType;
+		saveDef.segmentType = segmentType;
+		saveDef.segmentAngle = segmentAngle;
 		saveDef.segmentName = segmentName;
 		saveDef.specialName = specialName;
 
@@ -301,20 +301,20 @@ public class RailTrackSegment extends TrackEdge {
 		saveDef.signalsB.destinationUid = signalsB.destinationNodeUid();
 	}
 
-	public void finalizeAfterLoading(RailTrackInstance pTrack) {
+	public void finalizeAfterLoading(RailTrackInstance trackInstance) {
 		signalsA.mParentTrackSegment = this;
-		signalsA.initialize(pTrack);
+		signalsA.initialize(trackInstance);
 
 		signalsB.mParentTrackSegment = this;
-		signalsB.initialize(pTrack);
+		signalsB.initialize(trackInstance);
 	}
 
 	// ---------------------------------------------
 	// Methods
 	// ---------------------------------------------
 
-	public int getOtherNodeUid(int pNodeUid) {
-		if (nodeAUid == pNodeUid) {
+	public int getOtherNodeUid(int nodeUid) {
+		if (nodeAUid == nodeUid) {
 			return nodeBUid;
 
 		} else {
@@ -323,46 +323,46 @@ public class RailTrackSegment extends TrackEdge {
 		}
 	}
 
-	public static int getCommonNodeUid(RailTrackSegment pEdgeA, RailTrackSegment pEdgeB) {
-		if (pEdgeA.nodeAUid == pEdgeB.nodeAUid)
-			return pEdgeB.nodeAUid;
-		else if (pEdgeA.nodeBUid == pEdgeB.nodeBUid)
-			return pEdgeB.nodeBUid;
-		else if (pEdgeA.nodeAUid == pEdgeB.nodeBUid)
-			return pEdgeB.nodeBUid;
-		else if (pEdgeA.nodeBUid == pEdgeB.nodeAUid)
-			return pEdgeB.nodeAUid;
+	public static int getCommonNodeUid(RailTrackSegment segmentdgeA, RailTrackSegment segmentB) {
+		if (segmentdgeA.nodeAUid == segmentB.nodeAUid)
+			return segmentB.nodeAUid;
+		else if (segmentdgeA.nodeBUid == segmentB.nodeBUid)
+			return segmentB.nodeBUid;
+		else if (segmentdgeA.nodeAUid == segmentB.nodeBUid)
+			return segmentB.nodeBUid;
+		else if (segmentdgeA.nodeBUid == segmentB.nodeAUid)
+			return segmentB.nodeAUid;
 		return -1;
 	}
 
 	// ---------------------------------------------
 
-	public void setBothSignalStates(int pDestinationNodeUid, float pDistIntoSegment, SignalState pNewState) {
-		final var lSignalSetA = signalsA.getSignal(pDestinationNodeUid == signalsA.mDestinationUid ? pDistIntoSegment : 1.f - pDistIntoSegment);
+	public void setBothSignalStates(int destinationNodeUid, float distIntoSegment, SignalState newState) {
+		final var lSignalSetA = signalsA.getSignal(destinationNodeUid == signalsA.mDestinationUid ? distIntoSegment : 1.f - distIntoSegment);
 		if (lSignalSetA != null && lSignalSetA.signalBlock != null) {
-			lSignalSetA.signalBlock.signalState(pNewState);
+			lSignalSetA.signalBlock.signalState(newState);
 
 		}
-		final var lSignalSetB = signalsB.getSignal(pDestinationNodeUid == signalsB.mDestinationUid ? pDistIntoSegment : 1.f - pDistIntoSegment);
+		final var lSignalSetB = signalsB.getSignal(destinationNodeUid == signalsB.mDestinationUid ? distIntoSegment : 1.f - distIntoSegment);
 		if (lSignalSetB != null && lSignalSetB.signalBlock != null) {
-			lSignalSetB.signalBlock.signalState(pNewState);
+			lSignalSetB.signalBlock.signalState(newState);
 
 		}
 	}
 
-	public SegmentSignalsCollection getSignalsList(int pDestNodeUid) {
-		if (signalsA.mDestinationUid == pDestNodeUid)
+	public SegmentSignalsCollection getSignalsList(int destinationNodeUid) {
+		if (signalsA.mDestinationUid == destinationNodeUid)
 			return signalsA;
-		if (signalsB.mDestinationUid == pDestNodeUid)
+		if (signalsB.mDestinationUid == destinationNodeUid)
 			return signalsB;
 		return null;
 	}
 
-	public void addTrackSignal(RailTrackInstance pTrack, float lDist, int pDestNodeUid) {
-		final var lSegmentSignalCollection = getSignalsList(pDestNodeUid);
+	public void addTrackSignal(RailTrackInstance trackInstance, float dist, int destinationNodeUid) {
+		final var lSegmentSignalCollection = getSignalsList(destinationNodeUid);
 		if (lSegmentSignalCollection == null)
 			return;
 
-		lSegmentSignalCollection.addSignalSegment(pTrack.trackSignalSegments.getFreePooledItem(), true, lDist);
+		lSegmentSignalCollection.addSignalSegment(trackInstance.trackSignalSegments.getFreePooledItem(), true, dist);
 	}
 }

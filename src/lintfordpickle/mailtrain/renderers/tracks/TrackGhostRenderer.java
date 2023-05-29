@@ -77,10 +77,10 @@ public class TrackGhostRenderer extends TrackMeshRenderer implements IInputProce
 		mGhostTrack.nodes().add(mGhostNodeA);
 		mGhostTrack.nodes().add(mGhostNodeB);
 
-		final var lEdgeAngle = MathHelper.wrapAngle((float) Math.atan2(mGhostNodeA.y - mGhostNodeB.y, mGhostNodeA.x - mGhostNodeB.x));
+		final var lSegmentAngle = MathHelper.wrapAngle((float) Math.atan2(mGhostNodeA.y - mGhostNodeB.y, mGhostNodeA.x - mGhostNodeB.x));
 
-		mGhostSegment = new RailTrackSegment(mGhostTrack, mGhostTrack.getNewEdgeUid(), mGhostNodeA.uid, mGhostNodeB.uid, lEdgeAngle);
-		mGhostTrack.edges().add(mGhostSegment);
+		mGhostSegment = new RailTrackSegment(mGhostTrack, mGhostTrack.getNewSegmentUid(), mGhostNodeA.uid, mGhostNodeB.uid, lSegmentAngle);
+		mGhostTrack.segments().add(mGhostSegment);
 	}
 
 	@Override

@@ -19,7 +19,7 @@ public class TrackEditorController extends BaseController {
 	// Constants
 	// ---------------------------------------------
 
-	private static List<RailTrackSegment> mTempEdgeList = new ArrayList<>();
+	private static List<RailTrackSegment> mTempSegmentList = new ArrayList<>();
 
 	public static final String CONTROLLER_NAME = "Track Editor Controller";
 
@@ -35,27 +35,27 @@ public class TrackEditorController extends BaseController {
 
 	private GameSceneInstance mGameScene;
 
-	private RailTrackInstance mTrack;
+	private RailTrackInstance mTrackInstace;
 
 	private RailTrackNode mSelectedNodeA;
 	private RailTrackNode mSelectedNodeB;
 
 	private int mLogicalUpdateCounter;
 
-	// These are used for functionality within the controller, like marking edges for allowed lists etc.
-	private int mEditorPrimaryEdgeLocalIndex = -1; // index is local to the selected node
-	private int mEditorSecondaryEdgeLocalIndex = -1; // index is local to the selected node
+	// These are used for functionality within the controller, like marking segments for allowed lists etc.
+	private int mEditorPrimarySegmentLocalIndex = -1; // index is local to the selected node
+	private int mEditorSecondarySegmentLocalIndex = -1; // index is local to the selected node
 
 	// ---------------------------------------------
 	// Properties
 	// ---------------------------------------------
 
-	public int editorPrimaryEdgeLocalIndex() {
-		return mEditorPrimaryEdgeLocalIndex;
+	public int editorPrimarySegmentLocalIndex() {
+		return mEditorPrimarySegmentLocalIndex;
 	}
 
-	public int editorSecondaryEdgeLocalIndex() {
-		return mEditorSecondaryEdgeLocalIndex;
+	public int editorSecondarySegmentLocalIndex() {
+		return mEditorSecondarySegmentLocalIndex;
 	}
 
 	public RailTrackNode selectedNodeA() {
@@ -74,14 +74,14 @@ public class TrackEditorController extends BaseController {
 		mSelectedNodeB = selectedNode;
 	}
 
-	public RailTrackSegment getSelectedEdge() {
-		if (mEditorPrimaryEdgeLocalIndex == -1)
+	public RailTrackSegment getSelectedSegment() {
+		if (mEditorPrimarySegmentLocalIndex == -1)
 			return null;
 
 		if (mSelectedNodeA == null)
 			return null;
 
-		return mSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(mEditorPrimaryEdgeLocalIndex);
+		return mSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(mEditorPrimarySegmentLocalIndex);
 	}
 
 	private void updateUpdateCounter() {
@@ -100,11 +100,11 @@ public class TrackEditorController extends BaseController {
 
 	@Override
 	public boolean isInitialized() {
-		return mTrack != null;
+		return mTrackInstace != null;
 	}
 
 	public RailTrackInstance track() {
-		return mTrack;
+		return mTrackInstace;
 	}
 
 	// ---------------------------------------------
@@ -115,197 +115,187 @@ public class TrackEditorController extends BaseController {
 		super(pControllerManager, CONTROLLER_NAME, pEntityGroupUid);
 
 		mGameScene = gameScene;
-		mTrack = mGameScene.trackManager().track();
+		mTrackInstace = mGameScene.trackManager().track();
 	}
 
 	// ---------------------------------------------
 	// Methods
 	// ---------------------------------------------
 
-	private void deleteNode(RailTrackNode pNode) {
-		if (pNode == null) {
+	private void deleteNode(RailTrackNode node) {
+		if (node == null) {
 			return;
 		}
-		mTempEdgeList.clear();
+		mTempSegmentList.clear();
 
-		final var lEdgeCount = pNode.trackSwitch.numberConnectedSegments();
-		for (int i = 0; i < lEdgeCount; i++) {
-			mTempEdgeList.add(pNode.trackSwitch.getConnectedSegmentByIndex(i));
+		final var lSegmentCount = node.trackSwitch.numberConnectedSegments();
+		for (int i = 0; i < lSegmentCount; i++) {
+			mTempSegmentList.add(node.trackSwitch.getConnectedSegmentByIndex(i));
 		}
-		for (int i = 0; i < lEdgeCount; i++) {
-			final var lEdge = mTempEdgeList.get(i);
-			deleteEdge(lEdge);
+		for (int i = 0; i < lSegmentCount; i++) {
+			final var lSegment = mTempSegmentList.get(i);
+			deleteSegment(lSegment);
 		}
-		mTrack.nodes().remove(pNode);
+
+		mTrackInstace.nodes().remove(node);
 	}
 
-	private void deleteEdge(RailTrackSegment pEdge) {
-		if (pEdge == null)
+	private void deleteSegment(RailTrackSegment segment) {
+		if (segment == null)
 			return;
-		final int lNodeCount = mTrack.nodes().size();
+		final int lNodeCount = mTrackInstace.nodes().size();
 		for (int i = 0; i < lNodeCount; i++) {
-			final var lNode = mTrack.nodes().get(i);
-			if (lNode.trackSwitch.getConnectedSegmentByUid(pEdge.uid) != null) {
-				lNode.removeEdgeByUid(pEdge.uid);
+			final var lNode = mTrackInstace.nodes().get(i);
+			if (lNode.trackSwitch.getConnectedSegmentByUid(segment.uid) != null) {
+				lNode.removeSegmentByUid(segment.uid);
 			}
 		}
-		RailTrackSegment lEdgeToDelete = null;
-		final int lEdgeCount = mTrack.edges().size();
-		for (int i = 0; i < lEdgeCount; i++) {
-			final var lEdge = mTrack.edges().get(i);
-			if (lEdge.nodeAUid == pEdge.nodeAUid || lEdge.nodeAUid == pEdge.nodeBUid) {
-				if (lEdge.nodeBUid == pEdge.nodeAUid || lEdge.nodeBUid == pEdge.nodeBUid) {
-					lEdgeToDelete = lEdge;
+		RailTrackSegment lSegmentToDelete = null;
+		final int lSegmentCount = mTrackInstace.segments().size();
+		for (int i = 0; i < lSegmentCount; i++) {
+			final var lSegment = mTrackInstace.segments().get(i);
+			if (lSegment.nodeAUid == segment.nodeAUid || lSegment.nodeAUid == segment.nodeBUid) {
+				if (lSegment.nodeBUid == segment.nodeAUid || lSegment.nodeBUid == segment.nodeBUid) {
+					lSegmentToDelete = lSegment;
 				}
 			}
 		}
-		mTrack.edges().remove(lEdgeToDelete);
-		pEdge = null;
+		mTrackInstace.segments().remove(lSegmentToDelete);
+		segment = null;
 	}
 
-	private RailTrackSegment getCommonEdge(final int pUidA, final int pUidB) {
-		final var lNodeA = mTrack.getNodeByUid(pUidA);
-		final var lNodeB = mTrack.getNodeByUid(pUidB);
+	private RailTrackSegment getCommonSegment(final int nodeAUid, final int nodeBUid) {
+		final var lNodeA = mTrackInstace.getNodeByUid(nodeAUid);
+		final var lNodeB = mTrackInstace.getNodeByUid(nodeBUid);
 
 		if (lNodeA == null || lNodeB == null)
 			return null;
 
-		final int lEdgeCountNodeA = lNodeA.trackSwitch.numberConnectedSegments();
-		for (int i = 0; i < lEdgeCountNodeA; i++) {
-			final var lOtherNodeUid = lNodeA.trackSwitch.getConnectedSegmentByIndex(i).getOtherNodeUid(pUidA);
-			if (pUidB == lOtherNodeUid) {
+		final int lSegmentCountNodeA = lNodeA.trackSwitch.numberConnectedSegments();
+		for (int i = 0; i < lSegmentCountNodeA; i++) {
+			final var lOtherNodeUid = lNodeA.trackSwitch.getConnectedSegmentByIndex(i).getOtherNodeUid(nodeAUid);
+			if (nodeBUid == lOtherNodeUid) {
 				return lNodeA.trackSwitch.getConnectedSegmentByIndex(i);
 			}
 		}
 		return null;
 	}
 
-	private void createEdgeBetween(int pNodeAUid, int pNodeBUid) {
-		if (pNodeAUid == pNodeBUid)
+	private void createSegmentBetween(int nodeAUid, int nodeBUid) {
+		if (nodeAUid == nodeBUid)
 			return; // Nope
 
-		boolean lEdgeExists = mTrack.edgeExistsBetween(pNodeAUid, pNodeBUid);
-		if (lEdgeExists)
+		boolean lSegmentExists = mTrackInstace.doesSegmentExistsBetween(nodeAUid, nodeBUid);
+		if (lSegmentExists)
 			return; // nope
 
-		final var lNodeA = mTrack.getNodeByUid(pNodeAUid);
-		final var lNodeB = mTrack.getNodeByUid(pNodeBUid);
+		final var lNodeA = mTrackInstace.getNodeByUid(nodeAUid);
+		final var lNodeB = mTrackInstace.getNodeByUid(nodeBUid);
 
 		if (lNodeA == null || lNodeB == null)
 			return; // nope
 
-		final var lNewEdgeAngle = MathHelper.wrapAngle((float) Math.atan2(lNodeB.y - lNodeA.y, lNodeB.x - lNodeA.x));
-		final var lNewEdge = new RailTrackSegment(mTrack, mTrack.getNewEdgeUid(), pNodeAUid, pNodeBUid, lNewEdgeAngle);
-		mTrack.edges().add(lNewEdge);
+		final var lNewSegmentAngle = MathHelper.wrapAngle((float) Math.atan2(lNodeB.y - lNodeA.y, lNodeB.x - lNodeA.x));
+		final var lNewSegment = new RailTrackSegment(mTrackInstace, mTrackInstace.getNewSegmentUid(), nodeAUid, nodeBUid, lNewSegmentAngle);
+		mTrackInstace.segments().add(lNewSegment);
 
-		lNewEdge.control0X = lNodeA.x;
-		lNewEdge.control0Y = lNodeA.y;
+		lNewSegment.control0X = lNodeA.x;
+		lNewSegment.control0Y = lNodeA.y;
 
-		lNewEdge.control1X = lNodeB.x;
-		lNewEdge.control1Y = lNodeB.y;
+		lNewSegment.control1X = lNodeB.x;
+		lNewSegment.control1Y = lNodeB.y;
 
-		lNewEdge.edgeLengthInMeters = mTrack.getEdgeLength(lNewEdge);
+		lNewSegment.segmentLengthInMeters = mTrackInstace.getSegmentLength(lNewSegment);
 
-		lNodeA.addEdgeToNode(lNewEdge);
-		lNodeB.addEdgeToNode(lNewEdge);
+		lNodeA.addSegmentToNode(lNewSegment);
+		lNodeB.addSegmentToNode(lNewSegment);
 
-		// TODO: Update allowed edge conections
+		// TODO: Update allowed segment conections
 	}
 
 	// ---------------------------------------------
 	// Track Manipulation Methods
 	// ---------------------------------------------
 
-	public void togglePrimaryEdgeType() {
+	public void togglePrimarySegmentType() {
 		if (mSelectedNodeA == null)
 			return;
 
-		if (mEditorPrimaryEdgeLocalIndex < 0)
+		if (mEditorPrimarySegmentLocalIndex < 0)
 			return;
 
-		final var lManipulateEdge = mSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(mEditorPrimaryEdgeLocalIndex);
+		final var lManipulateSegment = mSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(mEditorPrimarySegmentLocalIndex);
 
-		if (lManipulateEdge == null)
+		if (lManipulateSegment == null)
 			return;
 
-		if (lManipulateEdge.edgeType == RailTrackSegment.EDGE_TYPE_STRAIGHT)
-			lManipulateEdge.edgeType = RailTrackSegment.EDGE_TYPE_CURVE;
+		if (lManipulateSegment.segmentType == RailTrackSegment.SEGMENT_TYPE_STRAIGHT)
+			lManipulateSegment.segmentType = RailTrackSegment.SEGMENT_TYPE_CURVE;
 		else
-			lManipulateEdge.edgeType = RailTrackSegment.EDGE_TYPE_STRAIGHT;
+			lManipulateSegment.segmentType = RailTrackSegment.SEGMENT_TYPE_STRAIGHT;
 
 		updateUpdateCounter();
 	}
 
-	public int getPrimaryEdgeType() {
+	public int getPrimarySegmentType() {
 		if (mSelectedNodeA == null)
-			return RailTrackSegment.EDGE_TYPE_NONE;
+			return RailTrackSegment.SEGMENT_TYPE_NONE;
 
-		if (mEditorPrimaryEdgeLocalIndex < 0)
-			return RailTrackSegment.EDGE_TYPE_NONE;
+		if (mEditorPrimarySegmentLocalIndex < 0)
+			return RailTrackSegment.SEGMENT_TYPE_NONE;
 
-		final var lManipulateEdge = mSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(mEditorPrimaryEdgeLocalIndex);
+		final var lManipulateSegment = mSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(mEditorPrimarySegmentLocalIndex);
 
-		if (lManipulateEdge == null)
-			return RailTrackSegment.EDGE_TYPE_NONE;
+		if (lManipulateSegment == null)
+			return RailTrackSegment.SEGMENT_TYPE_NONE;
 
-		return lManipulateEdge.edgeType;
+		return lManipulateSegment.segmentType;
 	}
 
 	// ---------------------------------------------
 	// Editor API
 	// ---------------------------------------------
 
-	public void prevLocalPrimaryEdge() {
+	public void prevLocalPrimarySegment() {
 		if (mSelectedNodeA != null) {
-			mEditorPrimaryEdgeLocalIndex--;
-			if (mEditorPrimaryEdgeLocalIndex < 0)
-				mEditorPrimaryEdgeLocalIndex = mSelectedNodeA.trackSwitch.numberConnectedSegments() - 1;
+			mEditorPrimarySegmentLocalIndex--;
+			if (mEditorPrimarySegmentLocalIndex < 0)
+				mEditorPrimarySegmentLocalIndex = mSelectedNodeA.trackSwitch.numberConnectedSegments() - 1;
 		}
 	}
 
-	public void nextLocalPrimaryEdge() {
+	public void nextLocalPrimarySegment() {
 		if (mSelectedNodeA != null) {
-			mEditorPrimaryEdgeLocalIndex++;
-			if (mEditorPrimaryEdgeLocalIndex >= mSelectedNodeA.trackSwitch.numberConnectedSegments())
-				mEditorPrimaryEdgeLocalIndex = 0;
+			mEditorPrimarySegmentLocalIndex++;
+			if (mEditorPrimarySegmentLocalIndex >= mSelectedNodeA.trackSwitch.numberConnectedSegments())
+				mEditorPrimarySegmentLocalIndex = 0;
 		}
 	}
 
-	public void prevLocalSecondaryEdge() {
+	public void prevLocalSecondarySegment() {
 		if (mSelectedNodeA != null) {
-			mEditorSecondaryEdgeLocalIndex--;
-			if (mEditorSecondaryEdgeLocalIndex < 0)
-				mEditorSecondaryEdgeLocalIndex = mSelectedNodeA.trackSwitch.numberConnectedSegments() - 1;
+			mEditorSecondarySegmentLocalIndex--;
+			if (mEditorSecondarySegmentLocalIndex < 0)
+				mEditorSecondarySegmentLocalIndex = mSelectedNodeA.trackSwitch.numberConnectedSegments() - 1;
 		}
 	}
 
-	public void nextLocalSecondaryEdge() {
+	public void nextLocalSecondarySegment() {
 		if (mSelectedNodeA != null) {
-			mEditorSecondaryEdgeLocalIndex++;
-			if (mEditorSecondaryEdgeLocalIndex >= mSelectedNodeA.trackSwitch.numberConnectedSegments())
-				mEditorSecondaryEdgeLocalIndex = 0;
+			mEditorSecondarySegmentLocalIndex++;
+			if (mEditorSecondarySegmentLocalIndex >= mSelectedNodeA.trackSwitch.numberConnectedSegments())
+				mEditorSecondarySegmentLocalIndex = 0;
 		}
 	}
 
-	public void toggleSelectedEdgesTravelledAllowed() {
-		// Toggle allowed / not allowed (ref. edgeSelected)
-		//		if (mActiveEdgeLocalIndex != -1 && mAuxiliaryEdgeLocalIndex != -1) {
-		//			final var lSelectedEdge = mSelectedNodeA.getEdgeByIndex(mActiveEdgeLocalIndex);
-		//			final var lConstrainedEdge = mSelectedNodeA.getEdgeByIndex(mAuxiliaryEdgeLocalIndex);
-		//			if (lSelectedEdge.allowedEdgeConections.contains(lConstrainedEdge.uid)) {
-		//				lSelectedEdge.allowedEdgeConections.remove((Integer) lConstrainedEdge.uid);
-		//				Debug.debugManager().logger().i(getClass().getSimpleName(), "Added travel constraint to edge uid " + lConstrainedEdge.uid + " from edge uid " + lSelectedEdge.uid);
-		//			} else {
-		//				lSelectedEdge.allowedEdgeConections.add(lConstrainedEdge.uid);
-		//				Debug.debugManager().logger().i(getClass().getSimpleName(), "Added travelled allowed to edge uid " + lConstrainedEdge.uid + " from edge uid " + lSelectedEdge.uid);
-		//			}
-		//		}
+	public void toggleSelectedSegmentTravelledAllowed() {
+		// TODO: Unimplemented method
 	}
 
 	public RailTrackNode getNodeAtGridLocation(float worldPositionX, float worldPositionY) {
-		final int lNodeCount = mTrack.nodes().size();
+		final int lNodeCount = mTrackInstace.nodes().size();
 		for (int i = 0; i < lNodeCount; i++) {
-			final var lNode = mTrack.nodes().get(i);
+			final var lNode = mTrackInstace.nodes().get(i);
 			if (Vector2f.dst(worldPositionX, worldPositionY, lNode.x, lNode.y) < 8.f) {
 				return lNode;
 			}
@@ -313,13 +303,13 @@ public class TrackEditorController extends BaseController {
 		return null;
 	}
 
-	public boolean createNodeAt(float lMouseGridPositionX, float lMouseGridPositionY) {
+	public boolean createNodeAt(float mouseGridPositionX, float mouseGridPositionY) {
 		// If there is already a node here
-		final var lNodeUnderMouse = getNodeAtGridLocation(lMouseGridPositionX, lMouseGridPositionY);
+		final var lNodeUnderMouse = getNodeAtGridLocation(mouseGridPositionX, mouseGridPositionY);
 		if (lNodeUnderMouse != null) {
 			if (mSelectedNodeB != null && lNodeUnderMouse != mSelectedNodeB) {
 				// There maybe a chance to connect nodes A and the just selected one together
-				createEdgeBetween(mSelectedNodeB.uid, lNodeUnderMouse.uid);
+				createSegmentBetween(mSelectedNodeB.uid, lNodeUnderMouse.uid);
 
 				updateUpdateCounter();
 
@@ -328,71 +318,26 @@ public class TrackEditorController extends BaseController {
 			return false;
 		}
 
-		// if no nodes selected, then no problem
-		boolean lCreationAllowed = (mSelectedNodeA == null && mSelectedNodeB == null);
-		if (mSelectedNodeB != null) {
-			int localGridX = (int) mSelectedNodeB.x;
-			int localGridY = (int) mSelectedNodeB.y;
+		final var lSelectedNode = mSelectedNodeB != null ? mSelectedNodeB : mSelectedNodeA;
+		if (lSelectedNode != null) {
+			final var lNewNode = new RailTrackNode(mTrackInstace.getNewNodeUid());
+			lNewNode.init(mouseGridPositionX, mouseGridPositionY);
 
-			int newRelX = (int) lMouseGridPositionX - localGridX;
-			int newRelY = (int) lMouseGridPositionY - localGridY;
-			if (mSelectedNodeB.x == lMouseGridPositionX) { // Horizontal
-				lCreationAllowed = true;
-			} else if (mSelectedNodeB.y == lMouseGridPositionY) { // vertical
-				lCreationAllowed = true;
-			} else if (Math.abs(newRelX) == Math.abs(newRelY)) { // diagonal
-				lCreationAllowed = true;
-			}
+			mTrackInstace.nodes().add(lNewNode);
 
-			//if (!lCreationAllowed)
-			//	return true;
-
-			final var lNewNode = new RailTrackNode(mTrack.getNewNodeUid());
-			lNewNode.init(lMouseGridPositionX, lMouseGridPositionY);
-
-			mTrack.nodes().add(lNewNode);
-
-			createEdgeBetween(lNewNode.uid, mSelectedNodeB.uid);
-			mSelectedNodeB = lNewNode;
-
-			updateUpdateCounter();
-
-			return true;
-
-		} else if (mSelectedNodeA != null) {
-			int localGridX = (int) mSelectedNodeA.x;
-			int localGridY = (int) mSelectedNodeA.y;
-
-			int newRelX = (int) lMouseGridPositionX - localGridX;
-			int newRelY = (int) lMouseGridPositionY - localGridY;
-			if (mSelectedNodeA.x == lMouseGridPositionX) { // Horizontal
-				lCreationAllowed = true;
-			} else if (mSelectedNodeA.y == lMouseGridPositionY) { // vertical
-				lCreationAllowed = true;
-			} else if (Math.abs(newRelX) == Math.abs(newRelY)) { // diagonal
-				lCreationAllowed = true;
-			}
-			//				if (!lCreationAllowed)
-			//					return true;
-
-			final var lNewNode = new RailTrackNode(mTrack.getNewNodeUid());
-			lNewNode.init(lMouseGridPositionX, lMouseGridPositionY);
-
-			mTrack.nodes().add(lNewNode);
-
-			createEdgeBetween(lNewNode.uid, mSelectedNodeA.uid);
+			createSegmentBetween(lNewNode.uid, lSelectedNode.uid);
 			mSelectedNodeB = lNewNode;
 
 			updateUpdateCounter();
 
 			return true;
 		} else {
-			final var lNewNode = new RailTrackNode(mTrack.getNewNodeUid());
-			lNewNode.init(lMouseGridPositionX, lMouseGridPositionY);
+			final var lNewNode = new RailTrackNode(mTrackInstace.getNewNodeUid());
+			lNewNode.init(mouseGridPositionX, mouseGridPositionY);
 
 			updateUpdateCounter();
 
-			mTrack.nodes().add(lNewNode);
+			mTrackInstace.nodes().add(lNewNode);
 			mSelectedNodeB = lNewNode;
 		}
 
@@ -409,7 +354,6 @@ public class TrackEditorController extends BaseController {
 			selectedNodeA(null);
 			selectedNodeB(null);
 			return true;
-
 		}
 
 		final RailTrackNode lSelectedNode = getNodeAtGridLocation(worldX, worldY);
@@ -422,25 +366,15 @@ public class TrackEditorController extends BaseController {
 		if (mSelectedNodeA == null) {
 			mSelectedNodeA = lSelectedNode;
 
-			final int lEdgeCount = mSelectedNodeA.trackSwitch.numberConnectedSegments();
-			for (int j = 0; j < lEdgeCount; j++) {
-				final var lEdge = mSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(j);
-				if (lEdge == null) {
-					System.out.println(mSelectedNodeA.uid + ":: NULL EDGE");
-				} else {
-					System.out.println(mSelectedNodeA.uid + ":: Edge found Index : " + j + " Uid: " + lEdge.uid);
-				}
-			}
-
 			if (mSelectedNodeA.trackSwitch.numberConnectedSegments() > 0)
-				mEditorPrimaryEdgeLocalIndex = 0;
+				mEditorPrimarySegmentLocalIndex = 0;
 			else
-				mEditorPrimaryEdgeLocalIndex = -1;
+				mEditorPrimarySegmentLocalIndex = -1;
 
 			if (mSelectedNodeA.trackSwitch.numberConnectedSegments() > 1)
-				mEditorSecondaryEdgeLocalIndex = 1;
+				mEditorSecondarySegmentLocalIndex = 1;
 			else
-				mEditorSecondaryEdgeLocalIndex = -1;
+				mEditorSecondarySegmentLocalIndex = -1;
 
 			return true;
 
@@ -454,10 +388,10 @@ public class TrackEditorController extends BaseController {
 
 	public boolean deleteSelectedNodes() {
 		if (mSelectedNodeA != null && mSelectedNodeB != null) {
-			// remove edges from between these nodes
-			final var lCommonEdge = getCommonEdge(mSelectedNodeA.uid, mSelectedNodeB.uid);
-			if (lCommonEdge != null) {
-				deleteEdge(lCommonEdge);
+			// remove segments from between these nodes
+			final var lCommonSegment = getCommonSegment(mSelectedNodeA.uid, mSelectedNodeB.uid);
+			if (lCommonSegment != null) {
+				deleteSegment(lCommonSegment);
 
 			} else {
 				// delete both nodes
@@ -479,9 +413,9 @@ public class TrackEditorController extends BaseController {
 		return true;
 	}
 
-	public boolean handleTrackEdgeCreation() {
+	public boolean handleTrackSegmentCreation() {
 		if (mSelectedNodeA != null && mSelectedNodeB != null) {
-			createEdgeBetween(mSelectedNodeA.uid, mSelectedNodeB.uid);
+			createSegmentBetween(mSelectedNodeA.uid, mSelectedNodeB.uid);
 
 		}
 		updateUpdateCounter();
@@ -497,7 +431,7 @@ public class TrackEditorController extends BaseController {
 			final int lNumConnectedSegments = mSelectedNodeA.trackSwitch.numberConnectedSegments();
 			for (int i = 0; i < lNumConnectedSegments; i++) {
 				final var lSegment = mSelectedNodeA.trackSwitch.connectedSegments().get(i);
-				lSegment.edgeLengthInMeters = mTrack.getEdgeLength(lSegment);
+				lSegment.segmentLengthInMeters = mTrackInstace.getSegmentLength(lSegment);
 			}
 
 		}
@@ -515,26 +449,26 @@ public class TrackEditorController extends BaseController {
 	}
 
 	public void moveSelectedSegmentControlNode1To(float worldX, float worldY) {
-		final var lSelectedEdge = getSelectedEdge();
-		if (lSelectedEdge == null)
+		final var lSelectedSegment = getSelectedSegment();
+		if (lSelectedSegment == null)
 			return;
 
-		lSelectedEdge.control0X = worldX;
-		lSelectedEdge.control0Y = worldY;
+		lSelectedSegment.control0X = worldX;
+		lSelectedSegment.control0Y = worldY;
 
-		lSelectedEdge.edgeLengthInMeters = mTrack.getEdgeLength(lSelectedEdge);
+		lSelectedSegment.segmentLengthInMeters = mTrackInstace.getSegmentLength(lSelectedSegment);
 		updateUpdateCounter();
 	}
 
 	public void moveSelectedSegmentControlNode2To(float worldX, float worldY) {
-		final var lSelectedEdge = getSelectedEdge();
-		if (lSelectedEdge == null)
+		final var lSelectedSegment = getSelectedSegment();
+		if (lSelectedSegment == null)
 			return;
 
-		lSelectedEdge.control1X = worldX;
-		lSelectedEdge.control1Y = worldY;
+		lSelectedSegment.control1X = worldX;
+		lSelectedSegment.control1Y = worldY;
 
-		lSelectedEdge.edgeLengthInMeters = mTrack.getEdgeLength(lSelectedEdge);
+		lSelectedSegment.segmentLengthInMeters = mTrackInstace.getSegmentLength(lSelectedSegment);
 		updateUpdateCounter();
 	}
 
@@ -556,48 +490,18 @@ public class TrackEditorController extends BaseController {
 		lSelectedNode.trackSwitch.cycleSwitchAuxSegmentsForward();
 	}
 
-	public void setSelectedJunctionLamp(float worldX, float worldY) {
-		//		final var lSelectedEdge = getSelectedEdge();
-		//
-		//		if (lSelectedEdge == null)
-		//			return;
-		//
-		//		if (lSelectedEdge.trackJunction == null || lSelectedEdge.trackJunction.isSignalActive == false)
-		//			return;
-		//
-		//		lSelectedEdge.trackJunction.signalLampWorldX = worldX - mSelectedNodeA.x;
-		//		lSelectedEdge.trackJunction.signalLampWorldY = worldY - mSelectedNodeA.y;
-		//
-		//		updateUpdateCounter();
-	}
-
-	public void setSelectedJunctionBox(float worldX, float worldY) {
-		//		final var lSelectedEdge = getSelectedEdge();
-		//
-		//		if (lSelectedEdge == null)
-		//			return;
-		//
-		//		if (lSelectedEdge.trackJunction == null || lSelectedEdge.trackJunction.isSignalActive == false)
-		//			return;
-		//
-		//		lSelectedEdge.trackJunction.signalBoxWorldX = worldX - mSelectedNodeA.x;
-		//		lSelectedEdge.trackJunction.signalBoxWorldY = worldY - mSelectedNodeA.y;
-		//
-		//		updateUpdateCounter();
-	}
-
 	// ---------------------------------------------
 	// Input Callbacks
 	// ---------------------------------------------
 
 	public void clearTrackEditor(LintfordCore pCore) {
-		mTrack.nodes().clear();
-		mTrack.edges().clear();
-		mTrack.reset();
+		mTrackInstace.nodes().clear();
+		mTrackInstace.segments().clear();
+		mTrackInstace.reset();
 
-		mTrack.trackSignalSegments.clearInstances();
+		mTrackInstace.trackSignalSegments.clearInstances();
 
-		mTempEdgeList.clear();
+		mTempSegmentList.clear();
 
 		mSelectedNodeA = null;
 		mSelectedNodeB = null;

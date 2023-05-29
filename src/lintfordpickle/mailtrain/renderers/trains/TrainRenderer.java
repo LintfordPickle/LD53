@@ -160,21 +160,21 @@ public class TrainRenderer extends BaseRenderer {
 
 		GL11.glPointSize(11.f);
 
-		final var lCurrentEdge = pTrainCar.frontAxle.currentEdge;
-		final var lOriginNodeUid = lCurrentEdge.getOtherNodeUid(pTrainCar.frontAxle.destinationNodeUid);
-		final var lDistIntoTrack = pTrainCar.frontAxle.normalizedDistanceAlongEdge;
+		final var lCurrentSegment = pTrainCar.frontAxle.currentSegment;
+		final var lOriginNodeUid = lCurrentSegment.getOtherNodeUid(pTrainCar.frontAxle.destinationNodeUid);
+		final var lDistIntoTrack = pTrainCar.frontAxle.normalizedDistanceAlongSegment;
 
-		final var lWorldPosX = pTrack.getPositionAlongEdgeX(lCurrentEdge, lOriginNodeUid, lDistIntoTrack);
-		final var lWorldPosY = pTrack.getPositionAlongEdgeY(lCurrentEdge, lOriginNodeUid, lDistIntoTrack);
+		final var lWorldPosX = pTrack.getPositionAlongSegmentX(lCurrentSegment, lOriginNodeUid, lDistIntoTrack);
+		final var lWorldPosY = pTrack.getPositionAlongSegmentY(lCurrentSegment, lOriginNodeUid, lDistIntoTrack);
 
 		Debug.debugManager().drawers().drawPointImmediate(pCore.gameCamera(), lWorldPosX, lWorldPosY, -0.01f, 1f, 1.f, 0.f, 1.f);
 
-		final var lCurrentEdge1 = pTrainCar.rearAxle.currentEdge;
-		final var lOriginNodeUid1 = lCurrentEdge1.getOtherNodeUid(pTrainCar.rearAxle.destinationNodeUid);
-		final var lDistIntoTrack1 = pTrainCar.rearAxle.normalizedDistanceAlongEdge;
+		final var lCurrentSegment1 = pTrainCar.rearAxle.currentSegment;
+		final var lOriginNodeUid1 = lCurrentSegment1.getOtherNodeUid(pTrainCar.rearAxle.destinationNodeUid);
+		final var lDistIntoTrack1 = pTrainCar.rearAxle.normalizedDistanceAlongSegment;
 
-		final var lWorldPosX1 = pTrack.getPositionAlongEdgeX(lCurrentEdge1, lOriginNodeUid1, lDistIntoTrack1);
-		final var lWorldPosY1 = pTrack.getPositionAlongEdgeY(lCurrentEdge1, lOriginNodeUid1, lDistIntoTrack1);
+		final var lWorldPosX1 = pTrack.getPositionAlongSegmentX(lCurrentSegment1, lOriginNodeUid1, lDistIntoTrack1);
+		final var lWorldPosY1 = pTrack.getPositionAlongSegmentY(lCurrentSegment1, lOriginNodeUid1, lDistIntoTrack1);
 		Debug.debugManager().drawers().drawPointImmediate(pCore.gameCamera(), lWorldPosX1, lWorldPosY1, -0.01f, 1f, 0.5f, 0.f, 1.f);
 	}
 
@@ -199,7 +199,7 @@ public class TrainRenderer extends BaseRenderer {
 		final var lDestinationNode = pTrack.getNodeByUid(lLeadAxle.destinationNodeUid);
 
 		lFontUnit.drawText("current segment: " + lDestinationNode.uid, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
-		lFontUnit.drawText("segment length: " + lLeadAxle.currentEdge.edgeLengthInMeters + "m", lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
+		lFontUnit.drawText("segment length: " + lLeadAxle.currentSegment.segmentLengthInMeters + "m", lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
 		lFontUnit.drawText("acceleration: " + String.format("%.2f", pTrain.acceleration() * lDelta) + "m/s^2", lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
 		lFontUnit.drawText("target speed: " + String.format("%.2f", pTrain.targetSpeedInMetersPerSecond) + "m/s", lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
 		lFontUnit.drawText("actual speed: " + String.format("%.2f", pTrain.getSpeed()) + "m/s", lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
@@ -238,38 +238,38 @@ public class TrainRenderer extends BaseRenderer {
 			lFontUnit.drawText("  Forwards: " + pTrain.drivingForward(), lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
 			lTextPositionY += 20.f;
 			lFontUnit.drawText("Train Frontaxel", lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
-			lFontUnit.drawText("      Current Edge Uid: " + lFrontAxle.currentEdge.uid, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
+			lFontUnit.drawText("      Current Segment Uid: " + lFrontAxle.currentSegment.uid, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
 			lFontUnit.drawText("  Destination Node Uid: " + lFrontAxle.destinationNodeUid, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
-			if (lFrontAxle.nextFollowEdge.edge != null) {
-				lFontUnit.drawText("         Next Edge Uid: " + lFrontAxle.nextFollowEdge.edge.uid, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
+			if (lFrontAxle.nextFollowSegment.Segment != null) {
+				lFontUnit.drawText("         Next Segment Uid: " + lFrontAxle.nextFollowSegment.Segment.uid, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
 			} else
 				lTextPositionY += 20.f;
-			lFontUnit.drawText("    Distance into Edge: " + lFrontAxle.normalizedDistanceAlongEdge, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
-			lFontUnit.drawText("      Next Follow Edge: ", lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
-			if (lRearAxle.nextFollowEdge != null) {
-				lFontUnit.drawText("       Target Node Uid: " + lFrontAxle.nextFollowEdge.targetNodeUid, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
-				lFontUnit.drawText("           Logicounter: " + lFrontAxle.nextFollowEdge.logicalCounter, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
+			lFontUnit.drawText("    Distance into Segment: " + lFrontAxle.normalizedDistanceAlongSegment, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
+			lFontUnit.drawText("      Next Follow Segment: ", lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
+			if (lRearAxle.nextFollowSegment != null) {
+				lFontUnit.drawText("       Target Node Uid: " + lFrontAxle.nextFollowSegment.targetNodeUid, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
+				lFontUnit.drawText("           Logicounter: " + lFrontAxle.nextFollowSegment.logicalCounter, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
 
 			}
 			lTextPositionY += 20.f;
 			lTextPositionY += 20.f;
 			lTextPositionY += 20.f;
 			lFontUnit.drawText("Train Rearaxel", lTextPositionX, lTextPositionY += 20.f, -.01f, 1.f);
-			lFontUnit.drawText("      Current Edge Uid: " + lRearAxle.currentEdge.uid, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
+			lFontUnit.drawText("      Current Segment Uid: " + lRearAxle.currentSegment.uid, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
 			lFontUnit.drawText("  Destination Node Uid: " + lRearAxle.destinationNodeUid, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
-			if (lRearAxle.nextFollowEdge.edge != null) {
-				lFontUnit.drawText("         Next Edge Uid: " + lRearAxle.nextFollowEdge.edge.uid, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
+			if (lRearAxle.nextFollowSegment.Segment != null) {
+				lFontUnit.drawText("         Next Segment Uid: " + lRearAxle.nextFollowSegment.Segment.uid, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
 			} else
 				lTextPositionY += 20.f;
-			lFontUnit.drawText("    Distance into Edge: " + lRearAxle.normalizedDistanceAlongEdge, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
-			lFontUnit.drawText("      Next Follow Edge: ", lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
-			if (lRearAxle.nextFollowEdge != null) {
-				lFontUnit.drawText("       Target Node Uid: " + lRearAxle.nextFollowEdge.targetNodeUid, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
-				lFontUnit.drawText("           Logicounter: " + lRearAxle.nextFollowEdge.logicalCounter, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
+			lFontUnit.drawText("    Distance into Segment: " + lRearAxle.normalizedDistanceAlongSegment, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
+			lFontUnit.drawText("      Next Follow Segment: ", lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
+			if (lRearAxle.nextFollowSegment != null) {
+				lFontUnit.drawText("       Target Node Uid: " + lRearAxle.nextFollowSegment.targetNodeUid, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
+				lFontUnit.drawText("           Logicounter: " + lRearAxle.nextFollowSegment.logicalCounter, lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
 
 			}
 			lTextPositionY += 20.f;
-			float lAxleSpacing = Math.abs(lFrontAxle.normalizedDistanceAlongEdge) - Math.abs(lRearAxle.normalizedDistanceAlongEdge);
+			float lAxleSpacing = Math.abs(lFrontAxle.normalizedDistanceAlongSegment) - Math.abs(lRearAxle.normalizedDistanceAlongSegment);
 			lFontUnit.drawText("axle spacing: " + (String.format("%.2f", lAxleSpacing)), lTextPositionX, lTextPositionY += 20.f, -0.1f, 1.f);
 
 			lTextPositionX += 275.f;
@@ -280,11 +280,11 @@ public class TrainRenderer extends BaseRenderer {
 		// Render the axle ticker information
 		lTextPositionY += 20.f;
 		lTextPositionY += 20.f;
-		final int lFollowNodeListSize = pTrain.trackEdgeFollowList.size();
+		final int lFollowNodeListSize = pTrain.trackSegmentFollowList.size();
 		for (int j = 0; j < lFollowNodeListSize; j++) {
-			final var lTicker = pTrain.trackEdgeFollowList.get(j);
-			if (lTicker.edge != null)
-				lFontUnit.drawText("e" + lTicker.edge.uid + "  (" + lTicker.logicalCounter + ")", lTextPositionX, lTextPositionY += 20.f, -.01f, 1.f);
+			final var lTicker = pTrain.trackSegmentFollowList.get(j);
+			if (lTicker.Segment != null)
+				lFontUnit.drawText("e" + lTicker.Segment.uid + "  (" + lTicker.logicalCounter + ")", lTextPositionX, lTextPositionY += 20.f, -.01f, 1.f);
 
 		}
 		lFontUnit.end();

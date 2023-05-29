@@ -19,7 +19,7 @@ public class Train extends OpenPooledBaseData {
 
 	private static final List<TrainCar> UpdateListTrainCars = new ArrayList<>();
 
-	private static final boolean OUTPUT_TRACK_FOLLOW_EDGE_INFO = false;
+	private static final boolean OUTPUT_TRACK_FOLLOW_SEGMENT_INFO = false;
 
 	// ---------------------------------------------
 	// Variables
@@ -54,7 +54,7 @@ public class Train extends OpenPooledBaseData {
 	final float lDistanceToStartBraking = 96.f;
 
 	// allows axles to figure out the next node uid to follow
-	public final transient List<TrainFollowEdge> trackEdgeFollowList = new ArrayList<>();
+	public final transient List<TrainFollowSegment> trackSegmentFollowList = new ArrayList<>();
 
 	// ---------------------------------------------
 	// Properties
@@ -223,29 +223,29 @@ public class Train extends OpenPooledBaseData {
 			handleUpdateAxles(pTrack, leadCar.frontAxle);
 			if (getNumberOfCarsInTrain() == 1) {
 				// so take the locomotive's rear axle
-				removeFollowEdges(leadCar.rearAxle.nextFollowEdge);
+				removeFollowSegments(leadCar.rearAxle.nextFollowSegment);
 			} else if (lastCar != null) {
 				// otherwise take the rear car's 'rearaxle' - which ever that maybe
-				removeFollowEdges(lastCar.getAxleOnFreeHitch().nextFollowEdge);
+				removeFollowSegments(lastCar.getAxleOnFreeHitch().nextFollowSegment);
 			}
 		} else {
 			// going backwards with one car means we're using the locomotive
 			if (getNumberOfCarsInTrain() == 1) {
 				handleDriveAxles(pCore, pTrack, leadCar.rearAxle);
 				handleUpdateAxles(pTrack, leadCar.rearAxle);
-				removeFollowEdges(leadCar.frontAxle.nextFollowEdge);
+				removeFollowSegments(leadCar.frontAxle.nextFollowSegment);
 			} else {
 				final var lRearmostAxle = lastCar.getAxleOnFreeHitch();
 				handleDriveAxles(pCore, pTrack, lRearmostAxle);
 				handleUpdateAxles(pTrack, lRearmostAxle);
-				removeFollowEdges(leadCar.frontAxle.nextFollowEdge);
+				removeFollowSegments(leadCar.frontAxle.nextFollowSegment);
 
 			}
 		}
 	}
 
-	private void updateTrainSpeed(LintfordCore pCore, RailTrackInstance pTrack) {
-		final float lDelta = (float) pCore.gameTime().elapsedTimeMilli() * 0.001f;
+	private void updateTrainSpeed(LintfordCore core, RailTrackInstance trackInstance) {
+		final var lDelta = (float) core.gameTime().elapsedTimeMilli() * 0.001f;
 		final var lLeadAxle = drivingForward() ? leadCar.frontAxle : lastCar.getAxleOnFreeHitch();
 
 		distanceToNextStop -= lLeadAxle.distanceTravelledInMetersLastTick();
@@ -299,14 +299,14 @@ public class Train extends OpenPooledBaseData {
 		}
 	}
 
-	public void updateAxleWorldPosition(RailTrackInstance pTrack, TrainAxle pAxle) {
+	public void updateAxleWorldPosition(RailTrackInstance pTrack, TrainAxle axle) {
 		// The position is based on the rail track
-		final var lCurrentEdge = pAxle.currentEdge;
-		final var lOriginNodeUid = lCurrentEdge.getOtherNodeUid(pAxle.destinationNodeUid);
-		final var lDistIntoTrack = pAxle.normalizedDistanceAlongEdge;
+		final var lCurrentSegment = axle.currentSegment;
+		final var lOriginNodeUid = lCurrentSegment.getOtherNodeUid(axle.destinationNodeUid);
+		final var lDistIntoTrack = axle.normalizedDistanceAlongSegment;
 
-		pAxle.worldPositionX = pTrack.getPositionAlongEdgeX(lCurrentEdge, lOriginNodeUid, lDistIntoTrack);
-		pAxle.worldPositionY = pTrack.getPositionAlongEdgeY(lCurrentEdge, lOriginNodeUid, lDistIntoTrack);
+		axle.worldPositionX = pTrack.getPositionAlongSegmentX(lCurrentSegment, lOriginNodeUid, lDistIntoTrack);
+		axle.worldPositionY = pTrack.getPositionAlongSegmentY(lCurrentSegment, lOriginNodeUid, lDistIntoTrack);
 	}
 
 	// ---------------------------------------------
@@ -370,51 +370,51 @@ public class Train extends OpenPooledBaseData {
 			// We are the lead axle
 			final var lCurrentNodeUid = pTrainAxle.destinationNodeUid;
 
-			// Update the next edge (via the ticker)
+			// Update the next segment (via the ticker)
 			if (pIsLeadAxle) {
-				// this is the lead axle, so get the next edge along which we should drive
-				final var lNextEdge = pTrack.getNextEdge(pTrainAxle.currentEdge, pTrainAxle.destinationNodeUid);
-				if (lNextEdge == null) { // end of track
+				// this is the lead axle, so get the next segment along which we should drive
+				final var lNextSegment = pTrack.getNextSegment(pTrainAxle.currentSegment, pTrainAxle.destinationNodeUid);
+				if (lNextSegment == null) { // end of track
 					// This only returns the fact that we have no further node to goto in this 'direction'.
-					// It speaks nothing to the current position on the currently still active edge.
-					
+					// It speaks nothing to the current position on the currently still active segment.
+
 					// TODO: Stop the train if under some tolerence
 					// TODO: If the track has a stopper - then stop tolerence is heightened
 					// TODO: If the train speed is too high to stop, then its a crash ...
-					
+
 					// TODO: Handle the case of derailment - no track to traverse
 					pTrainAxle.parentTrainCar.train.killSpeed();
-					
+
 					return;
 				}
-				
+
 				// Firstly, update this axle
-				pTrainAxle.currentEdge = lNextEdge;// pUpdateAxle.tickerCounter.edge;
-				pTrainAxle.destinationNodeUid = lNextEdge.getOtherNodeUid(lCurrentNodeUid);
-				pTrainAxle.normalizedDistanceAlongEdge -= 1.f;
+				pTrainAxle.currentSegment = lNextSegment;
+				pTrainAxle.destinationNodeUid = lNextSegment.getOtherNodeUid(lCurrentNodeUid);
+				pTrainAxle.normalizedDistanceAlongSegment -= 1.f;
 
 				// As this axle is not following another, track whichever path is taken and record it
-				addFollowEdge(lNextEdge, pTrainAxle.destinationNodeUid);
-				pTrainAxle.nextFollowEdge.edge = lNextEdge;
-				pTrainAxle.nextFollowEdge.logicalCounter = pTrainAxle.destinationNodeUid;
+				addFollowSegment(lNextSegment, pTrainAxle.destinationNodeUid);
+				pTrainAxle.nextFollowSegment.Segment = lNextSegment;
+				pTrainAxle.nextFollowSegment.logicalCounter = pTrainAxle.destinationNodeUid;
 
 			} else {
-				final var lNextTicker = getNextFollowEdge(pTrainAxle.nextFollowEdge);
+				final var lNextTicker = getNextFollowSegment(pTrainAxle.nextFollowSegment);
 				if (lNextTicker == null) {
 					System.out.println("This is where I would have broken ");
-					printTrainFollowEdgeDebugInfo();
+					printTrainFollowSegmentDebugInfo();
 					return;
 				}
-				// change the edge this axle is traversing to the next in its tracker list
-				pTrainAxle.currentEdge = lNextTicker.edge; // pUpdateAxle.tickerCounter.edge;
-				pTrainAxle.destinationNodeUid = lNextTicker.targetNodeUid; // pUpdateAxle.currentEdge.getOtherNodeUid(lDestinationNodeUid);
-				pTrainAxle.normalizedDistanceAlongEdge -= 1.f;
+				// change the segment this axle is traversing to the next in its tracker list
+				pTrainAxle.currentSegment = lNextTicker.Segment;
+				pTrainAxle.destinationNodeUid = lNextTicker.targetNodeUid;
+				pTrainAxle.normalizedDistanceAlongSegment -= 1.f;
 
-				// As this axle is following another axle, get the next edge to follow from the train history.
-				final var lNewTicker = getNextFollowEdge(pTrainAxle.nextFollowEdge);
+				// As this axle is following another axle, get the next segment to follow from the train history.
+				final var lNewTicker = getNextFollowSegment(pTrainAxle.nextFollowSegment);
 				if (lNewTicker != null) {
-					pTrainAxle.nextFollowEdge.edge = lNewTicker.edge;
-					pTrainAxle.nextFollowEdge.logicalCounter = lNewTicker.logicalCounter;
+					pTrainAxle.nextFollowSegment.Segment = lNewTicker.Segment;
+					pTrainAxle.nextFollowSegment.logicalCounter = lNewTicker.logicalCounter;
 
 				}
 			}
@@ -558,7 +558,7 @@ public class Train extends OpenPooledBaseData {
 		clearFollowPath();
 
 		// Just need to update the destination nodes of the axles, as their 'current positions' wont have changed
-		rebuildFollowEdgeList(pTrack, !drivingForward() ? leadCar.frontAxle : lastCar.getAxleOnFreeHitch(), true);
+		rebuildFollowSegmentList(pTrack, !drivingForward() ? leadCar.frontAxle : lastCar.getAxleOnFreeHitch(), true);
 	}
 
 	public void handleChangeDrivingDirection(RailTrackInstance pTrack, boolean forwards) {
@@ -568,14 +568,14 @@ public class Train extends OpenPooledBaseData {
 		clearFollowPath();
 
 		// Just need to update the destination nodes of the axles, as their 'current positions' wont have changed
-		rebuildFollowEdgeList(pTrack, !drivingForward() ? leadCar.frontAxle : lastCar.getAxleOnFreeHitch(), true);
+		rebuildFollowSegmentList(pTrack, !drivingForward() ? leadCar.frontAxle : lastCar.getAxleOnFreeHitch(), true);
 	}
 
 	public void reorientateTrainCarsToLocomotive(RailTrackInstance pTrack) {
 		// 'Rebuild' the follow map using the last car
 		clearFollowPath();
 
-		int lCurEdgeUid = -1;
+		int lCurSegmentUid = -1;
 		int lCurDestNodeUid = -1;
 
 		// reorientate the train based on the lead car (constant)
@@ -584,113 +584,112 @@ public class Train extends OpenPooledBaseData {
 			final var lParentCar = lCurrentHitch.parentCar;
 			final var lMatchingAxle = lCurrentHitch == lParentCar.frontHitch ? lParentCar.frontAxle : lParentCar.rearAxle;
 
-			if (lCurEdgeUid == -1)
-				lCurEdgeUid = lMatchingAxle.currentEdge.uid;
+			if (lCurSegmentUid == -1)
+				lCurSegmentUid = lMatchingAxle.currentSegment.uid;
 			if (lCurDestNodeUid == -1)
 				lCurDestNodeUid = lMatchingAxle.destinationNodeUid;
-			if (lMatchingAxle.currentEdge.uid == lCurEdgeUid) {
+			if (lMatchingAxle.currentSegment.uid == lCurSegmentUid) {
 				if (lCurDestNodeUid != lMatchingAxle.destinationNodeUid) {
 					// Flip node
-					lMatchingAxle.destinationNodeUid = lMatchingAxle.currentEdge.getOtherNodeUid(lMatchingAxle.destinationNodeUid);
-					lMatchingAxle.normalizedDistanceAlongEdge = 1.0f - lMatchingAxle.normalizedDistanceAlongEdge;
+					lMatchingAxle.destinationNodeUid = lMatchingAxle.currentSegment.getOtherNodeUid(lMatchingAxle.destinationNodeUid);
+					lMatchingAxle.normalizedDistanceAlongSegment = 1.0f - lMatchingAxle.normalizedDistanceAlongSegment;
 				}
 			} else {
 				if (lCurDestNodeUid == lMatchingAxle.destinationNodeUid) {
 					// Flip node
-					lMatchingAxle.destinationNodeUid = lMatchingAxle.currentEdge.getOtherNodeUid(lMatchingAxle.destinationNodeUid);
-					lMatchingAxle.normalizedDistanceAlongEdge = 1.0f - lMatchingAxle.normalizedDistanceAlongEdge;
+					lMatchingAxle.destinationNodeUid = lMatchingAxle.currentSegment.getOtherNodeUid(lMatchingAxle.destinationNodeUid);
+					lMatchingAxle.normalizedDistanceAlongSegment = 1.0f - lMatchingAxle.normalizedDistanceAlongSegment;
 				}
 			}
 			// ----
 
 			final var lOtherAxle = lParentCar.getOtherAxle(lMatchingAxle);
-			if (lOtherAxle.currentEdge.uid == lCurEdgeUid) {
+			if (lOtherAxle.currentSegment.uid == lCurSegmentUid) {
 				if (lCurDestNodeUid != lOtherAxle.destinationNodeUid) {
 					// Flip node
-					lOtherAxle.destinationNodeUid = lOtherAxle.currentEdge.getOtherNodeUid(lOtherAxle.destinationNodeUid);
-					lOtherAxle.normalizedDistanceAlongEdge = 1.0f - lOtherAxle.normalizedDistanceAlongEdge;
+					lOtherAxle.destinationNodeUid = lOtherAxle.currentSegment.getOtherNodeUid(lOtherAxle.destinationNodeUid);
+					lOtherAxle.normalizedDistanceAlongSegment = 1.0f - lOtherAxle.normalizedDistanceAlongSegment;
 				}
 			} else {
 				if (lCurDestNodeUid == lOtherAxle.destinationNodeUid) {
 					// Flip node
-					lOtherAxle.destinationNodeUid = lOtherAxle.currentEdge.getOtherNodeUid(lOtherAxle.destinationNodeUid);
-					lOtherAxle.normalizedDistanceAlongEdge = 1.0f - lOtherAxle.normalizedDistanceAlongEdge;
+					lOtherAxle.destinationNodeUid = lOtherAxle.currentSegment.getOtherNodeUid(lOtherAxle.destinationNodeUid);
+					lOtherAxle.normalizedDistanceAlongSegment = 1.0f - lOtherAxle.normalizedDistanceAlongSegment;
 				}
 			}
-			lCurEdgeUid = lOtherAxle.currentEdge.uid;
+			lCurSegmentUid = lOtherAxle.currentSegment.uid;
 			lCurDestNodeUid = lOtherAxle.destinationNodeUid;
 
 			// Update for next iteration ---
 			lCurrentHitch = lParentCar.getOtherHitch(lCurrentHitch).connectedTo;
 
 		}
-		// 2. Second pass - rebuilds follow edge list from back to front
-		rebuildFollowEdgeList(pTrack, !drivingForward() ? leadCar.frontAxle : lastCar.getAxleOnFreeHitch(), false);
+		// 2. Second pass - rebuilds follow segment list from back to front
+		rebuildFollowSegmentList(pTrack, !drivingForward() ? leadCar.frontAxle : lastCar.getAxleOnFreeHitch(), false);
 	}
 
-	private void rebuildFollowEdgeList(RailTrackInstance pTrack, TrainAxle pLeadingAxle, boolean pFLipDirection) {
-		RailTrackSegment lLastEdgeAddedToFollowList = null;
+	private void rebuildFollowSegmentList(RailTrackInstance pTrack, TrainAxle pLeadingAxle, boolean pFLipDirection) {
+		RailTrackSegment lLastSegmentAddedToFollowList = null;
 
 		var lCurrentAxle = pLeadingAxle;
 
 		var lCurrentTrainCar = pLeadingAxle.parentTrainCar;
 		while (lCurrentAxle != null) {
 			if (pFLipDirection) {
-				final var lFlippedDestinationNodeUid = lCurrentAxle.currentEdge.getOtherNodeUid(lCurrentAxle.destinationNodeUid);
+				final var lFlippedDestinationNodeUid = lCurrentAxle.currentSegment.getOtherNodeUid(lCurrentAxle.destinationNodeUid);
 				lCurrentAxle.destinationNodeUid = lFlippedDestinationNodeUid;
-				lCurrentAxle.normalizedDistanceAlongEdge = 1.0f - lCurrentAxle.normalizedDistanceAlongEdge;
+				lCurrentAxle.normalizedDistanceAlongSegment = 1.0f - lCurrentAxle.normalizedDistanceAlongSegment;
 				lCurrentAxle.overshootDistanceInMeters = 0.f;
 
-				lCurrentAxle.nextFollowEdge.targetNodeUid = lFlippedDestinationNodeUid;
-				lCurrentAxle.nextFollowEdge.logicalCounter = 0;
+				lCurrentAxle.nextFollowSegment.targetNodeUid = lFlippedDestinationNodeUid;
+				lCurrentAxle.nextFollowSegment.logicalCounter = 0;
 
 			}
-			if (lLastEdgeAddedToFollowList == null || lCurrentAxle.currentEdge.uid != lLastEdgeAddedToFollowList.uid) {
+			if (lLastSegmentAddedToFollowList == null || lCurrentAxle.currentSegment.uid != lLastSegmentAddedToFollowList.uid) {
 				// Need to get a list of all nodes between the last registered node and the current one
-				if (lLastEdgeAddedToFollowList != null) {
-					final var lCommonNodeUid = RailTrackSegment.getCommonNodeUid(lLastEdgeAddedToFollowList, lCurrentAxle.currentEdge);
+				if (lLastSegmentAddedToFollowList != null) {
+					final var lCommonNodeUid = RailTrackSegment.getCommonNodeUid(lLastSegmentAddedToFollowList, lCurrentAxle.currentSegment);
 					if (lCommonNodeUid == -1) {
-						final var lLastFollowEdge = getLastFollowEdge();
-						final var lSourceNodeUid = lCurrentAxle.currentEdge.getOtherNodeUid(lCurrentAxle.destinationNodeUid);
+						final var lLastFollowSegment = getLastFollowSegment();
+						final var lSourceNodeUid = lCurrentAxle.currentSegment.getOtherNodeUid(lCurrentAxle.destinationNodeUid);
 
-						final var lMissingEdge = pTrack.getEdgeBetweenNodes(lSourceNodeUid, lLastFollowEdge.targetNodeUid);
-						if (lMissingEdge != null) {
-							addFollowEdge(lMissingEdge, lSourceNodeUid);
-
+						final var lMissingSegment = pTrack.getSegmentBetweenNodes(lSourceNodeUid, lLastFollowSegment.targetNodeUid);
+						if (lMissingSegment != null) {
+							addFollowSegment(lMissingSegment, lSourceNodeUid);
 						}
 					}
 				}
-				addFollowEdge(lCurrentAxle.currentEdge, lCurrentAxle.destinationNodeUid);
-				lLastEdgeAddedToFollowList = lCurrentAxle.currentEdge;
+				addFollowSegment(lCurrentAxle.currentSegment, lCurrentAxle.destinationNodeUid);
+				lLastSegmentAddedToFollowList = lCurrentAxle.currentSegment;
 
 			}
 			final var lOtherAxle = lCurrentTrainCar.getOtherAxle(lCurrentAxle);
 			if (pFLipDirection) {
-				final var lFlippedDestinationNodeUid = lOtherAxle.currentEdge.getOtherNodeUid(lOtherAxle.destinationNodeUid);
+				final var lFlippedDestinationNodeUid = lOtherAxle.currentSegment.getOtherNodeUid(lOtherAxle.destinationNodeUid);
 				lOtherAxle.destinationNodeUid = lFlippedDestinationNodeUid;
-				lOtherAxle.normalizedDistanceAlongEdge = 1.0f - lOtherAxle.normalizedDistanceAlongEdge;
+				lOtherAxle.normalizedDistanceAlongSegment = 1.0f - lOtherAxle.normalizedDistanceAlongSegment;
 				lOtherAxle.overshootDistanceInMeters = 0.f;
 
-				lOtherAxle.nextFollowEdge.targetNodeUid = lFlippedDestinationNodeUid;
-				lOtherAxle.nextFollowEdge.logicalCounter = 0;
+				lOtherAxle.nextFollowSegment.targetNodeUid = lFlippedDestinationNodeUid;
+				lOtherAxle.nextFollowSegment.logicalCounter = 0;
 			}
-			if (lLastEdgeAddedToFollowList == null || lOtherAxle.currentEdge.uid != lLastEdgeAddedToFollowList.uid) {
+			if (lLastSegmentAddedToFollowList == null || lOtherAxle.currentSegment.uid != lLastSegmentAddedToFollowList.uid) {
 				// Need to get a list of all nodes between the last registered node and the current one
-				if (lLastEdgeAddedToFollowList != null) {
-					final var lCommonNodeUid = RailTrackSegment.getCommonNodeUid(lLastEdgeAddedToFollowList, lOtherAxle.currentEdge);
+				if (lLastSegmentAddedToFollowList != null) {
+					final var lCommonNodeUid = RailTrackSegment.getCommonNodeUid(lLastSegmentAddedToFollowList, lOtherAxle.currentSegment);
 					if (lCommonNodeUid == -1) {
-						final var lLastFollowEdge = getLastFollowEdge();
-						final var lSourceNodeUid = lOtherAxle.currentEdge.getOtherNodeUid(lOtherAxle.destinationNodeUid);
+						final var lLastFollowSegment = getLastFollowSegment();
+						final var lSourceNodeUid = lOtherAxle.currentSegment.getOtherNodeUid(lOtherAxle.destinationNodeUid);
 
-						final var lMissingEdge = pTrack.getEdgeBetweenNodes(lSourceNodeUid, lLastFollowEdge.targetNodeUid);
-						if (lMissingEdge != null) {
-							addFollowEdge(lMissingEdge, lSourceNodeUid);
+						final var lMissingSegment = pTrack.getSegmentBetweenNodes(lSourceNodeUid, lLastFollowSegment.targetNodeUid);
+						if (lMissingSegment != null) {
+							addFollowSegment(lMissingSegment, lSourceNodeUid);
 
 						}
 					}
 				}
-				addFollowEdge(lOtherAxle.currentEdge, lOtherAxle.destinationNodeUid);
-				lLastEdgeAddedToFollowList = lOtherAxle.currentEdge;
+				addFollowSegment(lOtherAxle.currentSegment, lOtherAxle.destinationNodeUid);
+				lLastSegmentAddedToFollowList = lOtherAxle.currentSegment;
 
 			}
 			TrainHitch lCurrentHitch = lCurrentTrainCar.getMatchingHitch(lOtherAxle);
@@ -702,8 +701,8 @@ public class Train extends OpenPooledBaseData {
 			lCurrentAxle = lCurrentTrainCar.getMatchingAxle(lNextCarHitch);
 
 		}
-		if (OUTPUT_TRACK_FOLLOW_EDGE_INFO)
-			printTrainFollowEdgeDebugInfo();
+		if (OUTPUT_TRACK_FOLLOW_SEGMENT_INFO)
+			printTrainFollowSegmentDebugInfo();
 	}
 
 	private void resetAxleTrackerLogicalCounters() {
@@ -711,8 +710,8 @@ public class Train extends OpenPooledBaseData {
 		for (int i = 0; i < lNumCars; i++) {
 			final var lTrainCar = getCarByIndex(i);
 
-			lTrainCar.frontAxle.nextFollowEdge.logicalCounter = -1;
-			lTrainCar.rearAxle.nextFollowEdge.logicalCounter = -1;
+			lTrainCar.frontAxle.nextFollowSegment.logicalCounter = -1;
+			lTrainCar.rearAxle.nextFollowSegment.logicalCounter = -1;
 
 		}
 	}
@@ -721,11 +720,11 @@ public class Train extends OpenPooledBaseData {
 	public void reorientateTrainCarsToLocomotiveOld(RailTrackInstance pTrack) {
 		// 'Rebuild' the follow map using the last car
 		clearFollowPath();
-		RailTrackSegment lLastEdgeAddedToFollowList = null;
+		RailTrackSegment lLastSegmentAddedToFollowList = null;
 
 		final int lNumberCarsInTrain = getNumberOfCarsInTrain();
 
-		int lCurEdgeUid = -1;
+		int lCurSegmentUid = -1;
 		int lCurDestNodeUid = -1;
 
 		// 1. First pass - aligns all car directions to match the main locomotive
@@ -735,47 +734,47 @@ public class Train extends OpenPooledBaseData {
 
 			final var lFrontAxle = lTrainCar.frontAxle;
 
-			if (lCurEdgeUid == -1)
-				lCurEdgeUid = lFrontAxle.currentEdge.uid;
+			if (lCurSegmentUid == -1)
+				lCurSegmentUid = lFrontAxle.currentSegment.uid;
 			if (lCurDestNodeUid == -1)
 				lCurDestNodeUid = lFrontAxle.destinationNodeUid;
-			if (lFrontAxle.currentEdge.uid == lCurEdgeUid) {
+			if (lFrontAxle.currentSegment.uid == lCurSegmentUid) {
 				if (lCurDestNodeUid != lFrontAxle.destinationNodeUid) {
 					// Flip node
-					lFrontAxle.destinationNodeUid = lFrontAxle.currentEdge.getOtherNodeUid(lFrontAxle.destinationNodeUid);
-					lFrontAxle.normalizedDistanceAlongEdge = 1.0f - lFrontAxle.normalizedDistanceAlongEdge;
+					lFrontAxle.destinationNodeUid = lFrontAxle.currentSegment.getOtherNodeUid(lFrontAxle.destinationNodeUid);
+					lFrontAxle.normalizedDistanceAlongSegment = 1.0f - lFrontAxle.normalizedDistanceAlongSegment;
 				}
 			} else {
 				if (lCurDestNodeUid == lFrontAxle.destinationNodeUid) {
 					// Flip node
-					lFrontAxle.destinationNodeUid = lFrontAxle.currentEdge.getOtherNodeUid(lFrontAxle.destinationNodeUid);
-					lFrontAxle.normalizedDistanceAlongEdge = 1.0f - lFrontAxle.normalizedDistanceAlongEdge;
+					lFrontAxle.destinationNodeUid = lFrontAxle.currentSegment.getOtherNodeUid(lFrontAxle.destinationNodeUid);
+					lFrontAxle.normalizedDistanceAlongSegment = 1.0f - lFrontAxle.normalizedDistanceAlongSegment;
 				}
 			}
-			lCurEdgeUid = lFrontAxle.currentEdge.uid;
+			lCurSegmentUid = lFrontAxle.currentSegment.uid;
 			lCurDestNodeUid = lFrontAxle.destinationNodeUid;
 
 			// ----
 
 			final var lRearAxle = lTrainCar.rearAxle;
-			if (lRearAxle.currentEdge.uid == lCurEdgeUid) {
+			if (lRearAxle.currentSegment.uid == lCurSegmentUid) {
 				if (lCurDestNodeUid != lRearAxle.destinationNodeUid) {
 					// Flip node
-					lRearAxle.destinationNodeUid = lRearAxle.currentEdge.getOtherNodeUid(lRearAxle.destinationNodeUid);
-					lRearAxle.normalizedDistanceAlongEdge = 1.0f - lRearAxle.normalizedDistanceAlongEdge;
+					lRearAxle.destinationNodeUid = lRearAxle.currentSegment.getOtherNodeUid(lRearAxle.destinationNodeUid);
+					lRearAxle.normalizedDistanceAlongSegment = 1.0f - lRearAxle.normalizedDistanceAlongSegment;
 				}
 			} else {
 				if (lCurDestNodeUid == lRearAxle.destinationNodeUid) {
 					// Flip node
-					lRearAxle.destinationNodeUid = lRearAxle.currentEdge.getOtherNodeUid(lRearAxle.destinationNodeUid);
-					lRearAxle.normalizedDistanceAlongEdge = 1.0f - lRearAxle.normalizedDistanceAlongEdge;
+					lRearAxle.destinationNodeUid = lRearAxle.currentSegment.getOtherNodeUid(lRearAxle.destinationNodeUid);
+					lRearAxle.normalizedDistanceAlongSegment = 1.0f - lRearAxle.normalizedDistanceAlongSegment;
 				}
 			}
-			lCurEdgeUid = lRearAxle.currentEdge.uid;
+			lCurSegmentUid = lRearAxle.currentSegment.uid;
 			lCurDestNodeUid = lRearAxle.destinationNodeUid;
 
 		}
-		// 2. Second pass - rebuilds follow edge list from back to front
+		// 2. Second pass - rebuilds follow segment list from back to front
 
 		// Just need to update the destination nodes of the axles, as their 'current positions' wont have changed
 		for (int i = 0; i < lNumberCarsInTrain; i++) {
@@ -783,48 +782,48 @@ public class Train extends OpenPooledBaseData {
 			final int lTrainCarUid = drivingForward() ? lNumberCarsInTrain - i - 1 : i;
 			final var lTrainCar = getCarByIndex(lTrainCarUid);
 			{
-				// The edge the axle is on doesn't change just between we change direction ...
+				// The segment the axle is on doesn't change just between we change direction ...
 				final var lCurrentAxle = !drivingForward() ? lTrainCar.frontAxle : lTrainCar.rearAxle;
-				if (lLastEdgeAddedToFollowList == null || lCurrentAxle.currentEdge.uid != lLastEdgeAddedToFollowList.uid) {
+				if (lLastSegmentAddedToFollowList == null || lCurrentAxle.currentSegment.uid != lLastSegmentAddedToFollowList.uid) {
 					// Need to get a list of all nodes between the last registered node and the current one
-					if (lLastEdgeAddedToFollowList != null) {
-						final var lCommonNodeUid = RailTrackSegment.getCommonNodeUid(lLastEdgeAddedToFollowList, lCurrentAxle.currentEdge);
+					if (lLastSegmentAddedToFollowList != null) {
+						final var lCommonNodeUid = RailTrackSegment.getCommonNodeUid(lLastSegmentAddedToFollowList, lCurrentAxle.currentSegment);
 						if (lCommonNodeUid == -1) {
-							final var lLastFollowEdge = getLastFollowEdge();
-							final var lSourceNodeUid = lCurrentAxle.currentEdge.getOtherNodeUid(lCurrentAxle.destinationNodeUid);
+							final var lLastFollowSegment = getLastFollowSegment();
+							final var lSourceNodeUid = lCurrentAxle.currentSegment.getOtherNodeUid(lCurrentAxle.destinationNodeUid);
 
-							final var lMissingEdge = pTrack.getEdgeBetweenNodes(lSourceNodeUid, lLastFollowEdge.targetNodeUid);
-							if (lMissingEdge != null) {
-								addFollowEdge(lMissingEdge, lSourceNodeUid);
+							final var lMissingSegment = pTrack.getSegmentBetweenNodes(lSourceNodeUid, lLastFollowSegment.targetNodeUid);
+							if (lMissingSegment != null) {
+								addFollowSegment(lMissingSegment, lSourceNodeUid);
 
 							}
 						}
 					}
-					addFollowEdge(lCurrentAxle.currentEdge, lCurrentAxle.destinationNodeUid);
-					lLastEdgeAddedToFollowList = lCurrentAxle.currentEdge;
+					addFollowSegment(lCurrentAxle.currentSegment, lCurrentAxle.destinationNodeUid);
+					lLastSegmentAddedToFollowList = lCurrentAxle.currentSegment;
 
 				}
 			}
 			{
-				// The edge the axle is on doesn't change just between we change direction ...
+				// The segment the axle is on doesn't change just between we change direction ...
 				final var lCurrentAxle = !drivingForward() ? lTrainCar.rearAxle : lTrainCar.frontAxle;
-				if (lLastEdgeAddedToFollowList == null || lCurrentAxle.currentEdge.uid != lLastEdgeAddedToFollowList.uid) {
+				if (lLastSegmentAddedToFollowList == null || lCurrentAxle.currentSegment.uid != lLastSegmentAddedToFollowList.uid) {
 					// Need to get a list of all nodes between the last registered node and the current one
-					if (lLastEdgeAddedToFollowList != null) {
-						final var lCommonNodeUid = RailTrackSegment.getCommonNodeUid(lLastEdgeAddedToFollowList, lCurrentAxle.currentEdge);
+					if (lLastSegmentAddedToFollowList != null) {
+						final var lCommonNodeUid = RailTrackSegment.getCommonNodeUid(lLastSegmentAddedToFollowList, lCurrentAxle.currentSegment);
 						if (lCommonNodeUid == -1) {
-							final var lLastFollowEdge = getLastFollowEdge();
-							final var lSourceNodeUid = lCurrentAxle.currentEdge.getOtherNodeUid(lCurrentAxle.destinationNodeUid);
+							final var lLastFollowSegment = getLastFollowSegment();
+							final var lSourceNodeUid = lCurrentAxle.currentSegment.getOtherNodeUid(lCurrentAxle.destinationNodeUid);
 
-							final var lMissingEdge = pTrack.getEdgeBetweenNodes(lSourceNodeUid, lLastFollowEdge.targetNodeUid);
-							if (lMissingEdge != null) {
-								addFollowEdge(lMissingEdge, lSourceNodeUid);
+							final var lMissingSegment = pTrack.getSegmentBetweenNodes(lSourceNodeUid, lLastFollowSegment.targetNodeUid);
+							if (lMissingSegment != null) {
+								addFollowSegment(lMissingSegment, lSourceNodeUid);
 
 							}
 						}
 					}
-					addFollowEdge(lCurrentAxle.currentEdge, lCurrentAxle.destinationNodeUid);
-					lLastEdgeAddedToFollowList = lCurrentAxle.currentEdge;
+					addFollowSegment(lCurrentAxle.currentSegment, lCurrentAxle.destinationNodeUid);
+					lLastSegmentAddedToFollowList = lCurrentAxle.currentSegment;
 
 				}
 			}
@@ -834,45 +833,46 @@ public class Train extends OpenPooledBaseData {
 	public void clearFollowPath() {
 		resetAxleTrackerLogicalCounters();
 
-		trackEdgeFollowList.clear();
+		trackSegmentFollowList.clear();
 		trainPathNodeTracker = 0;
-		if (OUTPUT_TRACK_FOLLOW_EDGE_INFO) {
-			System.out.println("Train Follow Edge List Cleared");
+		if (OUTPUT_TRACK_FOLLOW_SEGMENT_INFO) {
+			System.out.println("Train Follow Segment List Cleared");
 			System.out.println("====================================");
 
 		}
 	}
 
-	public void removeFollowEdges(final TrainFollowEdge pAxleTicker) {
-		if (trackEdgeFollowList.size() == 0)
+	public void removeFollowSegments(final TrainFollowSegment pAxleTicker) {
+		if (trackSegmentFollowList.size() == 0)
 			return;
-		if (OUTPUT_TRACK_FOLLOW_EDGE_INFO) {
-			System.out.println("Train Follow Edge List Removeds older than " + pAxleTicker.logicalCounter);
 
+		if (OUTPUT_TRACK_FOLLOW_SEGMENT_INFO) {
+			System.out.println("Train FollowSegment List Removed older than " + pAxleTicker.logicalCounter);
 		}
+
 		// Remove all the tickers which are older than the last processed here
-		while (trackEdgeFollowList.size() > 0 && trackEdgeFollowList.get(0).logicalCounter < pAxleTicker.logicalCounter) {
-			trackEdgeFollowList.remove(0);
+		while (trackSegmentFollowList.size() > 0 && trackSegmentFollowList.get(0).logicalCounter < pAxleTicker.logicalCounter) {
+			trackSegmentFollowList.remove(0);
 		}
 	}
 
-	public TrainFollowEdge addFollowEdge(RailTrackSegment pEdge, int pDestNodeUid) {
-		// Sets the next edge and destination node that this train will follow
-		final var lNewAxleTicker = new TrainFollowEdge(pEdge, pDestNodeUid, trainPathNodeTracker++);
+	public TrainFollowSegment addFollowSegment(RailTrackSegment segment, int destNodeUid) {
+		// Sets the next segment and destination node that this train will follow
+		final var lNewAxleTicker = new TrainFollowSegment(segment, destNodeUid, trainPathNodeTracker++);
 
-		if (OUTPUT_TRACK_FOLLOW_EDGE_INFO)
-			System.out.println("Added new follow edge e:" + +pEdge.uid + "  n:" + pDestNodeUid);
+		if (OUTPUT_TRACK_FOLLOW_SEGMENT_INFO)
+			System.out.println("Added new follow segment e:" + +segment.uid + "  n:" + destNodeUid);
 
-		trackEdgeFollowList.add(lNewAxleTicker);
+		trackSegmentFollowList.add(lNewAxleTicker);
 		return lNewAxleTicker;
 	}
 
-	public TrainFollowEdge getNextFollowEdge(TrainFollowEdge pCurrentEdge) {
-		final int lNodeListSize = trackEdgeFollowList.size();
+	public TrainFollowSegment getNextFollowSegment(TrainFollowSegment currentSegment) {
+		final int lNodeListSize = trackSegmentFollowList.size();
 		for (int i = 0; i < lNodeListSize; i++) {
-			if (trackEdgeFollowList.get(i).edge.uid == pCurrentEdge.edge.uid && trackEdgeFollowList.get(i).logicalCounter >= pCurrentEdge.logicalCounter) {
+			if (trackSegmentFollowList.get(i).Segment.uid == currentSegment.Segment.uid && trackSegmentFollowList.get(i).logicalCounter >= currentSegment.logicalCounter) {
 				if (i < lNodeListSize - 1)
-					return trackEdgeFollowList.get(i + 1);
+					return trackSegmentFollowList.get(i + 1);
 
 				return null;
 
@@ -881,9 +881,9 @@ public class Train extends OpenPooledBaseData {
 		return null;
 	}
 
-	public TrainFollowEdge getLastFollowEdge() {
-		if (trackEdgeFollowList.size() > 0)
-			return trackEdgeFollowList.get(trackEdgeFollowList.size() - 1);
+	public TrainFollowSegment getLastFollowSegment() {
+		if (trackSegmentFollowList.size() > 0)
+			return trackSegmentFollowList.get(trackSegmentFollowList.size() - 1);
 
 		return null;
 	}
@@ -926,17 +926,17 @@ public class Train extends OpenPooledBaseData {
 
 	// Debug ---------------------------------------
 
-	public void printTrainFollowEdgeDebugInfo() {
-		System.out.println("Train Follow Edge List Debug");
+	public void printTrainFollowSegmentDebugInfo() {
+		System.out.println("Train Follow Segment List Debug");
 		System.out.println("====================================");
-		final int lNodeListSize = trackEdgeFollowList.size();
+		final int lNodeListSize = trackSegmentFollowList.size();
 		for (int i = 0; i < lNodeListSize; i++) {
-			final var lItem = trackEdgeFollowList.get(i);
+			final var lItem = trackSegmentFollowList.get(i);
 			if (lItem == null) {
-				System.out.println("Null item in train follow edge list");
+				System.out.println("Null item in train follow segment list");
 
 			} else {
-				System.out.println(i + ":   e:" + lItem.edge.uid + "  destNode: " + lItem.targetNodeUid);
+				System.out.println(i + ":   e:" + lItem.Segment.uid + "  destNode: " + lItem.targetNodeUid);
 
 			}
 		}

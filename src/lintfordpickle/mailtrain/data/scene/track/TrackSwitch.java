@@ -30,7 +30,7 @@ public class TrackSwitch {
 	private int mActiveAuxiliarySegmentIndex;
 
 	/**
-	 * All edges connected to this {@link TrackSwitch} Just because an edge is connected to a switch, doesn't mean the edge can be traversed from that node.
+	 * Contains all segments connected to this {@link TrackSwitch}. Just because a segment is connected to a switch, doesn't mean the segment can be traversed from that node.
 	 */
 	private transient List<RailTrackSegment> connectedSegments;
 	private final List<Integer> connectedSegmentUids;
@@ -51,16 +51,16 @@ public class TrackSwitch {
 		return connectedSegmentUids;
 	}
 
-	public RailTrackSegment getConnectedSegmentByIndex(int edgeListIndex) {
-		return connectedSegments.get(edgeListIndex);
+	public RailTrackSegment getConnectedSegmentByIndex(int segmentListIndex) {
+		return connectedSegments.get(segmentListIndex);
 	}
 
 	// TODO: Move the whitelist to the switch (as every node has a switch now anyway)
-	public RailTrackSegment getRandomWhitelistedSegmentApartFrom(RailTrackSegment currentEdge, int destinationNode) {
+	public RailTrackSegment getRandomWhitelistedSegmentApartFrom(RailTrackSegment currentSegment, int destinationNode) {
 		if (connectedSegments == null || connectedSegments.size() == 0)
 			return null;
 
-		// final var pEdgeUidWhiteList = currentEdge.allowedEdgeConections;
+		// final var pEdgeUidWhiteList = currentSegment.allowedEdgeConections;
 
 		SEGMENT_UPDATE_LIST.clear();
 
@@ -70,8 +70,8 @@ public class TrackSwitch {
 				continue;
 
 			final int lUidToCheck = connectedSegments.get(i).uid;
-			if (lUidToCheck != currentEdge.uid /* && pEdgeUidWhiteList.contains(lUidToCheck) */) {
-				// Mark allowed edges, just not the one we just left
+			if (lUidToCheck != currentSegment.uid /* && pSegmentUidWhiteList.contains(lUidToCheck) */) {
+				// Mark allowed segments, just not the one we just left
 				SEGMENT_UPDATE_LIST.add(connectedSegments.get(i));
 			}
 		}
@@ -80,13 +80,13 @@ public class TrackSwitch {
 		if (SEGMENT_UPDATE_LIST.size() == 1)
 			return SEGMENT_UPDATE_LIST.get(0);
 
-		final int lUEdgeCount = SEGMENT_UPDATE_LIST.size();
+		final int lUpdateSegmenteCount = SEGMENT_UPDATE_LIST.size();
 
-		if (lUEdgeCount == 0) {
+		if (lUpdateSegmenteCount == 0) {
 			return null;
 		}
 
-		final int lRandIndex = RandomNumbers.random(0, lUEdgeCount);
+		final int lRandIndex = RandomNumbers.random(0, lUpdateSegmenteCount);
 
 		return SEGMENT_UPDATE_LIST.get(lRandIndex);
 	}
@@ -97,8 +97,8 @@ public class TrackSwitch {
 
 		SEGMENT_UPDATE_LIST.clear();
 
-		final int lEdgeCount = connectedSegments.size();
-		for (int i = 0; i < lEdgeCount; i++) {
+		final int lSegmentCount = connectedSegments.size();
+		for (int i = 0; i < lSegmentCount; i++) {
 			if (connectedSegments.get(i) == null)
 				continue;
 
@@ -108,17 +108,17 @@ public class TrackSwitch {
 			}
 		}
 
-		// Now select a random, allowed edge
+		// Now select a random, allowed segment
 		if (SEGMENT_UPDATE_LIST.size() == 1)
 			return SEGMENT_UPDATE_LIST.get(0);
 
-		final int lUEdgeCount = SEGMENT_UPDATE_LIST.size();
+		final int lUSegmentCount = SEGMENT_UPDATE_LIST.size();
 
-		if (lUEdgeCount == 0) {
+		if (lUSegmentCount == 0) {
 			return null;
 		}
 
-		final int lRandIndex = RandomNumbers.random(0, lUEdgeCount);
+		final int lRandIndex = RandomNumbers.random(0, lUSegmentCount);
 
 		return SEGMENT_UPDATE_LIST.get(lRandIndex);
 	}
@@ -127,14 +127,14 @@ public class TrackSwitch {
 		if (connectedSegments == null || connectedSegments.size() == 0)
 			return null;
 
-		final int lEdgeCount = connectedSegments.size();
-		final int lRandIndex = RandomNumbers.random(0, lEdgeCount);
+		final int lSegmentCount = connectedSegments.size();
+		final int lRandIndex = RandomNumbers.random(0, lSegmentCount);
 
 		return connectedSegments.get(lRandIndex);
 
 	}
 
-	public void removeSegmentByUid(int edgeUid) {
+	public void removeSegmentByUid(int segmentUid) {
 		SEGMENT_UPDATE_LIST.clear();
 		final int lSegmentCount = connectedSegments.size();
 		for (int i = 0; i < lSegmentCount; i++) {
@@ -143,13 +143,13 @@ public class TrackSwitch {
 
 		for (int i = 0; i < lSegmentCount; i++) {
 			final var lSegment = SEGMENT_UPDATE_LIST.get(i);
-			if (lSegment != null && lSegment.uid == edgeUid) {
+			if (lSegment != null && lSegment.uid == segmentUid) {
 				connectedSegments.remove(lSegment);
 			}
 		}
 
-		if (connectedSegmentUids.contains((Integer) edgeUid)) {
-			connectedSegmentUids.remove((Integer) edgeUid);
+		if (connectedSegmentUids.contains((Integer) segmentUid)) {
+			connectedSegmentUids.remove((Integer) segmentUid);
 		}
 	}
 
@@ -157,13 +157,13 @@ public class TrackSwitch {
 		return numberConnectedSegments() == 1;
 	}
 
-	public RailTrackSegment getConnectedSegmentByUid(int edgeUid) {
-		final int lEdgeCount = connectedSegments.size();
-		for (int i = 0; i < lEdgeCount; i++) {
+	public RailTrackSegment getConnectedSegmentByUid(int segmentUid) {
+		final int lSegmentCount = connectedSegments.size();
+		for (int i = 0; i < lSegmentCount; i++) {
 			if (connectedSegments.get(i) == null)
 				continue;
 
-			if (connectedSegments.get(i).uid == edgeUid) {
+			if (connectedSegments.get(i).uid == segmentUid) {
 				return connectedSegments.get(i);
 			}
 		}
@@ -171,12 +171,12 @@ public class TrackSwitch {
 		return null;
 	}
 
-	public void addSegmentToSwitch(RailTrackSegment edge) {
-		if (!connectedSegments.contains(edge))
-			connectedSegments.add(edge);
+	public void addSegmentToSwitch(RailTrackSegment segment) {
+		if (!connectedSegments.contains(segment))
+			connectedSegments.add(segment);
 
-		if (!connectedSegmentUids.contains(edge.uid))
-			connectedSegmentUids.add(edge.uid);
+		if (!connectedSegmentUids.contains(segment.uid))
+			connectedSegmentUids.add(segment.uid);
 
 		if (connectedSegments.size() == 1) {
 			mMainSegmentLocalIndex = 0;
@@ -192,8 +192,8 @@ public class TrackSwitch {
 			return;
 		}
 
-		final int lNumEdges = connectedSegments.size();
-		for (int i = 0; i < lNumEdges; i++) {
+		final int lNumSegments = connectedSegments.size();
+		for (int i = 0; i < lNumSegments; i++) {
 			if (i == mMainSegmentLocalIndex)
 				continue;
 
@@ -326,7 +326,7 @@ public class TrackSwitch {
 		mMainSegmentLocalIndex = saveDef.mainSegmentLocalIndex;
 		mActiveAuxiliarySegmentIndex = saveDef.activeAuxiliarySegmentLocalIndex;
 
-		connectedSegmentUids.addAll(saveDef.connectedEdgeUids);
+		connectedSegmentUids.addAll(saveDef.connectedSegmentUids);
 
 		signalBoxWorldX = saveDef.boxOffsetX;
 		signalBoxWorldY = saveDef.boxOffsetY;
@@ -336,7 +336,7 @@ public class TrackSwitch {
 		saveDef.mainSegmentLocalIndex = mMainSegmentLocalIndex;
 		saveDef.activeAuxiliarySegmentLocalIndex = mActiveAuxiliarySegmentIndex;
 
-		saveDef.connectedEdgeUids.addAll(connectedSegmentUids);
+		saveDef.connectedSegmentUids.addAll(connectedSegmentUids);
 
 		saveDef.boxOffsetX = signalBoxWorldX;
 		saveDef.boxOffsetY = signalBoxWorldY;
@@ -358,33 +358,33 @@ public class TrackSwitch {
 		if (connectedSegments == null)
 			connectedSegments = new ArrayList<>();
 
-		final var lEdgeUidCount = connectedSegmentUids.size();
-		for (int i = 0; i < lEdgeUidCount; i++) {
-			final var lEdge = railTrackInstance.getEdgeByUid(connectedSegmentUids.get(i));
-			if (lEdge != null) {
-				if (!connectedSegments.contains(lEdge))
-					connectedSegments.add(lEdge);
+		final var lSegmentUidCount = connectedSegmentUids.size();
+		for (int i = 0; i < lSegmentUidCount; i++) {
+			final var lSegment = railTrackInstance.getSegmentByUid(connectedSegmentUids.get(i));
+			if (lSegment != null) {
+				if (!connectedSegments.contains(lSegment))
+					connectedSegments.add(lSegment);
 			} else {
-				throw new RuntimeException("Error resolving track edges from Node.ConnectedEdgeUids");
+				throw new RuntimeException("Error resolving track segments from Node.ConnectedSegmentUids");
 			}
 		}
 	}
 
-	public int getOtherSegmentConnectionUid(int notThisEdgeUid) {
-		final int allowedSegmentCount = connectedSegmentUids.size();
-		for (int i = 0; i < allowedSegmentCount; i++) {
-			if (connectedSegmentUids.get(i) != notThisEdgeUid)
+	public int getOtherSegmentConnectionUid(int notThisSegmentUid) {
+		final int lAllowedSegmentCount = connectedSegmentUids.size();
+		for (int i = 0; i < lAllowedSegmentCount; i++) {
+			if (connectedSegmentUids.get(i) != notThisSegmentUid)
 				return connectedSegmentUids.get(i);
 		}
 
 		return NO_SEGMENT;
 	}
 
-	public int getOtherSegmentConnectionUids2(int notThisEdgeUid) {
+	public int getOtherSegmentConnectionUids2(int notThisSegmentUid) {
 		boolean lFoundOne = false;
-		final int allowedEdgeCount = connectedSegmentUids.size();
-		for (int i = 0; i < allowedEdgeCount; i++) {
-			if (connectedSegmentUids.get(i) != notThisEdgeUid) {
+		final int lAllowedSegmentCount = connectedSegmentUids.size();
+		for (int i = 0; i < lAllowedSegmentCount; i++) {
+			if (connectedSegmentUids.get(i) != notThisSegmentUid) {
 				if (!lFoundOne)
 					lFoundOne = true;
 				else

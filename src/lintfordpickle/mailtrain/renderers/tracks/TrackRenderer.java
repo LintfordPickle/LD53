@@ -3,7 +3,6 @@ package lintfordpickle.mailtrain.renderers.tracks;
 import org.lwjgl.opengl.GL11;
 
 import lintfordpickle.mailtrain.ConstantsGame;
-import lintfordpickle.mailtrain.controllers.GameTrackEditorController;
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
 import lintfordpickle.mailtrain.data.scene.track.RailTrackInstance;
 import lintfordpickle.mailtrain.data.scene.track.RailTrackNode;
@@ -30,8 +29,6 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 
 	public static final String RENDERER_NAME = "Track Renderer";
 
-	private static final Vector2f TempTrackVec2 = new Vector2f();
-
 	// ---------------------------------------------
 	// Variables
 	// ---------------------------------------------
@@ -40,7 +37,6 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 
 	private SpriteSheetDefinition mTrackSpriteSheet;
 	private TrackController mTrackController;
-	private GameTrackEditorController mGameTrackEditorcontroller;
 	private Texture mTextureStonebed;
 	private Texture mTextureSleepers;
 	private Texture mTextureMetal;
@@ -81,8 +77,8 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 	// Constructor
 	// ---------------------------------------------
 
-	public TrackRenderer(RendererManager pRendererManager, int pEntityGroupID) {
-		super(pRendererManager, RENDERER_NAME, pEntityGroupID);
+	public TrackRenderer(RendererManager rendererManager, int entityGroupUid) {
+		super(rendererManager, RENDERER_NAME, entityGroupUid);
 	}
 
 	// ---------------------------------------------
@@ -90,21 +86,20 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 	// ---------------------------------------------
 
 	@Override
-	public void initialize(LintfordCore pCore) {
-		mTrackController = (TrackController) pCore.controllerManager().getControllerByNameRequired(TrackController.CONTROLLER_NAME, entityGroupID());
-		mGameTrackEditorcontroller = (GameTrackEditorController) pCore.controllerManager().getControllerByNameRequired(GameTrackEditorController.CONTROLLER_NAME, entityGroupID());
+	public void initialize(LintfordCore core) {
+		mTrackController = (TrackController) core.controllerManager().getControllerByNameRequired(TrackController.CONTROLLER_NAME, entityGroupID());
 	}
 
 	@Override
-	public void loadResources(ResourceManager pResourceManager) {
-		super.loadResources(pResourceManager);
+	public void loadResources(ResourceManager resourceManager) {
+		super.loadResources(resourceManager);
 
-		mTrackSpriteSheet = pResourceManager.spriteSheetManager().getSpriteSheet("SPRITESHEET_ENVIRONMENT", ConstantsGame.GAME_RESOURCE_GROUP_ID);
+		mTrackSpriteSheet = resourceManager.spriteSheetManager().getSpriteSheet("SPRITESHEET_ENVIRONMENT", ConstantsGame.GAME_RESOURCE_GROUP_ID);
 
-		mTextureStonebed = pResourceManager.textureManager().loadTexture("TEXTURE_TRACK_STONEBED", "res/textures/textureTrackStonebed.png", GL11.GL_LINEAR, entityGroupID());
-		mTextureSleepers = pResourceManager.textureManager().loadTexture("TEXTURE_TRACK_SLEEPER", "res/textures/textureTrackSleepers.png", GL11.GL_LINEAR, entityGroupID());
-		mTextureBackplate = pResourceManager.textureManager().loadTexture("TEXTURE_TRACK_BACKPLATE", "res/textures/textureTrackBackplate.png", GL11.GL_LINEAR, entityGroupID());
-		mTextureMetal = pResourceManager.textureManager().loadTexture("TEXTURE_TRACK_METAL", "res/textures/textureTrackMetal.png", GL11.GL_LINEAR, entityGroupID());
+		mTextureStonebed = resourceManager.textureManager().loadTexture("TEXTURE_TRACK_STONEBED", "res/textures/textureTrackStonebed.png", GL11.GL_LINEAR, entityGroupID());
+		mTextureSleepers = resourceManager.textureManager().loadTexture("TEXTURE_TRACK_SLEEPER", "res/textures/textureTrackSleepers.png", GL11.GL_LINEAR, entityGroupID());
+		mTextureBackplate = resourceManager.textureManager().loadTexture("TEXTURE_TRACK_BACKPLATE", "res/textures/textureTrackBackplate.png", GL11.GL_LINEAR, entityGroupID());
+		mTextureMetal = resourceManager.textureManager().loadTexture("TEXTURE_TRACK_METAL", "res/textures/textureTrackMetal.png", GL11.GL_LINEAR, entityGroupID());
 
 		wiresTextureFrame = mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALWIRES");
 
@@ -112,9 +107,9 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 		warningSignalTextureFrame = mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALLIGHTSWARNING");
 		openSignalTextureFrame = mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALLIGHTSOPEN");
 
-		pResourceManager.audioManager().loadAudioFile("SOUND_SIGNAL_CHANGE", "res/sounds/soundSignalChange.wav", false);
+		resourceManager.audioManager().loadAudioFile("SOUND_SIGNAL_CHANGE", "res/sounds/soundSignalChange.wav", false);
 
-		mTrainSoundManager = new AudioFireAndForgetManager(pResourceManager.audioManager());
+		mTrainSoundManager = new AudioFireAndForgetManager(resourceManager.audioManager());
 		mTrainSoundManager.acquireAudioSources(2);
 
 		loadTrackMesh(mTrackController.track());
@@ -133,12 +128,12 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 	}
 
 	@Override
-	public boolean handleInput(LintfordCore pCore) {
-		mLeftMouseCooldownTimer -= pCore.appTime().elapsedTimeMilli();
+	public boolean handleInput(LintfordCore core) {
+		mLeftMouseCooldownTimer -= core.appTime().elapsedTimeMilli();
 
-		final float lMouseWorldSpaceX = pCore.gameCamera().getMouseWorldSpaceX();
-		final float lMouseWorldSpaceY = pCore.gameCamera().getMouseWorldSpaceY();
-		if (pCore.input().mouse().isMouseLeftButtonDownTimed(this)) {
+		final float lMouseWorldSpaceX = core.gameCamera().getMouseWorldSpaceX();
+		final float lMouseWorldSpaceY = core.gameCamera().getMouseWorldSpaceY();
+		if (core.input().mouse().isMouseLeftButtonDownTimed(this)) {
 			final var lTrack = mTrackController.track();
 
 			// TODO: Track switching input handler
@@ -160,39 +155,37 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 				}
 			}
 		}
-		return super.handleInput(pCore);
+		return super.handleInput(core);
 	}
 
 	@Override
-	public void update(LintfordCore pCore) {
-		super.update(pCore);
+	public void update(LintfordCore core) {
+		super.update(core);
 		if (mTrackLogicalCounter != mTrackController.trackBuildLogicalCounter()) {
 			loadTrackMesh(mTrackController.track());
 			mTrackLogicalCounter = mTrackController.trackBuildLogicalCounter();
 		}
 	}
 
-	@SuppressWarnings("unused")
 	@Override
-	public void draw(LintfordCore pCore) {
+	public void draw(LintfordCore core) {
 		if (!mTrackController.isInitialized())
 			return;
 
 		final var lTrack = mTrackController.track();
-		drawTrack(pCore, lTrack);
-
+		drawTrack(core, lTrack);
 	}
 
 	// ---------------------------------------------
 	// Methods
 	// ---------------------------------------------
 
-	private void drawTrack(LintfordCore pCore, RailTrackInstance pTrack) {
-		drawMesh(pCore, mTextureStonebed);
-		drawMesh(pCore, mTextureSleepers);
-		drawSignals(pCore);
-		drawMesh(pCore, mTextureBackplate);
-		drawMesh(pCore, mTextureMetal);
+	private void drawTrack(LintfordCore core, RailTrackInstance trackInstance) {
+		drawMesh(core, mTextureStonebed);
+		drawMesh(core, mTextureSleepers);
+		drawSignals(core);
+		drawMesh(core, mTextureBackplate);
+		drawMesh(core, mTextureMetal);
 
 		final var lTrack = mTrackController.track();
 
@@ -202,13 +195,14 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 			final var lNodeInst = lNodeList.get(i);
 
 			if (lNodeInst.trackSwitch.isSwitchActive())
-				drawSwitchBox(pCore, mRendererManager.uiSpriteBatch(), lTrack, lNodeInst);
+				drawSwitchBox(core, mRendererManager.uiSpriteBatch(), lTrack, lNodeInst);
 		}
 
-		final var lEdgeList = lTrack.edges();
-		final var lEdgeCount = lEdgeList.size();
-		for (int i = 0; i < lEdgeCount; i++) {
-			final var lEdge = lEdgeList.get(i);
+		final var lSegmentList = lTrack.segments();
+		final var lSegmentCount = lSegmentList.size();
+		for (int i = 0; i < lSegmentCount; i++) {
+			final var lSegment = lSegmentList.get(i);
+			drawSignalBox(core, mRendererManager.uiSpriteBatch(), lTrack, lSegment, null);
 
 		}
 	}
@@ -237,7 +231,7 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 			if (lSignalBlock == null)
 				continue;
 
-			final var lTrackSegmentLength = lTrackSegment.edgeLengthInMeters;
+			final var lTrackSegmentLength = lTrackSegment.segmentLengthInMeters;
 
 			final var lDestNode = lTrack.getNodeByUid(lSignal.destinationNodeUid());
 			final var lSourceNodeUid = lTrackSegment.getOtherNodeUid(lSignal.destinationNodeUid());
@@ -258,8 +252,8 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 			final float lNormX = lVectorX / lTrackSegmentLength;
 			final float lNormY = lVectorY / lTrackSegmentLength;
 
-			final float lWorldX = lTrack.getPositionAlongEdgeX(lTrackSegment, lSourceNodeUid, lDistanceIntoNode);
-			final float lWorldY = lTrack.getPositionAlongEdgeY(lTrackSegment, lSourceNodeUid, lDistanceIntoNode);
+			final float lWorldX = lTrack.getPositionAlongSegmentX(lTrackSegment, lSourceNodeUid, lDistanceIntoNode);
+			final float lWorldY = lTrack.getPositionAlongSegmentY(lTrackSegment, lSourceNodeUid, lDistanceIntoNode);
 
 			final float lOffAmtWires = -6.f;
 			final float lOffAmtSignal = 10f;
@@ -305,7 +299,7 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 		textureBatch.end();
 	}
 
-	private void drawSignalBox(LintfordCore pCore, TextureBatchPCT pTextureBatch, RailTrackInstance pTrack, RailTrackSegment pActiveEdge, RailTrackNode pTrackNode) {
+	private void drawSignalBox(LintfordCore core, TextureBatchPCT textureBatch, RailTrackInstance track, RailTrackSegment activeEdge, RailTrackNode trackNode) {
 		//		final var lIsLeftSignalActive = pActiveEdge.trackJunction.leftEnabled;
 		//		final var lActiveEdgeUid = lIsLeftSignalActive ? pActiveEdge.trackJunction.leftEdgeUid : pActiveEdge.trackJunction.rightEdgeUid;
 		//		final var lActiveEdge = pTrack.getEdgeByUid(lActiveEdgeUid);
@@ -362,23 +356,4 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 		//
 		//		}
 	}
-
-	@Override
-	public boolean allowKeyboardInput() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean allowGamepadInput() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean allowMouseInput() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
 }
