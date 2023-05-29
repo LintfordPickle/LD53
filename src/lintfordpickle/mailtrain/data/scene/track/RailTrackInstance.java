@@ -280,26 +280,14 @@ public class RailTrackInstance {
 	}
 
 	public RailTrackSegment getNextEdge(RailTrackSegment currentSegment, int destinationNodeUid) {
-		RailTrackSegment lReturnSegment = null;
-
 		final var lDestinationNode = getNodeByUid(destinationNodeUid);
 
 		final var lDestinationSegmentUid = lDestinationNode.trackSwitch.getOutSegmentUid(currentSegment.uid);
-		if(lDestinationSegmentUid == -1) {
-			// no connecting segments
+		if (lDestinationSegmentUid == -1) {
+			return null; // no available connecting lines
 		}
-		
-		
-		
-//		lReturnSegment = lDestinationNode.getRandomWhitelistedEdgeApartFrom(currentSegment, destinationNodeUid);
-//
-//		if (lReturnSegment == null) {
-//			// If there are no whitelisted edges, then just pick a 'valid' track ...
-//			// TODO: this is commented out to simulate a de-railment at the next arrvied at node.
-//			lReturnSegment = lDestinationNode.getRandomEdgeApartFrom(currentSegment, destinationNodeUid);
-//		}
 
-		return lReturnSegment;
+		return getEdgeByUid(lDestinationSegmentUid);
 	}
 
 	public float getPositionAlongEdgeX(RailTrackSegment segment, int fromUid, float normalizedDist) {

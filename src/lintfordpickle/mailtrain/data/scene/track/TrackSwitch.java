@@ -343,9 +343,12 @@ public class TrackSwitch {
 	}
 
 	public int getOutSegmentUid(int segmentUid) {
+
+		// TODO: Implement whitelisted segments from in incoming segmentUid 
+
 		// If the segmentUid is the main segment, then take the active segment path
 		if (segmentUid == mainSegmentUid())
-			return mActiveAuxiliarySegmentIndex;
+			return connectedSegmentUidFromIndex(mActiveAuxiliarySegmentIndex);
 
 		// otherwise, auxiliary segments feed back into the main line
 		return mainSegmentUid();

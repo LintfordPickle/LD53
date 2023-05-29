@@ -166,41 +166,7 @@ public class TrackDebugRenderer extends BaseRenderer implements IInputProcessor 
 			final float lWorldPositionY = (lNodeA.y + lNodeB.y) / 2.f;
 
 			mGameTextFont.drawText("E:" + lEdge.uid, lWorldPositionX, lWorldPositionY - 5, -0.1f, ColorConstants.WHITE, .5f, -1);
-//			if (lEdge.trackJunction != null && lEdge.trackJunction.isSignalActive) {
-//				final var lActiveEdgeUid = lEdge.trackJunction.leftEnabled ? lEdge.trackJunction.leftEdgeUid : lEdge.trackJunction.rightEdgeUid;
-//				final var lActiveEdge = lTrack.getEdgeByUid(lActiveEdgeUid);
-//
-//				final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(lEdge, lActiveEdge);
-//
-//				final var lActiveNode = lTrack.getNodeByUid(pCommonNodeUid);
-//				final var lOtherNodeUid = lActiveEdge.getOtherNodeUid(lActiveNode.uid);
-//				final var lOtherNode = lTrack.getNodeByUid(lOtherNodeUid);
-//				final float lVectorX = lOtherNode.x - lActiveNode.x;
-//				final float lVectorY = lOtherNode.y - lActiveNode.y;
-//
-//				// TODO: garbage
-//				var ll = new Vector2f(lVectorX, lVectorY);
-//				ll.nor();
-//
-//				Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lNodeA.x + ll.x * 20.f, lNodeA.y + ll.y * 20.f, 4.f);
-//
-//			}
-			{
-				// Control Nodes
-				if (lEdge.edgeType > 0) {
-					final float lControl0X = lEdge.control0X;
-					final float lControl0Y = lEdge.control0Y;
 
-					final float lControl1X = lEdge.control1X;
-					final float lControl1Y = lEdge.control1Y;
-
-					Debug.debugManager().drawers().drawLine(lNodeA.x, lNodeA.y, lControl1X, lControl1Y, 0.f, 1.f, 1.f);
-					Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lControl0X, lControl0Y, 4.f);
-
-					Debug.debugManager().drawers().drawLine(lNodeB.x, lNodeB.y, lControl0X, lControl0Y, 0.f, 1.f, 1.f);
-					Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lControl1X, lControl1Y, 2.f);
-				}
-			}
 			{ // Edge length (meters)
 				final var lEdgeLength = lEdge.edgeLengthInMeters;
 

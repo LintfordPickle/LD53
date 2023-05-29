@@ -487,7 +487,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 			mGameTextFont.drawText("n" + lNode.uid, lNode.x, lNode.y - 16.f, -0.01f, ColorConstants.WHITE, .4f, -1);
 
 			//if (mDrawEditorJunctions)
-				drawJunctionBox(core, mRendererManager.uiSpriteBatch(), mTrackEditorController.track(), lNode);
+				drawSwitchBox(core, mRendererManager.uiSpriteBatch(), mTrackEditorController.track(), lNode);
 
 		}
 		mGameTextFont.end();
@@ -689,7 +689,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		// TODO:
 	}
 
-	private void drawJunctionBox(LintfordCore core, TextureBatchPCT textureBatch, RailTrackInstance trackInstance, RailTrackNode activeNode) {
+	private void drawSwitchBox(LintfordCore core, TextureBatchPCT textureBatch, RailTrackInstance trackInstance, RailTrackNode activeNode) {
 		if (activeNode == null || activeNode.trackSwitch.isSwitchActive() == false)
 			return;
 
@@ -790,3 +790,4 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 	}
 
 }
+	
