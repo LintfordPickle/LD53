@@ -160,7 +160,7 @@ public class RailTrackSegment extends TrackEdge {
 	public static final int EDGE_SPECIAL_TYPE_ENEMY_SPAWN = 16; // station / town for trading
 
 	public static String getEdgeTypeName(int edgeType) {
-		switch(edgeType) {
+		switch (edgeType) {
 		default:
 		case EDGE_TYPE_NONE:
 			return "unknown";
@@ -170,7 +170,7 @@ public class RailTrackSegment extends TrackEdge {
 			return "curve";
 		}
 	}
-	
+
 	// ---------------------------------------------
 	// Variables
 	// ---------------------------------------------
@@ -185,13 +185,9 @@ public class RailTrackSegment extends TrackEdge {
 	public String segmentName;
 	public String specialName;
 
-	public final TrackJunction trackJunction = new TrackJunction();
-
 	public final SegmentSignalsCollection signalsA = new SegmentSignalsCollection(this);
 	public final SegmentSignalsCollection signalsB = new SegmentSignalsCollection(this);
 	public int logicalUpdateCounter;
-
-	public final List<Integer> allowedEdgeConections = new ArrayList<>();
 
 	// ---------------------------------------------
 	// Properties
@@ -240,14 +236,10 @@ public class RailTrackSegment extends TrackEdge {
 		edgeLengthInMeters = saveDef.edgeLengthInMeters;
 		edgeType = saveDef.edgeType;
 
-		allowedEdgeConections.addAll(saveDef.allowedEdgeConnections);
-
 		signalsA.mSignalSegmentUids.addAll(saveDef.signalsA.signalSegmentUids);
 		signalsA.mDestinationUid = saveDef.signalsA.destinationUid;
 		signalsB.mSignalSegmentUids.addAll(saveDef.signalsB.signalSegmentUids);
 		signalsB.mDestinationUid = saveDef.signalsB.destinationUid;
-		
-		trackJunction.loadFromDef(saveDef.trackJunction);
 	}
 
 	// ---------------------------------------------
@@ -307,10 +299,6 @@ public class RailTrackSegment extends TrackEdge {
 		saveDef.signalsA.destinationUid = signalsA.destinationNodeUid();
 		saveDef.signalsB.signalSegmentUids.addAll(signalsB.mSignalSegmentUids);
 		saveDef.signalsB.destinationUid = signalsB.destinationNodeUid();
-
-		saveDef.allowedEdgeConnections.addAll(allowedEdgeConections);
-		
-		trackJunction.saveIntoDef(saveDef.trackJunction);
 	}
 
 	public void finalizeAfterLoading(RailTrackInstance pTrack) {
@@ -333,29 +321,6 @@ public class RailTrackSegment extends TrackEdge {
 			return nodeAUid;
 
 		}
-	}
-
-	public int getOtherAllowedEdgeConnectionUids() {
-		final int allowedEdgeCount = allowedEdgeConections.size();
-		for (int i = 0; i < allowedEdgeCount; i++) {
-			if (allowedEdgeConections.get(i) != uid)
-				return allowedEdgeConections.get(i);
-		}
-		return -1;
-	}
-
-	public int getOtherAllowedEdgeConnectionUids2() {
-		boolean lFoundOne = false;
-		final int allowedEdgeCount = allowedEdgeConections.size();
-		for (int i = 0; i < allowedEdgeCount; i++) {
-			if (allowedEdgeConections.get(i) != uid) {
-				if (!lFoundOne)
-					lFoundOne = true;
-				else
-					return allowedEdgeConections.get(i);
-			}
-		}
-		return -1;
 	}
 
 	public static int getCommonNodeUid(RailTrackSegment pEdgeA, RailTrackSegment pEdgeB) {
@@ -398,8 +363,6 @@ public class RailTrackSegment extends TrackEdge {
 		if (lSegmentSignalCollection == null)
 			return;
 
-		
-		
 		lSegmentSignalCollection.addSignalSegment(pTrack.trackSignalSegments.getFreePooledItem(), true, lDist);
 	}
 }

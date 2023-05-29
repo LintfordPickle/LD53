@@ -2,6 +2,7 @@ package lintfordpickle.mailtrain.renderers.editor.panels;
 
 import lintfordpickle.mailtrain.controllers.TrackEditorController;
 import lintfordpickle.mailtrain.data.editor.EditorLayer;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackNode;
 import lintfordpickle.mailtrain.renderers.EditorTrackRenderer;
 import lintfordpickle.mailtrain.renderers.editor.UiPanel;
 import net.lintford.library.core.LintfordCore;
@@ -9,19 +10,19 @@ import net.lintford.library.core.input.InputManager;
 import net.lintford.library.renderers.windows.UiWindow;
 import net.lintford.library.renderers.windows.components.UiButton;
 import net.lintford.library.renderers.windows.components.UiHorizontalEntryGroup;
+import net.lintford.library.renderers.windows.components.UiLabelledInt;
 
-public class JunctionsPanel extends UiPanel {
+public class SwitchesPanel extends UiPanel {
 
 	// --------------------------------------
 	// Constants
 	// --------------------------------------
 
-	private static final String TITLE = "Junctions";
+	private static final String TITLE = "Switches";
 
-	private static final int BUTTON_TOGGLE_JUNCTION = 10;
-	private static final int BUTTON_TOGGLE_JUNCTION_ROUTE = 15;
+	private static final int BUTTON_TOGGLE_MAINLINE = 10;
+	private static final int BUTTON_TOGGLE_ACTIVE_AUX = 15;
 	private static final int BUTTON_MOVE_BOX = 20;
-	private static final int BUTTON_MOVE_LAMP = 21;
 
 	// --------------------------------------
 	// Variables
@@ -30,18 +31,22 @@ public class JunctionsPanel extends UiPanel {
 	private TrackEditorController mTrackEditorController;
 	private EditorTrackRenderer mEditorTrackRenderer;
 
-	private UiButton mToggleJunctionButton;
-	private UiButton mToggleMainRoute;
+	private UiLabelledInt mMainSegmentUidLabel;
+	private UiButton mToggleMainLine;
+	private UiLabelledInt mActiveAuxSegmentUidLabel;
+	private UiButton mToggleActiveAuxiliaryLine;
 
 	private UiHorizontalEntryGroup mPlacementGroup;
 	private UiButton mPlaceBox;
-	private UiButton mPlacePost;
+
+	// Data
+	private RailTrackNode mSelectedNodeA;
 
 	// --------------------------------------
 	// Constructor
 	// --------------------------------------
 
-	public JunctionsPanel(UiWindow parentWindow, int entityGroupdUid) {
+	public SwitchesPanel(UiWindow parentWindow, int entityGroupdUid) {
 		super(parentWindow, TITLE, entityGroupdUid);
 
 		mShowActiveLayerButton = true;
@@ -51,13 +56,21 @@ public class JunctionsPanel extends UiPanel {
 		mPanelTitle = TITLE;
 		mEditorLayer = EditorLayer.Track;
 
-		mToggleJunctionButton = new UiButton(parentWindow);
-		mToggleJunctionButton.buttonLabel("Toggle Junction");
-		mToggleJunctionButton.setClickListener(this, BUTTON_TOGGLE_JUNCTION);
+		mMainSegmentUidLabel = new UiLabelledInt(parentWindow);
+		mMainSegmentUidLabel.labelText("MainSegment Uid");
+		mMainSegmentUidLabel.value(66);
 
-		mToggleMainRoute = new UiButton(parentWindow);
-		mToggleMainRoute.buttonLabel("Toggle Main Path");
-		mToggleMainRoute.setClickListener(this, BUTTON_TOGGLE_JUNCTION_ROUTE);
+		mToggleMainLine = new UiButton(parentWindow);
+		mToggleMainLine.buttonLabel("Toggle Mainline");
+		mToggleMainLine.setClickListener(this, BUTTON_TOGGLE_MAINLINE);
+
+		mActiveAuxSegmentUidLabel = new UiLabelledInt(parentWindow);
+		mActiveAuxSegmentUidLabel.labelText("Active Aux Uid:");
+		mActiveAuxSegmentUidLabel.value(44);
+
+		mToggleActiveAuxiliaryLine = new UiButton(parentWindow);
+		mToggleActiveAuxiliaryLine.buttonLabel("Toggle Active Aux:");
+		mToggleActiveAuxiliaryLine.setClickListener(this, BUTTON_TOGGLE_ACTIVE_AUX);
 
 		mPlacementGroup = new UiHorizontalEntryGroup(parentWindow);
 
@@ -65,15 +78,12 @@ public class JunctionsPanel extends UiPanel {
 		mPlaceBox.buttonLabel("Move Box");
 		mPlaceBox.setClickListener(this, BUTTON_MOVE_BOX);
 
-		mPlacePost = new UiButton(parentWindow);
-		mPlacePost.buttonLabel("Move Lamp");
-		mPlacePost.setClickListener(this, BUTTON_MOVE_LAMP);
-
 		mPlacementGroup.widgets().add(mPlaceBox);
-		mPlacementGroup.widgets().add(mPlacePost);
 
-		addWidget(mToggleJunctionButton);
-		addWidget(mToggleMainRoute);
+		addWidget(mMainSegmentUidLabel);
+		addWidget(mToggleMainLine);
+		addWidget(mActiveAuxSegmentUidLabel);
+		addWidget(mToggleActiveAuxiliaryLine);
 		addWidget(mPlacementGroup);
 
 	}
@@ -95,6 +105,35 @@ public class JunctionsPanel extends UiPanel {
 
 	}
 
+	@Override
+	public void update(LintfordCore core) {
+		super.update(core);
+
+		var lNodeSelectionChanged = false;
+
+		if (mTrackEditorController.selectedNodeA() != mSelectedNodeA) {
+			mSelectedNodeA = mTrackEditorController.selectedNodeA();
+			lNodeSelectionChanged = true;
+		}
+
+		if (lNodeSelectionChanged) {
+			if (mSelectedNodeA != null) {
+
+				mMainSegmentUidLabel.value(mSelectedNodeA.trackSwitch.mainSegmentUid());
+				mActiveAuxSegmentUidLabel.value(mSelectedNodeA.trackSwitch.activeAuxiliarySegmentUid());
+
+				mToggleMainLine.isEnabled(true);
+				mToggleActiveAuxiliaryLine.isEnabled(true);
+			} else {
+				mMainSegmentUidLabel.value(-1);
+				mActiveAuxSegmentUidLabel.value(-1);
+
+				mToggleMainLine.isEnabled(false);
+				mToggleActiveAuxiliaryLine.isEnabled(false);
+			}
+		}
+	}
+
 	// --------------------------------------
 	// Methods
 	// --------------------------------------
@@ -114,23 +153,20 @@ public class JunctionsPanel extends UiPanel {
 		final var lTrackHashCode = mEditorTrackRenderer.hashCode();
 
 		switch (entryUid) {
-		case BUTTON_TOGGLE_JUNCTION:
-			mTrackEditorController.toggleSelectedEdgeJunction();
+		case BUTTON_TOGGLE_MAINLINE:
+			mTrackEditorController.toggleSelectedSwitchMainLine();
+			mSelectedNodeA = null;
 			break;
 
-		case BUTTON_TOGGLE_JUNCTION_ROUTE:
-			mTrackEditorController.toggleSelectedJunctionLeftRightEdges();
+		case BUTTON_TOGGLE_ACTIVE_AUX:
+			mTrackEditorController.toggleSelectedSwitchAuxiliaryLine();
+			mSelectedNodeA = null;
 			break;
 
 		case BUTTON_MOVE_BOX:
 			if (mEditorBrushController.brush().isActionSet() == false)
 				mEditorBrushController.setAction(TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_JUNCTION_BOX, "Moving Junction Box", lTrackHashCode);
 
-			break;
-
-		case BUTTON_MOVE_LAMP:
-			if (mEditorBrushController.brush().isActionSet() == false)
-				mEditorBrushController.setAction(TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_JUNCTION_POST, "Moving Junction Post", lTrackHashCode);
 			break;
 		}
 	}

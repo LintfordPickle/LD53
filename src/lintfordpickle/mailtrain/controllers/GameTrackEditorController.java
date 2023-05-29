@@ -280,9 +280,9 @@ public class GameTrackEditorController extends BaseController implements IInputP
 		}
 		mTempEdgeList.clear();
 
-		final var lEdgeCount = pNode.numberConnectedEdges();
+		final var lEdgeCount = pNode.trackSwitch.numberConnectedSegments();
 		for (int i = 0; i < lEdgeCount; i++) {
-			mTempEdgeList.add(pNode.getEdgeByIndex(i));
+			mTempEdgeList.add(pNode.trackSwitch.getConnectedSegmentByIndex(i));
 		}
 		for (int i = 0; i < lEdgeCount; i++) {
 			final var lEdge = mTempEdgeList.get(i);
@@ -297,7 +297,7 @@ public class GameTrackEditorController extends BaseController implements IInputP
 		final int lNodeCount = mTrack.nodes().size();
 		for (int i = 0; i < lNodeCount; i++) {
 			final var lNode = mTrack.nodes().get(i);
-			if (lNode.getEdgeByUid(pEdge.uid) != null) {
+			if (lNode.trackSwitch.getConnectedSegmentByUid(pEdge.uid) != null) {
 				lNode.removeEdgeByUid(pEdge.uid);
 			}
 		}
@@ -322,11 +322,11 @@ public class GameTrackEditorController extends BaseController implements IInputP
 		if (lNodeA == null || lNodeB == null)
 			return null;
 
-		final int lEdgeCountNodeA = lNodeA.numberConnectedEdges();
+		final int lEdgeCountNodeA = lNodeA.trackSwitch.numberConnectedSegments();
 		for (int i = 0; i < lEdgeCountNodeA; i++) {
-			final var lOtherNodeUid = lNodeA.getEdgeByIndex(i).getOtherNodeUid(pUidA);
+			final var lOtherNodeUid = lNodeA.trackSwitch.getConnectedSegmentByIndex(i).getOtherNodeUid(pUidA);
 			if (pUidB == lOtherNodeUid) {
-				return lNodeA.getEdgeByIndex(i);
+				return lNodeA.trackSwitch.getConnectedSegmentByIndex(i);
 			}
 		}
 		return null;
@@ -352,40 +352,42 @@ public class GameTrackEditorController extends BaseController implements IInputP
 
 		lNewEdge.edgeType = (lNodeA.x == lNodeB.x || lNodeA.y == lNodeB.y) ? RailTrackSegment.EDGE_TYPE_STRAIGHT : RailTrackSegment.EDGE_TYPE_CURVE;
 
-		final int lNodeAEdgeCount = lNodeA.numberConnectedEdges();
+		final int lNodeAEdgeCount = lNodeA.trackSwitch.numberConnectedSegments();
 		for (int i = 0; i < lNodeAEdgeCount; i++) {
-			final var lOldEdge = lNodeA.getEdgeByIndex(i);
+			final var lOldEdge = lNodeA.trackSwitch.getConnectedSegmentByIndex(i);
 			if (lOldEdge == null)
 				return;
 			if (Math.abs(lOldEdge.edgeAngle - lNewEdge.edgeAngle) < MIN_SEGMENT_ANGLE_TOLERENCE) {
-				if (!lOldEdge.allowedEdgeConections.contains((Integer) lNewEdge.uid)) {
-					lOldEdge.allowedEdgeConections.add((Integer) lNewEdge.uid);
-				}
-				if (!lNewEdge.allowedEdgeConections.contains((Integer) lOldEdge.uid)) {
-					lNewEdge.allowedEdgeConections.add((Integer) lOldEdge.uid);
-				}
+//				if (!lOldEdge.allowedEdgeConections.contains((Integer) lNewEdge.uid)) {
+//					lOldEdge.allowedEdgeConections.add((Integer) lNewEdge.uid);
+//				}
+//				if (!lNewEdge.allowedEdgeConections.contains((Integer) lOldEdge.uid)) {
+//					lNewEdge.allowedEdgeConections.add((Integer) lOldEdge.uid);
+//				}
 				mScreenManager.toastManager().addMessage("Track", "Segment connected", 150);
 			} else {
 				mScreenManager.toastManager().addMessage("Track", "Angle too large!", 150);
 			}
 		}
-		final int lNodeBEdgeCount = lNodeB.numberConnectedEdges();
+		
+		final int lNodeBEdgeCount = lNodeB.trackSwitch.numberConnectedSegments();
 		for (int i = 0; i < lNodeBEdgeCount; i++) {
-			final var lOldEdge = lNodeB.getEdgeByIndex(i);
+			final var lOldEdge = lNodeB.trackSwitch.getConnectedSegmentByIndex(i);
 			if (lOldEdge == null)
 				continue;
 			if (Math.abs(lOldEdge.edgeAngle - lNewEdge.edgeAngle) < MIN_SEGMENT_ANGLE_TOLERENCE) {
-				if (!lOldEdge.allowedEdgeConections.contains((Integer) lNewEdge.uid)) {
-					lOldEdge.allowedEdgeConections.add((Integer) lNewEdge.uid);
-				}
-				if (!lNewEdge.allowedEdgeConections.contains((Integer) lOldEdge.uid)) {
-					lNewEdge.allowedEdgeConections.add((Integer) lOldEdge.uid);
-				}
+//				if (!lOldEdge.allowedEdgeConections.contains((Integer) lNewEdge.uid)) {
+//					lOldEdge.allowedEdgeConections.add((Integer) lNewEdge.uid);
+//				}
+//				if (!lNewEdge.allowedEdgeConections.contains((Integer) lOldEdge.uid)) {
+//					lNewEdge.allowedEdgeConections.add((Integer) lOldEdge.uid);
+//				}
 				mScreenManager.toastManager().addMessage("Track", "Segment connected", 150);
 			} else {
 				mScreenManager.toastManager().addMessage("Track", "Angle too large!", 150);
 			}
 		}
+		
 		lNewEdge.control0X = lNodeA.x;
 		lNewEdge.control0Y = lNodeA.y;
 
@@ -447,33 +449,35 @@ public class GameTrackEditorController extends BaseController implements IInputP
 				lEdge.control1X = lNodeB.x;
 				lEdge.control1Y = lNodeB.y;
 
-				int edge0Uid = lEdge.getOtherAllowedEdgeConnectionUids();
-				if (edge0Uid != -1) {
-					final var lEdge0 = mTrack.getEdgeByUid(edge0Uid);
-					if (lEdge0 == null)
-						continue;
-
-					// Red
-					final float lNodeAngle = lEdge0.getNodeAngle(lNodeA.uid);
-					lEdge.control0X = lNodeA.x + (float) Math.cos(lNodeAngle) * lControlLength;
-					lEdge.control0Y = lNodeA.y + (float) Math.sin(lNodeAngle) * lControlLength;
-
-					lEdge.nodeAAngle = MathHelper.wrapAngle((float) Math.atan2(lNodeA.y - lEdge.control0Y, lNodeA.x - lEdge.control0X));
-
-				}
-				int edge1Uid = lEdge.getOtherAllowedEdgeConnectionUids2();
-				if (edge1Uid != -1) {
-					final var lEdge1 = mTrack.getEdgeByUid(edge1Uid);
-					if (lEdge1 == null)
-						continue;
-
-					// Green
-					final float lNodeAngle = lEdge1.getNodeAngle(lNodeB.uid);
-					lEdge.control1X = lNodeB.x + (float) Math.cos(lNodeAngle) * lControlLength;
-					lEdge.control1Y = lNodeB.y + (float) Math.sin(lNodeAngle) * lControlLength;
-
-					lEdge.nodeBAngle = MathHelper.wrapAngle((float) Math.atan2(lNodeB.y - lEdge.control1Y, lNodeB.x - lEdge.control1X));
-				}
+//				int edge0Uid = lEdge.getOtherAllowedEdgeConnectionUids();
+//				if (edge0Uid != -1) {
+//					final var lEdge0 = mTrack.getEdgeByUid(edge0Uid);
+//					if (lEdge0 == null)
+//						continue;
+//
+//					// Red
+//					final float lNodeAngle = lEdge0.getNodeAngle(lNodeA.uid);
+//					lEdge.control0X = lNodeA.x + (float) Math.cos(lNodeAngle) * lControlLength;
+//					lEdge.control0Y = lNodeA.y + (float) Math.sin(lNodeAngle) * lControlLength;
+//
+//					lEdge.nodeAAngle = MathHelper.wrapAngle((float) Math.atan2(lNodeA.y - lEdge.control0Y, lNodeA.x - lEdge.control0X));
+//
+//				}
+//				
+//				int edge1Uid = lEdge.getOtherAllowedEdgeConnectionUids2();
+//				if (edge1Uid != -1) {
+//					final var lEdge1 = mTrack.getEdgeByUid(edge1Uid);
+//					if (lEdge1 == null)
+//						continue;
+//
+//					// Green
+//					final float lNodeAngle = lEdge1.getNodeAngle(lNodeB.uid);
+//					lEdge.control1X = lNodeB.x + (float) Math.cos(lNodeAngle) * lControlLength;
+//					lEdge.control1Y = lNodeB.y + (float) Math.sin(lNodeAngle) * lControlLength;
+//
+//					lEdge.nodeBAngle = MathHelper.wrapAngle((float) Math.atan2(lNodeB.y - lEdge.control1Y, lNodeB.x - lEdge.control1X));
+//				}
+				
 				if (lNodeA != null && lNodeB != null && lNodeA.y > lNodeB.y) {
 					float tx = lEdge.control0X;
 					float ty = lEdge.control0Y;
@@ -482,11 +486,13 @@ public class GameTrackEditorController extends BaseController implements IInputP
 					lEdge.control1X = tx;
 					lEdge.control1Y = ty;
 				}
+				
 				if (lEdge.uid == 18) {
 					System.out.println(lNodeA.x + "," + lNodeA.y + " (" + lEdge.control0X + "," + lEdge.control0Y + ")");
 					System.out.println(lNodeB.x + "," + lNodeB.y + " (" + lEdge.control1X + "," + lEdge.control1Y + ")");
 					System.out.println("------------------");
 				}
+				
 				lEdge.edgeLengthInMeters = mTrack.getEdgeLength(lEdge);
 			}
 		}
@@ -510,21 +516,21 @@ public class GameTrackEditorController extends BaseController implements IInputP
 					mSelectedNodeA = lSelectedNode;
 					mSelectedNodeA.isSelected = true;
 
-					final int lEdgeCount = mSelectedNodeA.numberConnectedEdges();
+					final int lEdgeCount = mSelectedNodeA.trackSwitch.numberConnectedSegments();
 					for (int j = 0; j < lEdgeCount; j++) {
-						final var lEdge = mSelectedNodeA.getEdgeByIndex(j);
+						final var lEdge = mSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(j);
 						if (lEdge == null) {
 							System.out.println(mSelectedNodeA.uid + ":: NULL EDGE");
 						} else {
 							System.out.println(mSelectedNodeA.uid + ":: Edge found Index : " + j + " Uid: " + lEdge.uid);
 						}
 					}
-					if (mSelectedNodeA.numberConnectedEdges() > 0)
+					if (mSelectedNodeA.trackSwitch.numberConnectedSegments() > 0)
 						activeEdgeLocalIndex = 0;
 					else
 						activeEdgeLocalIndex = -1;
 
-					if (mSelectedNodeA.numberConnectedEdges() > 1)
+					if (mSelectedNodeA.trackSwitch.numberConnectedSegments() > 1)
 						auxilleryEdgeLocalIndex = 1;
 					else
 						auxilleryEdgeLocalIndex = -1;

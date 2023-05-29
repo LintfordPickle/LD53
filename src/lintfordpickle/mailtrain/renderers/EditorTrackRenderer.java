@@ -10,6 +10,7 @@ import lintfordpickle.mailtrain.controllers.editor.EditorBrushController;
 import lintfordpickle.mailtrain.controllers.tracks.TrackController;
 import lintfordpickle.mailtrain.data.editor.EditorLayer;
 import lintfordpickle.mailtrain.data.scene.track.RailTrackInstance;
+import lintfordpickle.mailtrain.data.scene.track.RailTrackNode;
 import lintfordpickle.mailtrain.data.scene.track.RailTrackSegment;
 import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.ResourceManager;
@@ -23,7 +24,6 @@ import net.lintford.library.core.graphics.sprites.spritesheet.SpriteSheetDefinit
 import net.lintford.library.core.graphics.textures.Texture;
 import net.lintford.library.core.maths.MathHelper;
 import net.lintford.library.core.maths.Matrix4f;
-import net.lintford.library.core.maths.Vector2f;
 import net.lintford.library.renderers.RendererManager;
 
 public class EditorTrackRenderer extends TrackMeshRenderer {
@@ -288,13 +288,6 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 				}
 				break;
 
-			case TrackEditorController.CONTROLLER_EDITOR_ACTION_MOVE_JUNCTION_POST:
-				if (mLeftMouseDownTimed) {
-					mTrackEditorController.moveSelectedSegmentJunctionPostTo(mMouseGridPositionX, mMouseGridPositionY);
-					mEditorBrushController.finishAction(hashCode());
-				}
-				break;
-
 			}
 		}
 
@@ -325,10 +318,10 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 			return false;
 
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_U, this)) {
-			mTrackEditorController.toggleSelectedEdgeJunction();
+			mTrackEditorController.toggleSelectedSwitchMainLine();
 
 		} else if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_Z, this)) {
-			mTrackEditorController.toggleSelectedJunctionLeftRightEdges();
+			mTrackEditorController.toggleSelectedSwitchAuxiliaryLine();
 		}
 
 		return false;
@@ -395,7 +388,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 
 	private boolean handleSignalBlockControls(LintfordCore pCore) {
 		// Need to get the active edge
-		if (mTrackEditorController.activeEdgeLocalIndex() == -1)
+		if (mTrackEditorController.editorPrimaryEdgeLocalIndex() == -1)
 			return false;
 
 		// Need to get the active node (A)
@@ -403,7 +396,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 			return false;
 
 		final var lSelectedNodeA = mTrackEditorController.selectedNodeA();
-		final var lActiveEdge = lSelectedNodeA.getEdgeByIndex(mTrackEditorController.activeEdgeLocalIndex());
+		final var lActiveEdge = lSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(mTrackEditorController.editorPrimaryEdgeLocalIndex());
 
 		// Check for signal creation
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_Q, this)) {
@@ -469,7 +462,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 
 	}
 
-	public void debugDrawNodes(LintfordCore pCore) {
+	public void debugDrawNodes(LintfordCore core) {
 		final var lTrack = mTrackEditorController.track();
 		final var lNodeList = lTrack.nodes();
 
@@ -478,19 +471,23 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 
 		GL11.glPointSize(4.f);
 
-		mGameTextFont.begin(pCore.gameCamera());
+		mGameTextFont.begin(core.gameCamera());
 
 		final var lNodeCount = lNodeList.size();
 		for (int i = 0; i < lNodeCount; i++) {
 			final var lNode = lNodeList.get(i);
+
 			if (lNode == lSelectedNodeA) {
-				Debug.debugManager().drawers().drawPointImmediate(pCore.gameCamera(), lNode.x, lNode.y, -0.01f, 0.f, 0.f, 1.f, 1.f);
+				Debug.debugManager().drawers().drawPointImmediate(core.gameCamera(), lNode.x, lNode.y, -0.01f, 0.f, 0.f, 1.f, 1.f);
 			} else if (lNode == lSelectedNodeB) {
-				Debug.debugManager().drawers().drawPointImmediate(pCore.gameCamera(), lNode.x, lNode.y, -0.01f, 0.f, 1.f, 0.f, 1.f);
+				Debug.debugManager().drawers().drawPointImmediate(core.gameCamera(), lNode.x, lNode.y, -0.01f, 0.f, 1.f, 0.f, 1.f);
 			} else {
-				Debug.debugManager().drawers().drawPointImmediate(pCore.gameCamera(), lNode.x, lNode.y, -0.01f, 1.f, 0.f, 0.f, 1.f);
+				Debug.debugManager().drawers().drawPointImmediate(core.gameCamera(), lNode.x, lNode.y, -0.01f, 1.f, 0.f, 0.f, 1.f);
 			}
 			mGameTextFont.drawText("n" + lNode.uid, lNode.x, lNode.y - 16.f, -0.01f, ColorConstants.WHITE, .4f, -1);
+
+			//if (mDrawEditorJunctions)
+				drawJunctionBox(core, mRendererManager.uiSpriteBatch(), mTrackEditorController.track(), lNode);
 
 		}
 		mGameTextFont.end();
@@ -501,18 +498,21 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		final var lEdgeList = lTrack.edges();
 
 		final var lSelectedNodeA = mTrackEditorController.selectedNodeA();
-		final var lSelectedEdge = mTrackEditorController.getSelectedEdge();
 
-		final var lEdgeIndex = lSelectedNodeA != null ? mTrackEditorController.activeEdgeLocalIndex() : -1;
-		final var lEdgeIndexConstraint = lSelectedNodeA != null ? mTrackEditorController.auxiliaryEdgeLocalIndex() : -1;
+		final var lSelectedNodeMainLineEdgeUid = lSelectedNodeA != null ? lSelectedNodeA.trackSwitch.mainSegmentUid() : -1;
+		final var lSelectedNodeAuxLineEdgeUid = lSelectedNodeA != null ? lSelectedNodeA.trackSwitch.activeAuxiliarySegmentUid() : -1;
+
+		final var lEditorPrimaryHighlightIndex = lSelectedNodeA != null ? mTrackEditorController.editorPrimaryEdgeLocalIndex() : -1;
+		final var lEditorSecondaryHighlightIndex = lSelectedNodeA != null ? mTrackEditorController.editorSecondaryEdgeLocalIndex() : -1;
 
 		RailTrackSegment lHighlightEdge = null;
 		RailTrackSegment lConstrainEdge = null;
-		if (lSelectedNodeA != null && lEdgeIndex != -1)
-			lHighlightEdge = lSelectedNodeA.getEdgeByIndex(lEdgeIndex);
 
-		if (lSelectedNodeA != null && lEdgeIndexConstraint != -1)
-			lConstrainEdge = lSelectedNodeA.getEdgeByIndex(lEdgeIndexConstraint);
+		if (lSelectedNodeA != null && lEditorPrimaryHighlightIndex != -1)
+			lHighlightEdge = lSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(lEditorPrimaryHighlightIndex);
+
+		if (lSelectedNodeA != null && lEditorSecondaryHighlightIndex != -1)
+			lConstrainEdge = lSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(lEditorSecondaryHighlightIndex);
 
 		Debug.debugManager().drawers().beginLineRenderer(pCore.gameCamera(), GL11.GL_LINES, 2.f);
 
@@ -525,6 +525,9 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 			var lNodeA = lTrack.getNodeByUid(lEdge.nodeAUid);
 			var lNodeB = lTrack.getNodeByUid(lEdge.nodeBUid);
 
+			var isMainLine = lSelectedNodeMainLineEdgeUid != -1 && lSelectedNodeMainLineEdgeUid == lEdge.uid;
+			var isAuxiliaryLine = lSelectedNodeAuxLineEdgeUid != -1 && lSelectedNodeAuxLineEdgeUid == lEdge.uid;
+
 			float lR = 1.f;
 			float lG = 1.f;
 			float lB = 1.f;
@@ -534,7 +537,8 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 			boolean lIsEdgeAllowed = false;
 			if (lHighlightEdge != null && lConstrainEdge != null && lConstrainEdge.uid == lEdge.uid) {
 				lB = 0.f;
-				lIsEdgeAllowed = lHighlightEdge.allowedEdgeConections.contains((Integer) lConstrainEdge.uid);
+				// TOOD: update this
+				lIsEdgeAllowed = false; // lHighlightEdge.allowedEdgeConections.contains((Integer) lConstrainEdge.uid);
 				if (lIsEdgeAllowed) {
 					lR = 0.f;
 					lG = 1.f;
@@ -555,6 +559,19 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 			if (lEdge.edgeType == RailTrackSegment.EDGE_TYPE_STRAIGHT) { // Straight edge
 				Debug.debugManager().drawers().drawLine(lNodeA.x, lNodeA.y, lNodeB.x, lNodeB.y, lR, lG, lB);
 
+				if (isMainLine) {
+					final var lHx = lNodeA.x + (lNodeB.x - lNodeA.x) * .75f;
+					final var lHY = lNodeA.y + (lNodeB.y - lNodeA.y) * .75f;
+
+					Debug.debugManager().drawers().drawLine(lNodeA.x - 2, lNodeA.y - 2, lHx - 2, lHY - 2, 1, 1, 0);
+
+				} else if (isAuxiliaryLine) {
+					final var lHx = lNodeA.x + (lNodeB.x - lNodeA.x) * .75f;
+					final var lHY = lNodeA.y + (lNodeB.y - lNodeA.y) * .75f;
+
+					Debug.debugManager().drawers().drawLine(lNodeA.x - 2, lNodeA.y - 2, lHx - 2, lHY - 2, 1, 0, 1);
+				}
+
 			} else { // S-Curve
 				float lLastX = lNodeA.x;
 				float lLastY = lNodeA.y;
@@ -566,6 +583,19 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 
 					lLastX = lNewPointX;
 					lLastY = lNewPointY;
+				}
+
+				if (isMainLine) {
+					final var lHx = lNodeA.x + (lNodeB.x - lNodeA.x) * .75f;
+					final var lHY = lNodeA.y + (lNodeB.y - lNodeA.y) * .75f;
+
+					Debug.debugManager().drawers().drawLine(lNodeA.x, lNodeA.y, lHx, lHY, 1, 1, 0);
+
+				} else if (isAuxiliaryLine) {
+					final var lHx = lNodeA.x + (lNodeB.x - lNodeA.x) * .75f;
+					final var lHY = lNodeA.y + (lNodeB.y - lNodeA.y) * .75f;
+
+					Debug.debugManager().drawers().drawLine(lNodeA.x, lNodeA.y, lHx, lHY, 1, 0, 1);
 				}
 
 				final var lIsPrimaryEdge = lHighlightEdge != null && lHighlightEdge.uid == lEdge.uid;
@@ -587,9 +617,6 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 
 			debugDrawEdgeSignal(pCore, lTrack, lEdge);
 
-			if (lEdge.trackJunction.isSignalActive)
-				drawJunctionBox(pCore, mRendererManager.uiSpriteBatch(), lTrack, lEdge);
-
 			mGameTextFont.drawText("E:" + lEdge.uid, lWorldPositionX, lWorldPositionY, -0.1f, ColorConstants.WHITE, .4f, -1);
 
 			drawEdgeInformation(pCore, mRendererManager.uiSpriteBatch(), lTrack, lEdge);
@@ -601,45 +628,45 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 	}
 
 	private void debugDrawEdgeSignal(LintfordCore pCore, RailTrackInstance pTrack, RailTrackSegment pEdge) {
-		if (pEdge.trackJunction != null && pEdge.trackJunction.isSignalActive) {
-			{
-				final var lLeftEdgeUid = pEdge.trackJunction.leftEdgeUid;
-				final var lLeftEdge = pTrack.getEdgeByUid(lLeftEdgeUid);
-
-				final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(pEdge, lLeftEdge);
-
-				final var lActiveNode = pTrack.getNodeByUid(pCommonNodeUid);
-				final var lOtherNodeUid = lLeftEdge.getOtherNodeUid(lActiveNode.uid);
-				final var lOtherNode = pTrack.getNodeByUid(lOtherNodeUid);
-				final float lVectorX = lOtherNode.x - lActiveNode.x;
-				final float lVectorY = lOtherNode.y - lActiveNode.y;
-
-				var ll = new Vector2f(lVectorX, lVectorY);
-				ll.nor();
-
-				Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lActiveNode.x + ll.x * 20.f, lActiveNode.y + ll.y * 20.f, 5.f);
-			}
-
-			{
-				final var lRightEdgeUid = pEdge.trackJunction.rightEdgeUid;
-				final var lRightEdge = pTrack.getEdgeByUid(lRightEdgeUid);
-				if (lRightEdge == null) {
-					return;
-				}
-				final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(pEdge, lRightEdge);
-
-				final var lActiveNode = pTrack.getNodeByUid(pCommonNodeUid);
-				final var lOtherNodeUid = lRightEdge.getOtherNodeUid(lActiveNode.uid);
-				final var lOtherNode = pTrack.getNodeByUid(lOtherNodeUid);
-				final float lVectorX = lOtherNode.x - lActiveNode.x;
-				final float lVectorY = lOtherNode.y - lActiveNode.y;
-
-				var ll = new Vector2f(lVectorX, lVectorY);
-				ll.nor();
-
-				Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lActiveNode.x + ll.x * 20.f, lActiveNode.y + ll.y * 20.f, 3.f);
-			}
-		}
+		//		if (pEdge.trackJunction != null && pEdge.trackJunction.isSignalActive) {
+		//			{
+		//				final var lLeftEdgeUid = pEdge.trackJunction.leftEdgeUid;
+		//				final var lLeftEdge = pTrack.getEdgeByUid(lLeftEdgeUid);
+		//
+		//				final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(pEdge, lLeftEdge);
+		//
+		//				final var lActiveNode = pTrack.getNodeByUid(pCommonNodeUid);
+		//				final var lOtherNodeUid = lLeftEdge.getOtherNodeUid(lActiveNode.uid);
+		//				final var lOtherNode = pTrack.getNodeByUid(lOtherNodeUid);
+		//				final float lVectorX = lOtherNode.x - lActiveNode.x;
+		//				final float lVectorY = lOtherNode.y - lActiveNode.y;
+		//
+		//				var ll = new Vector2f(lVectorX, lVectorY);
+		//				ll.nor();
+		//
+		//				Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lActiveNode.x + ll.x * 20.f, lActiveNode.y + ll.y * 20.f, 5.f);
+		//			}
+		//
+		//			{
+		//				final var lRightEdgeUid = pEdge.trackJunction.rightEdgeUid;
+		//				final var lRightEdge = pTrack.getEdgeByUid(lRightEdgeUid);
+		//				if (lRightEdge == null) {
+		//					return;
+		//				}
+		//				final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(pEdge, lRightEdge);
+		//
+		//				final var lActiveNode = pTrack.getNodeByUid(pCommonNodeUid);
+		//				final var lOtherNodeUid = lRightEdge.getOtherNodeUid(lActiveNode.uid);
+		//				final var lOtherNode = pTrack.getNodeByUid(lOtherNodeUid);
+		//				final float lVectorX = lOtherNode.x - lActiveNode.x;
+		//				final float lVectorY = lOtherNode.y - lActiveNode.y;
+		//
+		//				var ll = new Vector2f(lVectorX, lVectorY);
+		//				ll.nor();
+		//
+		//				Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lActiveNode.x + ll.x * 20.f, lActiveNode.y + ll.y * 20.f, 3.f);
+		//			}
+		//		}
 	}
 
 	public void drawTrackInfo(LintfordCore pCore) {
@@ -662,47 +689,28 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		// TODO:
 	}
 
-	private void drawJunctionBox(LintfordCore pCore, TextureBatchPCT pTextureBatch, RailTrackInstance pTrack, RailTrackSegment pActiveEdge) {
-		final var lIsLeftSignalActive = pActiveEdge.trackJunction.leftEnabled;
-		final var lActiveEdgeUid = lIsLeftSignalActive ? pActiveEdge.trackJunction.leftEdgeUid : pActiveEdge.trackJunction.rightEdgeUid;
-		if (lActiveEdgeUid == -1)
+	private void drawJunctionBox(LintfordCore core, TextureBatchPCT textureBatch, RailTrackInstance trackInstance, RailTrackNode activeNode) {
+		if (activeNode == null || activeNode.trackSwitch.isSwitchActive() == false)
 			return;
-		final var lActiveEdge = pTrack.getEdgeByUid(lActiveEdgeUid);
-
-		if (lActiveEdge == null) {
-			// FIXME: This still occurs during editing
-			return;
-		}
 
 		final var lWorldTexture = mTracksSpriteSheet.texture();
-		pTextureBatch.begin(pCore.gameCamera());
-		{
-			// Junction post
-			final var lSignalBounds = lIsLeftSignalActive ? mTracksSpriteSheet.getSpriteFrame(mTracksSpriteSheet.getSpriteFrameIndexByName("TEXTURESIGNALLEFT"))
-					: mTracksSpriteSheet.getSpriteFrame(mTracksSpriteSheet.getSpriteFrameIndexByName("TEXTURESIGNALRIGHT"));
 
-			final float lPostWorldX = pActiveEdge.trackJunction.signalLampWorldX;
-			final float lPostWorldY = pActiveEdge.trackJunction.signalLampWorldY;
+		textureBatch.begin(core.gameCamera());
 
-			final float lWidth = lSignalBounds.width();
-			final float lHeight = lSignalBounds.height();
-
-			pTextureBatch.draw(lWorldTexture, lSignalBounds, lPostWorldX - lWidth * .5f, lPostWorldY - lHeight * .5f, lWidth, lHeight, -0.01f, ColorConstants.WHITE);
-		}
 		{
 			// Junction box
 			final var lSignalBox = mTracksSpriteSheet.getSpriteFrame(mTracksSpriteSheet.getSpriteFrameIndexByName("TEXTURESIGNALBOX"));
 
-			final float lBoxWorldX = pActiveEdge.trackJunction.signalBoxWorldX;
-			final float lBoxWorldY = pActiveEdge.trackJunction.signalBoxWorldY;
+			final float lBoxWorldX = activeNode.trackSwitch.signalBoxWorldX;
+			final float lBoxWorldY = activeNode.trackSwitch.signalBoxWorldY;
 
 			final float lWidth = lSignalBox.width();
 			final float lHeight = lSignalBox.height();
 
-			pTextureBatch.draw(lWorldTexture, lSignalBox, lBoxWorldX - lWidth * .5f, lBoxWorldY - lHeight * .5f, lWidth, lHeight, -0.01f, ColorConstants.WHITE);
+			textureBatch.draw(lWorldTexture, lSignalBox, lBoxWorldX - lWidth * .5f, lBoxWorldY - lHeight * .5f, lWidth, lHeight, -0.01f, ColorConstants.WHITE);
 
 		}
-		pTextureBatch.end();
+		textureBatch.end();
 	}
 
 	private void drawEdgeInformation(LintfordCore pCore, TextureBatchPCT pTextureBatch, RailTrackInstance pTrack, RailTrackSegment pActiveEdge) {

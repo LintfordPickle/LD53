@@ -179,7 +179,7 @@ public class PlayerTrainController extends BaseController implements IInputProce
 			lPlayerSpawnEdge = mTrackController.track().getEdgeByName(startingEdge);
 		}
 
-		mPlayerLocomotiveTrain = mTrainController.addNewTrain(lPlayerSpawnEdge, 3);
+		mPlayerLocomotiveTrain = mTrainController.addNewTrain(lPlayerSpawnEdge, 1);
 		return mPlayerLocomotiveTrain;
 	}
 

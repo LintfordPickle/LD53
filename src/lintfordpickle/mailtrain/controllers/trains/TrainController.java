@@ -180,13 +180,13 @@ public class TrainController extends BaseController implements ITrainWhisperer, 
 		var lFollowingCar = lLocomotiveCar;
 		for (int i = 0; i < pNumCarriages; i++) {
 			lFollowingCar = createNewTrainCar(lNewTrain, lFollowingCar, TrainCarDefinition.Cannon00Definition);
-
 		}
+
 		if (pSpawnEdge == null) {
 			Debug.debugManager().logger().e(getClass().getSimpleName(), "The track doesn't contain a spawn point!");
 			pSpawnEdge = mTrackController.track().edges().get(0);
-
 		}
+
 		lNewTrain.drivingForward(true);
 		placeTrainOnTracks(lNewTrain, pSpawnEdge, pSpawnEdge.nodeAUid, 1.0f);
 

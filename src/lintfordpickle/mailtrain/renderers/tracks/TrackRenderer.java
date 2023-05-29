@@ -141,26 +141,28 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 		if (pCore.input().mouse().isMouseLeftButtonDownTimed(this)) {
 			final var lTrack = mTrackController.track();
 
-			final int lEdgeCount = lTrack.edges().size();
-			for (int i = 0; i < lEdgeCount; i++) {
-				final var lEdge = lTrack.edges().get(i);
-				if (lEdge != null && lEdge.trackJunction != null && lEdge.trackJunction.isSignalActive) {
-					final var lSignalNode = lTrack.getNodeByUid(lEdge.trackJunction.signalNodeUid);
-
-					final var lBoxPosX = lSignalNode.x + lEdge.trackJunction.signalBoxWorldX;
-					final var lBoxPosY = lSignalNode.y + lEdge.trackJunction.signalBoxWorldY;
-					if (lEdge != null && Vector2f.dst(lMouseWorldSpaceX, lMouseWorldSpaceY, lBoxPosX, lBoxPosY) < 10.f) {
-						lEdge.trackJunction.toggleSignal();
-
-						final var lBoxWorldPositionX = lSignalNode.x;
-						final var lBoxWorldPositionY = lSignalNode.y;
-
-						if (ConstantsGame.SOUNDS_ENABLED)
-							mTrainSoundManager.play("SOUND_SIGNAL_CHANGE", lBoxWorldPositionX, lBoxWorldPositionY, 0.f, 0.f);
-
-					}
-				}
-			}
+			// TODO: Track switching input handler
+			
+//			final int lEdgeCount = lTrack.edges().size();
+//			for (int i = 0; i < lEdgeCount; i++) {
+//				final var lEdge = lTrack.edges().get(i);
+//				if (lEdge != null && lEdge.trackJunction != null && lEdge.trackJunction.isSignalActive) {
+//					final var lSignalNode = lTrack.getNodeByUid(lEdge.trackJunction.signalNodeUid);
+//
+//					final var lBoxPosX = lSignalNode.x + lEdge.trackJunction.signalBoxWorldX;
+//					final var lBoxPosY = lSignalNode.y + lEdge.trackJunction.signalBoxWorldY;
+//					if (lEdge != null && Vector2f.dst(lMouseWorldSpaceX, lMouseWorldSpaceY, lBoxPosX, lBoxPosY) < 10.f) {
+//						lEdge.trackJunction.toggleSignal();
+//
+//						final var lBoxWorldPositionX = lSignalNode.x;
+//						final var lBoxWorldPositionY = lSignalNode.y;
+//
+//						if (ConstantsGame.SOUNDS_ENABLED)
+//							mTrainSoundManager.play("SOUND_SIGNAL_CHANGE", lBoxWorldPositionX, lBoxWorldPositionY, 0.f, 0.f);
+//
+//					}
+//				}
+//			}
 		}
 		return super.handleInput(pCore);
 	}
@@ -218,8 +220,8 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 		for (int i = 0; i < lEdgeCount; i++) {
 			final var lEdge = lEdgeList.get(i);
 
-			if (lEdge.trackJunction.isSignalActive)
-				drawJunctionBox(pCore, mRendererManager.uiSpriteBatch(), lTrack, lEdge);
+//			if (lEdge.trackJunction.isSignalActive)
+//				drawJunctionBox(pCore, mRendererManager.uiSpriteBatch(), lTrack, lEdge);
 		}
 	}
 
@@ -292,107 +294,107 @@ public class TrackRenderer extends TrackMeshRenderer implements IInputProcessor 
 	}
 
 	private void drawJunctionBox(LintfordCore pCore, TextureBatchPCT pTextureBatch, RailTrackInstance pTrack, RailTrackSegment pActiveEdge) {
-		final var lIsLeftSignalActive = pActiveEdge.trackJunction.leftEnabled;
-		final var lActiveEdgeUid = lIsLeftSignalActive ? pActiveEdge.trackJunction.leftEdgeUid : pActiveEdge.trackJunction.rightEdgeUid;
-		if (lActiveEdgeUid == -1)
-			return;
-		final var lActiveEdge = pTrack.getEdgeByUid(lActiveEdgeUid);
-		if (lActiveEdge == null) {
-			// FIXME: This stil occurs during editing
-			return;
-		}
-		final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(pActiveEdge, lActiveEdge);
-
-		final var lActiveNode = pTrack.getNodeByUid(pCommonNodeUid);
-
-		final var lWorldTexture = mTrackSpriteSheet.texture();
-		pTextureBatch.begin(pCore.gameCamera());
-		{
-			// signal post
-
-			final var lSignalBounds = lIsLeftSignalActive ? mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALLEFT") : mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALRIGHT");
-
-			final float lLampOffsetX = pActiveEdge.trackJunction.signalLampWorldX;
-			final float lLampOffsetY = pActiveEdge.trackJunction.signalLampWorldY;
-
-			final float lWidth = lSignalBounds.width();
-			final float lHeight = lSignalBounds.height();
-
-			pTextureBatch.draw(lWorldTexture, lSignalBounds, lActiveNode.x - lWidth * .5f + lLampOffsetX, lActiveNode.y - lHeight + lLampOffsetY, lWidth, lHeight, -0.01f, ColorConstants.WHITE);
-		}
-		{
-			// signal box
-
-			final var lSignalBox = mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALBOX");
-
-			final float lBoxOffsetX = pActiveEdge.trackJunction.signalBoxWorldX;
-			final float lBoxOffsetY = pActiveEdge.trackJunction.signalBoxWorldY;
-
-			final float lWidth = lSignalBox.width();
-			final float lHeight = lSignalBox.height();
-
-			pTextureBatch.draw(lWorldTexture, lSignalBox, lActiveNode.x - lWidth * .5f + lBoxOffsetX, lActiveNode.y - lHeight * .5f + lBoxOffsetY, lWidth, lHeight, -0.01f, ColorConstants.WHITE);
-
-		}
-		pTextureBatch.end();
+//		final var lIsLeftSignalActive = pActiveEdge.trackJunction.leftEnabled;
+//		final var lActiveEdgeUid = lIsLeftSignalActive ? pActiveEdge.trackJunction.leftEdgeUid : pActiveEdge.trackJunction.rightEdgeUid;
+//		if (lActiveEdgeUid == -1)
+//			return;
+//		final var lActiveEdge = pTrack.getEdgeByUid(lActiveEdgeUid);
+//		if (lActiveEdge == null) {
+//			// FIXME: This stil occurs during editing
+//			return;
+//		}
+//		final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(pActiveEdge, lActiveEdge);
+//
+//		final var lActiveNode = pTrack.getNodeByUid(pCommonNodeUid);
+//
+//		final var lWorldTexture = mTrackSpriteSheet.texture();
+//		pTextureBatch.begin(pCore.gameCamera());
+//		{
+//			// signal post
+//
+//			final var lSignalBounds = lIsLeftSignalActive ? mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALLEFT") : mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALRIGHT");
+//
+//			final float lLampOffsetX = pActiveEdge.trackJunction.signalLampWorldX;
+//			final float lLampOffsetY = pActiveEdge.trackJunction.signalLampWorldY;
+//
+//			final float lWidth = lSignalBounds.width();
+//			final float lHeight = lSignalBounds.height();
+//
+//			pTextureBatch.draw(lWorldTexture, lSignalBounds, lActiveNode.x - lWidth * .5f + lLampOffsetX, lActiveNode.y - lHeight + lLampOffsetY, lWidth, lHeight, -0.01f, ColorConstants.WHITE);
+//		}
+//		{
+//			// signal box
+//
+//			final var lSignalBox = mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALBOX");
+//
+//			final float lBoxOffsetX = pActiveEdge.trackJunction.signalBoxWorldX;
+//			final float lBoxOffsetY = pActiveEdge.trackJunction.signalBoxWorldY;
+//
+//			final float lWidth = lSignalBox.width();
+//			final float lHeight = lSignalBox.height();
+//
+//			pTextureBatch.draw(lWorldTexture, lSignalBox, lActiveNode.x - lWidth * .5f + lBoxOffsetX, lActiveNode.y - lHeight * .5f + lBoxOffsetY, lWidth, lHeight, -0.01f, ColorConstants.WHITE);
+//
+//		}
+//		pTextureBatch.end();
 	}
 
 	private void drawSignalBox(LintfordCore pCore, TextureBatchPCT pTextureBatch, RailTrackInstance pTrack, RailTrackSegment pActiveEdge, RailTrackNode pTrackNode) {
-		final var lIsLeftSignalActive = pActiveEdge.trackJunction.leftEnabled;
-		final var lActiveEdgeUid = lIsLeftSignalActive ? pActiveEdge.trackJunction.leftEdgeUid : pActiveEdge.trackJunction.rightEdgeUid;
-		final var lActiveEdge = pTrack.getEdgeByUid(lActiveEdgeUid);
-
-		final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(pActiveEdge, lActiveEdge);
-
-		final var lActiveNode = pTrack.getNodeByUid(pCommonNodeUid);
-		final var lOtherNodeUid = lActiveEdge.getOtherNodeUid(lActiveNode.uid);
-		final var lOtherNode = pTrack.getNodeByUid(lOtherNodeUid);
-		final float lVectorX = lOtherNode.x - lActiveNode.x;
-		final float lVectorY = lOtherNode.y - lActiveNode.y;
-
-		TempTrackVec2.set(lVectorX, lVectorY);
-		TempTrackVec2.nor();
-
-		final var lWorldTexture = mTrackSpriteSheet.texture();
-
-		final var lSignalArrow = mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALARROW");
-		final var lSignalArrowAngle = (float) Math.atan2(TempTrackVec2.y, TempTrackVec2.x) + (float) Math.toRadians(90.f);
-		{
-			final float lSrcX = lSignalArrow.x();
-			final float lSrcY = lSignalArrow.y();
-			final float lSrcW = lSignalArrow.width();
-			final float lSrcH = lSignalArrow.height();
-
-			pTextureBatch.drawAroundCenter(lWorldTexture, lSrcX, lSrcY, lSrcW, lSrcH, lActiveNode.x, lActiveNode.y, lSrcW, lSrcH, -0.1f, lSignalArrowAngle, .0f, lSrcH * .5f, 1.f, ColorConstants.WHITE);
-		}
-		{
-			// signal lamp
-
-			final float lLampOffsetX = pActiveEdge.trackJunction.signalLampWorldX;
-			final float lLampOffsetY = pActiveEdge.trackJunction.signalLampWorldY;
-
-			final var lSignalBounds = lIsLeftSignalActive ? mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALLEFT") : mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALRIGHT");
-
-			final float lLampWidth = lSignalBounds.width();
-			final float lLampHeight = lSignalBounds.height();
-
-			pTextureBatch.draw(lWorldTexture, lSignalBounds, lActiveNode.x - 16.f + lLampOffsetX, lActiveNode.y - 32.f + lLampOffsetY, lLampWidth, lLampHeight, -0.1f, ColorConstants.WHITE);
-
-		}
-		{
-			// signal box (clickable bit)
-
-			final float lBoxOffsetX = pActiveEdge.trackJunction.signalBoxWorldX;
-			final float lBoxOffsetY = pActiveEdge.trackJunction.signalBoxWorldY;
-
-			final var lSignalBounds = mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALBOX");
-
-			final float lBoxWidth = lSignalBounds.width();
-			final float lBoxHeight = lSignalBounds.height();
-
-			pTextureBatch.draw(lWorldTexture, lSignalBounds, lActiveNode.x - lBoxWidth * .5f + lBoxOffsetX, lActiveNode.y - lBoxHeight * .5f + lBoxOffsetY, lBoxWidth, lBoxHeight, -0.1f, ColorConstants.WHITE);
-
-		}
+//		final var lIsLeftSignalActive = pActiveEdge.trackJunction.leftEnabled;
+//		final var lActiveEdgeUid = lIsLeftSignalActive ? pActiveEdge.trackJunction.leftEdgeUid : pActiveEdge.trackJunction.rightEdgeUid;
+//		final var lActiveEdge = pTrack.getEdgeByUid(lActiveEdgeUid);
+//
+//		final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(pActiveEdge, lActiveEdge);
+//
+//		final var lActiveNode = pTrack.getNodeByUid(pCommonNodeUid);
+//		final var lOtherNodeUid = lActiveEdge.getOtherNodeUid(lActiveNode.uid);
+//		final var lOtherNode = pTrack.getNodeByUid(lOtherNodeUid);
+//		final float lVectorX = lOtherNode.x - lActiveNode.x;
+//		final float lVectorY = lOtherNode.y - lActiveNode.y;
+//
+//		TempTrackVec2.set(lVectorX, lVectorY);
+//		TempTrackVec2.nor();
+//
+//		final var lWorldTexture = mTrackSpriteSheet.texture();
+//
+//		final var lSignalArrow = mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALARROW");
+//		final var lSignalArrowAngle = (float) Math.atan2(TempTrackVec2.y, TempTrackVec2.x) + (float) Math.toRadians(90.f);
+//		{
+//			final float lSrcX = lSignalArrow.x();
+//			final float lSrcY = lSignalArrow.y();
+//			final float lSrcW = lSignalArrow.width();
+//			final float lSrcH = lSignalArrow.height();
+//
+//			pTextureBatch.drawAroundCenter(lWorldTexture, lSrcX, lSrcY, lSrcW, lSrcH, lActiveNode.x, lActiveNode.y, lSrcW, lSrcH, -0.1f, lSignalArrowAngle, .0f, lSrcH * .5f, 1.f, ColorConstants.WHITE);
+//		}
+//		{
+//			// signal lamp
+//
+//			final float lLampOffsetX = pActiveEdge.trackJunction.signalLampWorldX;
+//			final float lLampOffsetY = pActiveEdge.trackJunction.signalLampWorldY;
+//
+//			final var lSignalBounds = lIsLeftSignalActive ? mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALLEFT") : mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALRIGHT");
+//
+//			final float lLampWidth = lSignalBounds.width();
+//			final float lLampHeight = lSignalBounds.height();
+//
+//			pTextureBatch.draw(lWorldTexture, lSignalBounds, lActiveNode.x - 16.f + lLampOffsetX, lActiveNode.y - 32.f + lLampOffsetY, lLampWidth, lLampHeight, -0.1f, ColorConstants.WHITE);
+//
+//		}
+//		{
+//			// signal box (clickable bit)
+//
+//			final float lBoxOffsetX = pActiveEdge.trackJunction.signalBoxWorldX;
+//			final float lBoxOffsetY = pActiveEdge.trackJunction.signalBoxWorldY;
+//
+//			final var lSignalBounds = mTrackSpriteSheet.getSpriteFrame("TEXTURESIGNALBOX");
+//
+//			final float lBoxWidth = lSignalBounds.width();
+//			final float lBoxHeight = lSignalBounds.height();
+//
+//			pTextureBatch.draw(lWorldTexture, lSignalBounds, lActiveNode.x - lBoxWidth * .5f + lBoxOffsetX, lActiveNode.y - lBoxHeight * .5f + lBoxOffsetY, lBoxWidth, lBoxHeight, -0.1f, ColorConstants.WHITE);
+//
+//		}
 	}
 
 	@Override

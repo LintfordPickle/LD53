@@ -330,9 +330,9 @@ public class TrackController extends BaseController implements IInputProcessor {
 		final var lSourceNodeUid = pTrackSegment.getOtherNodeUid(pSegmentSignals.destinationNodeUid());
 		final var lSourceNode = pTrack.getNodeByUid(lSourceNodeUid);
 
-		final int lNumSourceSideEdges = lSourceNode.numberConnectedEdges();
+		final int lNumSourceSideEdges = lSourceNode.trackSwitch.numberConnectedSegments();
 		for (int i = 0; i < lNumSourceSideEdges; i++) {
-			final var lOtherSourceEdge = lSourceNode.connectedEdges().get(i);
+			final var lOtherSourceEdge = lSourceNode.trackSwitch.connectedSegments().get(i);
 			if (lOtherSourceEdge == pTrackSegment)
 				continue;
 
@@ -368,9 +368,9 @@ public class TrackController extends BaseController implements IInputProcessor {
 		int pDestinationUid = pSegmentSignals.destinationNodeUid();
 		final var lDestinationNode = pTrack.getNodeByUid(pDestinationUid);
 
-		final int lNumDestinationSideEdges = lDestinationNode.numberConnectedEdges();
+		final int lNumDestinationSideEdges = lDestinationNode.trackSwitch.numberConnectedSegments();
 		for (int i = 0; i < lNumDestinationSideEdges; i++) {
-			final var lOtherSourceEdge = lDestinationNode.connectedEdges().get(i);
+			final var lOtherSourceEdge = lDestinationNode.trackSwitch.connectedSegments().get(i);
 			if (lOtherSourceEdge == pTrackSegment)
 				continue;
 

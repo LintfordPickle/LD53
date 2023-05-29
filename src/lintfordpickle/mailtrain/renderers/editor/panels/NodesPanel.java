@@ -11,7 +11,7 @@ import net.lintford.library.renderers.windows.UiWindow;
 import net.lintford.library.renderers.windows.components.UiButton;
 import net.lintford.library.renderers.windows.components.UiLabelledInt;
 
-public class NodePanel extends UiPanel {
+public class NodesPanel extends UiPanel {
 
 	// --------------------------------------
 	// Constants
@@ -46,7 +46,7 @@ public class NodePanel extends UiPanel {
 	// Constructor
 	// --------------------------------------
 
-	public NodePanel(UiWindow parentWindow, int entityGroupdUid) {
+	public NodesPanel(UiWindow parentWindow, int entityGroupdUid) {
 		super(parentWindow, TITLE, entityGroupdUid);
 
 		mShowActiveLayerButton = true;

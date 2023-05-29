@@ -257,18 +257,18 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 			}
 
 			// update segment readings on node changes
-			mActiveEdgeLocalIndex = mTrackEditorController.activeEdgeLocalIndex();
-			mAuxiliaryEdgeLocalIndex = mTrackEditorController.auxiliaryEdgeLocalIndex();
+			mActiveEdgeLocalIndex = mTrackEditorController.editorPrimaryEdgeLocalIndex();
+			mAuxiliaryEdgeLocalIndex = mTrackEditorController.editorSecondaryEdgeLocalIndex();
 			lSegmentSelectionChanged = true;
 
 		} else {
-			if (mActiveEdgeLocalIndex != mTrackEditorController.activeEdgeLocalIndex()) {
-				mActiveEdgeLocalIndex = mTrackEditorController.activeEdgeLocalIndex();
+			if (mActiveEdgeLocalIndex != mTrackEditorController.editorPrimaryEdgeLocalIndex()) {
+				mActiveEdgeLocalIndex = mTrackEditorController.editorPrimaryEdgeLocalIndex();
 				lSegmentSelectionChanged = true;
 			}
 
-			if (mAuxiliaryEdgeLocalIndex != mTrackEditorController.auxiliaryEdgeLocalIndex()) {
-				mAuxiliaryEdgeLocalIndex = mTrackEditorController.auxiliaryEdgeLocalIndex();
+			if (mAuxiliaryEdgeLocalIndex != mTrackEditorController.editorSecondaryEdgeLocalIndex()) {
+				mAuxiliaryEdgeLocalIndex = mTrackEditorController.editorSecondaryEdgeLocalIndex();
 				lSegmentSelectionChanged = true;
 			}
 
@@ -279,10 +279,10 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 			var lAuxilierySegment = (RailTrackSegment) null; // mTrack.getEdgeByUid(mAuxiliaryEdgeLocalIndex);
 			if (mSelectedNodeA != null) {
 				if (mActiveEdgeLocalIndex >= 0)
-					lActiveSegment = mSelectedNodeA.getEdgeByIndex(mActiveEdgeLocalIndex);
+					lActiveSegment = mSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(mActiveEdgeLocalIndex);
 
 				if (mAuxiliaryEdgeLocalIndex >= 0)
-					lAuxilierySegment = mSelectedNodeA.getEdgeByIndex(mAuxiliaryEdgeLocalIndex);
+					lAuxilierySegment = mSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(mAuxiliaryEdgeLocalIndex);
 			}
 
 			if (lActiveSegment != null) {
@@ -291,11 +291,23 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 				mSegmentPrimaryId.value(lActiveSegment.uid);
 				mSegmentDistance.value(lActiveSegment.edgeLengthInMeters);
 				mPrimaryEdgeType.buttonLabel(RailTrackSegment.getEdgeTypeName(lActiveSegment.edgeType));
+				
+				if (lActiveSegment.edgeType == RailTrackSegment.EDGE_TYPE_STRAIGHT) {
+					mMoveControlNodeA.isEnabled(false);
+					mMoveControlNodeB.isEnabled(false);
+				} else if (lActiveSegment.edgeType == RailTrackSegment.EDGE_TYPE_CURVE) {
+					mMoveControlNodeA.isEnabled(true);
+					mMoveControlNodeB.isEnabled(true);
+				}
+				
 			} else {
 				mSegmentName.inputString("");
 				mSegmentPrimaryId.value(-1);
 				mSegmentDistance.value(0.0f);
 				mPrimaryEdgeType.buttonLabel("-");
+				
+				mMoveControlNodeA.isEnabled(false);
+				mMoveControlNodeB.isEnabled(false);
 			}
 
 			if (lAuxilierySegment != null) {
@@ -311,7 +323,8 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 					mToggleTravelAllowed.isEnabled(false);
 				} else {
 
-					var lIsTravelAllowed = lActiveSegment.allowedEdgeConections.contains(lAuxilierySegment.uid);
+					// TODO: implement allowed list
+					var lIsTravelAllowed = false; //  lActiveSegment.allowedEdgeConections.contains(lAuxilierySegment.uid);
 
 					if (lIsTravelAllowed) {
 						mToggleTravelAllowed.buttonLabel("Allowed");
@@ -330,7 +343,7 @@ public class SegmentPanel extends UiPanel implements IUiInputKeyPressCallback {
 
 		// Listen for changes to the properties on the active edge
 		if (mSelectedNodeA != null && mActiveEdgeLocalIndex != -1) {
-			final var lActiveSegment = mSelectedNodeA.getEdgeByIndex(mActiveEdgeLocalIndex);
+			final var lActiveSegment = mSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(mActiveEdgeLocalIndex);
 			if (lActiveSegment != null) {
 				if (lActiveSegment.segmentName != null && lActiveSegment.segmentName.length() != mSegmentName.inputString().length()) {
 					final var lInputString = mSegmentName.inputString().toString();

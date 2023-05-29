@@ -39,8 +39,5 @@ public class RailTrackSegmentSaveDefinition implements Serializable {
 	public int logicalUpdateCounter;
 
 	public final List<Integer> allowedEdgeConnections = new ArrayList<>();
-	
-	// segment juntion
-	public final TrackJunctionSaveDefinition trackJunction = new TrackJunctionSaveDefinition();
 
 }

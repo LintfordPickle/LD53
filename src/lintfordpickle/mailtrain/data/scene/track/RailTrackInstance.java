@@ -279,26 +279,27 @@ public class RailTrackInstance {
 		edgeUidCounter++;
 	}
 
-	public RailTrackSegment getNextEdge(RailTrackSegment currentEdge, int destinationNodeUid) {
-		RailTrackSegment lReturnEdge = null;
+	public RailTrackSegment getNextEdge(RailTrackSegment currentSegment, int destinationNodeUid) {
+		RailTrackSegment lReturnSegment = null;
 
-		final var lCurrentNode = getNodeByUid(destinationNodeUid);
+		final var lDestinationNode = getNodeByUid(destinationNodeUid);
 
-		// If this is a signal node, then we need to take into consideration which path is currently active.
-		if (currentEdge.trackJunction != null && currentEdge.trackJunction.isSignalActive && lCurrentNode.uid == currentEdge.trackJunction.signalNodeUid) {
-			final var lActiveEdgeUid = currentEdge.trackJunction.leftEnabled ? currentEdge.trackJunction.leftEdgeUid : currentEdge.trackJunction.rightEdgeUid;
-			return getEdgeByUid(lActiveEdgeUid);
-
+		final var lDestinationSegmentUid = lDestinationNode.trackSwitch.getOutSegmentUid(currentSegment.uid);
+		if(lDestinationSegmentUid == -1) {
+			// no connecting segments
 		}
-		lReturnEdge = lCurrentNode.getRandomWhitelistedEdgeApartFrom(currentEdge, destinationNodeUid);
+		
+		
+		
+//		lReturnSegment = lDestinationNode.getRandomWhitelistedEdgeApartFrom(currentSegment, destinationNodeUid);
+//
+//		if (lReturnSegment == null) {
+//			// If there are no whitelisted edges, then just pick a 'valid' track ...
+//			// TODO: this is commented out to simulate a de-railment at the next arrvied at node.
+//			lReturnSegment = lDestinationNode.getRandomEdgeApartFrom(currentSegment, destinationNodeUid);
+//		}
 
-		if (lReturnEdge == null) {
-			// If there are no whitelisted edges, then just pick a 'valid' track ...
-			// TODO: this is commented out to simulate a de-railment at the next arrvied at node.
-			lReturnEdge = lCurrentNode.getRandomEdgeApartFrom(currentEdge, destinationNodeUid);
-		}
-
-		return lReturnEdge;
+		return lReturnSegment;
 	}
 
 	public float getPositionAlongEdgeX(RailTrackSegment segment, int fromUid, float normalizedDist) {

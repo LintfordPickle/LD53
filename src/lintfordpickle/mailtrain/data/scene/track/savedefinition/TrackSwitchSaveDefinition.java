@@ -1,8 +1,10 @@
 package lintfordpickle.mailtrain.data.scene.track.savedefinition;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
-public class TrackJunctionSaveDefinition implements Serializable {
+public class TrackSwitchSaveDefinition implements Serializable {
 
 	// ---------------------------------------------
 	// Constants
@@ -14,15 +16,9 @@ public class TrackJunctionSaveDefinition implements Serializable {
 	// Variables
 	// ---------------------------------------------
 
-	public boolean isSignalActive; // TODO: rename variable (globally)
-
-	public int leftEdgeUid;
-	public int rightEdgeUid;
-	public int signalNodeUid;
-	public boolean leftEnabled;
-
-	public float lampOffsetX;
-	public float lampOffsetY;
+	public int mainSegmentLocalIndex;
+	public List<Integer> connectedEdgeUids = new ArrayList<>();
+	public int activeAuxiliarySegmentLocalIndex;
 
 	public float boxOffsetX;
 	public float boxOffsetY;

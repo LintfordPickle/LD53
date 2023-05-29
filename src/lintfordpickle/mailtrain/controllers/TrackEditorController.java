@@ -10,7 +10,6 @@ import lintfordpickle.mailtrain.data.scene.track.RailTrackSegment;
 import net.lintford.library.controllers.BaseController;
 import net.lintford.library.controllers.core.ControllerManager;
 import net.lintford.library.core.LintfordCore;
-import net.lintford.library.core.debug.Debug;
 import net.lintford.library.core.maths.MathHelper;
 import net.lintford.library.core.maths.Vector2f;
 
@@ -29,7 +28,6 @@ public class TrackEditorController extends BaseController {
 	public static final int CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_1 = 101;
 	public static final int CONTROLLER_EDITOR_ACTION_MOVE_CONTROL_2 = 102;
 	public static final int CONTROLLER_EDITOR_ACTION_MOVE_JUNCTION_BOX = 103;
-	public static final int CONTROLLER_EDITOR_ACTION_MOVE_JUNCTION_POST = 104;
 
 	// ---------------------------------------------
 	// Variables
@@ -44,19 +42,20 @@ public class TrackEditorController extends BaseController {
 
 	private int mLogicalUpdateCounter;
 
-	private int mActiveEdgeLocalIndex = -1; // index is local to the selected node
-	private int mAuxiliaryEdgeLocalIndex = -1; // index is local to the selected node
+	// These are used for functionality within the controller, like marking edges for allowed lists etc.
+	private int mEditorPrimaryEdgeLocalIndex = -1; // index is local to the selected node
+	private int mEditorSecondaryEdgeLocalIndex = -1; // index is local to the selected node
 
 	// ---------------------------------------------
 	// Properties
 	// ---------------------------------------------
 
-	public int activeEdgeLocalIndex() {
-		return mActiveEdgeLocalIndex;
+	public int editorPrimaryEdgeLocalIndex() {
+		return mEditorPrimaryEdgeLocalIndex;
 	}
 
-	public int auxiliaryEdgeLocalIndex() {
-		return mAuxiliaryEdgeLocalIndex;
+	public int editorSecondaryEdgeLocalIndex() {
+		return mEditorSecondaryEdgeLocalIndex;
 	}
 
 	public RailTrackNode selectedNodeA() {
@@ -76,13 +75,13 @@ public class TrackEditorController extends BaseController {
 	}
 
 	public RailTrackSegment getSelectedEdge() {
-		if (mActiveEdgeLocalIndex == -1)
+		if (mEditorPrimaryEdgeLocalIndex == -1)
 			return null;
 
 		if (mSelectedNodeA == null)
 			return null;
 
-		return mSelectedNodeA.getEdgeByIndex(mActiveEdgeLocalIndex);
+		return mSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(mEditorPrimaryEdgeLocalIndex);
 	}
 
 	private void updateUpdateCounter() {
@@ -129,9 +128,9 @@ public class TrackEditorController extends BaseController {
 		}
 		mTempEdgeList.clear();
 
-		final var lEdgeCount = pNode.numberConnectedEdges();
+		final var lEdgeCount = pNode.trackSwitch.numberConnectedSegments();
 		for (int i = 0; i < lEdgeCount; i++) {
-			mTempEdgeList.add(pNode.getEdgeByIndex(i));
+			mTempEdgeList.add(pNode.trackSwitch.getConnectedSegmentByIndex(i));
 		}
 		for (int i = 0; i < lEdgeCount; i++) {
 			final var lEdge = mTempEdgeList.get(i);
@@ -146,7 +145,7 @@ public class TrackEditorController extends BaseController {
 		final int lNodeCount = mTrack.nodes().size();
 		for (int i = 0; i < lNodeCount; i++) {
 			final var lNode = mTrack.nodes().get(i);
-			if (lNode.getEdgeByUid(pEdge.uid) != null) {
+			if (lNode.trackSwitch.getConnectedSegmentByUid(pEdge.uid) != null) {
 				lNode.removeEdgeByUid(pEdge.uid);
 			}
 		}
@@ -171,11 +170,11 @@ public class TrackEditorController extends BaseController {
 		if (lNodeA == null || lNodeB == null)
 			return null;
 
-		final int lEdgeCountNodeA = lNodeA.numberConnectedEdges();
+		final int lEdgeCountNodeA = lNodeA.trackSwitch.numberConnectedSegments();
 		for (int i = 0; i < lEdgeCountNodeA; i++) {
-			final var lOtherNodeUid = lNodeA.getEdgeByIndex(i).getOtherNodeUid(pUidA);
+			final var lOtherNodeUid = lNodeA.trackSwitch.getConnectedSegmentByIndex(i).getOtherNodeUid(pUidA);
 			if (pUidB == lOtherNodeUid) {
-				return lNodeA.getEdgeByIndex(i);
+				return lNodeA.trackSwitch.getConnectedSegmentByIndex(i);
 			}
 		}
 		return null;
@@ -196,34 +195,9 @@ public class TrackEditorController extends BaseController {
 			return; // nope
 
 		final var lNewEdgeAngle = MathHelper.wrapAngle((float) Math.atan2(lNodeB.y - lNodeA.y, lNodeB.x - lNodeA.x));
-
 		final var lNewEdge = new RailTrackSegment(mTrack, mTrack.getNewEdgeUid(), pNodeAUid, pNodeBUid, lNewEdgeAngle);
 		mTrack.edges().add(lNewEdge);
 
-		final int lNodeAEdgeCount = lNodeA.numberConnectedEdges();
-		for (int i = 0; i < lNodeAEdgeCount; i++) {
-			final var lOldEdge = lNodeA.getEdgeByIndex(i);
-			if (lOldEdge == null)
-				return;
-			if (!lOldEdge.allowedEdgeConections.contains((Integer) lNewEdge.uid)) {
-				lOldEdge.allowedEdgeConections.add((Integer) lNewEdge.uid);
-			}
-			if (!lNewEdge.allowedEdgeConections.contains((Integer) lOldEdge.uid)) {
-				lNewEdge.allowedEdgeConections.add((Integer) lOldEdge.uid);
-			}
-		}
-		final int lNodeBEdgeCount = lNodeB.numberConnectedEdges();
-		for (int i = 0; i < lNodeBEdgeCount; i++) {
-			final var lOldEdge = lNodeB.getEdgeByIndex(i);
-			if (lOldEdge == null)
-				continue;
-			if (!lOldEdge.allowedEdgeConections.contains((Integer) lNewEdge.uid)) {
-				lOldEdge.allowedEdgeConections.add((Integer) lNewEdge.uid);
-			}
-			if (!lNewEdge.allowedEdgeConections.contains((Integer) lOldEdge.uid)) {
-				lNewEdge.allowedEdgeConections.add((Integer) lOldEdge.uid);
-			}
-		}
 		lNewEdge.control0X = lNodeA.x;
 		lNewEdge.control0Y = lNodeA.y;
 
@@ -234,6 +208,8 @@ public class TrackEditorController extends BaseController {
 
 		lNodeA.addEdgeToNode(lNewEdge);
 		lNodeB.addEdgeToNode(lNewEdge);
+
+		// TODO: Update allowed edge conections
 	}
 
 	// ---------------------------------------------
@@ -244,10 +220,10 @@ public class TrackEditorController extends BaseController {
 		if (mSelectedNodeA == null)
 			return;
 
-		if (mActiveEdgeLocalIndex < 0)
+		if (mEditorPrimaryEdgeLocalIndex < 0)
 			return;
 
-		final var lManipulateEdge = mSelectedNodeA.getEdgeByIndex(mActiveEdgeLocalIndex);
+		final var lManipulateEdge = mSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(mEditorPrimaryEdgeLocalIndex);
 
 		if (lManipulateEdge == null)
 			return;
@@ -264,10 +240,10 @@ public class TrackEditorController extends BaseController {
 		if (mSelectedNodeA == null)
 			return RailTrackSegment.EDGE_TYPE_NONE;
 
-		if (mActiveEdgeLocalIndex < 0)
+		if (mEditorPrimaryEdgeLocalIndex < 0)
 			return RailTrackSegment.EDGE_TYPE_NONE;
 
-		final var lManipulateEdge = mSelectedNodeA.getEdgeByIndex(mActiveEdgeLocalIndex);
+		final var lManipulateEdge = mSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(mEditorPrimaryEdgeLocalIndex);
 
 		if (lManipulateEdge == null)
 			return RailTrackSegment.EDGE_TYPE_NONE;
@@ -281,49 +257,49 @@ public class TrackEditorController extends BaseController {
 
 	public void prevLocalPrimaryEdge() {
 		if (mSelectedNodeA != null) {
-			mActiveEdgeLocalIndex--;
-			if (mActiveEdgeLocalIndex < 0)
-				mActiveEdgeLocalIndex = mSelectedNodeA.numberConnectedEdges() - 1;
+			mEditorPrimaryEdgeLocalIndex--;
+			if (mEditorPrimaryEdgeLocalIndex < 0)
+				mEditorPrimaryEdgeLocalIndex = mSelectedNodeA.trackSwitch.numberConnectedSegments() - 1;
 		}
 	}
 
 	public void nextLocalPrimaryEdge() {
 		if (mSelectedNodeA != null) {
-			mActiveEdgeLocalIndex++;
-			if (mActiveEdgeLocalIndex >= mSelectedNodeA.numberConnectedEdges())
-				mActiveEdgeLocalIndex = 0;
+			mEditorPrimaryEdgeLocalIndex++;
+			if (mEditorPrimaryEdgeLocalIndex >= mSelectedNodeA.trackSwitch.numberConnectedSegments())
+				mEditorPrimaryEdgeLocalIndex = 0;
 		}
 	}
 
 	public void prevLocalSecondaryEdge() {
 		if (mSelectedNodeA != null) {
-			mAuxiliaryEdgeLocalIndex--;
-			if (mAuxiliaryEdgeLocalIndex < 0)
-				mAuxiliaryEdgeLocalIndex = mSelectedNodeA.numberConnectedEdges() - 1;
+			mEditorSecondaryEdgeLocalIndex--;
+			if (mEditorSecondaryEdgeLocalIndex < 0)
+				mEditorSecondaryEdgeLocalIndex = mSelectedNodeA.trackSwitch.numberConnectedSegments() - 1;
 		}
 	}
 
 	public void nextLocalSecondaryEdge() {
 		if (mSelectedNodeA != null) {
-			mAuxiliaryEdgeLocalIndex++;
-			if (mAuxiliaryEdgeLocalIndex >= mSelectedNodeA.numberConnectedEdges())
-				mAuxiliaryEdgeLocalIndex = 0;
+			mEditorSecondaryEdgeLocalIndex++;
+			if (mEditorSecondaryEdgeLocalIndex >= mSelectedNodeA.trackSwitch.numberConnectedSegments())
+				mEditorSecondaryEdgeLocalIndex = 0;
 		}
 	}
 
 	public void toggleSelectedEdgesTravelledAllowed() {
 		// Toggle allowed / not allowed (ref. edgeSelected)
-		if (mActiveEdgeLocalIndex != -1 && mAuxiliaryEdgeLocalIndex != -1) {
-			final var lSelectedEdge = mSelectedNodeA.getEdgeByIndex(mActiveEdgeLocalIndex);
-			final var lConstrainedEdge = mSelectedNodeA.getEdgeByIndex(mAuxiliaryEdgeLocalIndex);
-			if (lSelectedEdge.allowedEdgeConections.contains(lConstrainedEdge.uid)) {
-				lSelectedEdge.allowedEdgeConections.remove((Integer) lConstrainedEdge.uid);
-				Debug.debugManager().logger().i(getClass().getSimpleName(), "Added travel constraint to edge uid " + lConstrainedEdge.uid + " from edge uid " + lSelectedEdge.uid);
-			} else {
-				lSelectedEdge.allowedEdgeConections.add(lConstrainedEdge.uid);
-				Debug.debugManager().logger().i(getClass().getSimpleName(), "Added travelled allowed to edge uid " + lConstrainedEdge.uid + " from edge uid " + lSelectedEdge.uid);
-			}
-		}
+		//		if (mActiveEdgeLocalIndex != -1 && mAuxiliaryEdgeLocalIndex != -1) {
+		//			final var lSelectedEdge = mSelectedNodeA.getEdgeByIndex(mActiveEdgeLocalIndex);
+		//			final var lConstrainedEdge = mSelectedNodeA.getEdgeByIndex(mAuxiliaryEdgeLocalIndex);
+		//			if (lSelectedEdge.allowedEdgeConections.contains(lConstrainedEdge.uid)) {
+		//				lSelectedEdge.allowedEdgeConections.remove((Integer) lConstrainedEdge.uid);
+		//				Debug.debugManager().logger().i(getClass().getSimpleName(), "Added travel constraint to edge uid " + lConstrainedEdge.uid + " from edge uid " + lSelectedEdge.uid);
+		//			} else {
+		//				lSelectedEdge.allowedEdgeConections.add(lConstrainedEdge.uid);
+		//				Debug.debugManager().logger().i(getClass().getSimpleName(), "Added travelled allowed to edge uid " + lConstrainedEdge.uid + " from edge uid " + lSelectedEdge.uid);
+		//			}
+		//		}
 	}
 
 	public RailTrackNode getNodeAtGridLocation(float worldPositionX, float worldPositionY) {
@@ -372,8 +348,7 @@ public class TrackEditorController extends BaseController {
 			//	return true;
 
 			final var lNewNode = new RailTrackNode(mTrack.getNewNodeUid());
-			lNewNode.x = lMouseGridPositionX;
-			lNewNode.y = lMouseGridPositionY;
+			lNewNode.init(lMouseGridPositionX, lMouseGridPositionY);
 
 			mTrack.nodes().add(lNewNode);
 
@@ -401,8 +376,7 @@ public class TrackEditorController extends BaseController {
 			//					return true;
 
 			final var lNewNode = new RailTrackNode(mTrack.getNewNodeUid());
-			lNewNode.x = lMouseGridPositionX;
-			lNewNode.y = lMouseGridPositionY;
+			lNewNode.init(lMouseGridPositionX, lMouseGridPositionY);
 
 			mTrack.nodes().add(lNewNode);
 
@@ -414,8 +388,7 @@ public class TrackEditorController extends BaseController {
 			return true;
 		} else {
 			final var lNewNode = new RailTrackNode(mTrack.getNewNodeUid());
-			lNewNode.x = lMouseGridPositionX;
-			lNewNode.y = lMouseGridPositionY;
+			lNewNode.init(lMouseGridPositionX, lMouseGridPositionY);
 
 			updateUpdateCounter();
 
@@ -449,9 +422,9 @@ public class TrackEditorController extends BaseController {
 		if (mSelectedNodeA == null) {
 			mSelectedNodeA = lSelectedNode;
 
-			final int lEdgeCount = mSelectedNodeA.numberConnectedEdges();
+			final int lEdgeCount = mSelectedNodeA.trackSwitch.numberConnectedSegments();
 			for (int j = 0; j < lEdgeCount; j++) {
-				final var lEdge = mSelectedNodeA.getEdgeByIndex(j);
+				final var lEdge = mSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(j);
 				if (lEdge == null) {
 					System.out.println(mSelectedNodeA.uid + ":: NULL EDGE");
 				} else {
@@ -459,15 +432,15 @@ public class TrackEditorController extends BaseController {
 				}
 			}
 
-			if (mSelectedNodeA.numberConnectedEdges() > 0)
-				mActiveEdgeLocalIndex = 0;
+			if (mSelectedNodeA.trackSwitch.numberConnectedSegments() > 0)
+				mEditorPrimaryEdgeLocalIndex = 0;
 			else
-				mActiveEdgeLocalIndex = -1;
+				mEditorPrimaryEdgeLocalIndex = -1;
 
-			if (mSelectedNodeA.numberConnectedEdges() > 1)
-				mAuxiliaryEdgeLocalIndex = 1;
+			if (mSelectedNodeA.trackSwitch.numberConnectedSegments() > 1)
+				mEditorSecondaryEdgeLocalIndex = 1;
 			else
-				mAuxiliaryEdgeLocalIndex = -1;
+				mEditorSecondaryEdgeLocalIndex = -1;
 
 			return true;
 
@@ -520,33 +493,25 @@ public class TrackEditorController extends BaseController {
 		if (mSelectedNodeA != null) {
 			mSelectedNodeA.x = worldX;
 			mSelectedNodeA.y = worldY;
+
+			final int lNumConnectedSegments = mSelectedNodeA.trackSwitch.numberConnectedSegments();
+			for (int i = 0; i < lNumConnectedSegments; i++) {
+				final var lSegment = mSelectedNodeA.trackSwitch.connectedSegments().get(i);
+				lSegment.edgeLengthInMeters = mTrack.getEdgeLength(lSegment);
+			}
+
 		}
 
 		updateUpdateCounter();
 	}
 
 	public void moveSelectedSegmentJunctionBoxTo(float worldX, float worldY) {
-		final var lSelectedEdge = getSelectedEdge();
-		if (lSelectedEdge == null)
+		final var lSelectedNode = mSelectedNodeA != null ? mSelectedNodeA : mSelectedNodeB;
+		if (lSelectedNode == null)
 			return;
 
-		final var lJunction = lSelectedEdge.trackJunction;
-		if (lJunction != null) {
-			lJunction.signalBoxWorldX = worldX;
-			lJunction.signalBoxWorldY = worldY;
-		}
-	}
-
-	public void moveSelectedSegmentJunctionPostTo(float worldX, float worldY) {
-		final var lSelectedEdge = getSelectedEdge();
-		if (lSelectedEdge == null)
-			return;
-
-		final var lJunction = lSelectedEdge.trackJunction;
-		if (lJunction != null) {
-			lJunction.signalLampWorldX = worldX;
-			lJunction.signalLampWorldY = worldY;
-		}
+		lSelectedNode.trackSwitch.signalBoxWorldX = worldX;
+		lSelectedNode.trackSwitch.signalBoxWorldY = worldY;
 	}
 
 	public void moveSelectedSegmentControlNode1To(float worldX, float worldY) {
@@ -573,66 +538,52 @@ public class TrackEditorController extends BaseController {
 		updateUpdateCounter();
 	}
 
-	// --- Junctions
+	// --- Switches
 
-	public void toggleSelectedEdgeJunction() {
-		final var lSelectedEdge = getSelectedEdge();
-
-		if (lSelectedEdge.trackJunction.isSignalActive == false) {
-			final int lEdgeUid0 = mSelectedNodeA.getOtherEdgeConnectionUids(lSelectedEdge.uid);
-			final int lEdgeUid1 = mSelectedNodeA.getOtherEdgeConnectionUids2(lSelectedEdge.uid);
-			lSelectedEdge.trackJunction.init(mSelectedNodeA.uid, lEdgeUid0, lEdgeUid1);
-
-		} else {
-			lSelectedEdge.trackJunction.reset();
-		}
-	}
-
-	public void toggleSelectedJunctionLeftRightEdges() {
-		final var lSelectedEdge = getSelectedEdge();
-
-		if (lSelectedEdge == null)
+	public void toggleSelectedSwitchMainLine() {
+		final var lSelectedNode = mSelectedNodeA != null ? mSelectedNodeA : mSelectedNodeB;
+		if (lSelectedNode == null)
 			return;
 
-		if (lSelectedEdge.trackJunction != null && lSelectedEdge.trackJunction.isSignalActive) {
-			int lLeftEdgeUid = lSelectedEdge.trackJunction.leftEdgeUid;
-			lSelectedEdge.trackJunction.leftEdgeUid = lSelectedEdge.trackJunction.rightEdgeUid;
-			lSelectedEdge.trackJunction.rightEdgeUid = lLeftEdgeUid;
+		lSelectedNode.trackSwitch.cycleSwitchMainSegmentForward();
+	}
 
-		} else {
-			lSelectedEdge.trackJunction.reset();
+	public void toggleSelectedSwitchAuxiliaryLine() {
+		final var lSelectedNode = mSelectedNodeA != null ? mSelectedNodeA : mSelectedNodeB;
+		if (lSelectedNode == null)
+			return;
 
-		}
+		lSelectedNode.trackSwitch.cycleSwitchAuxSegmentsForward();
 	}
 
 	public void setSelectedJunctionLamp(float worldX, float worldY) {
-		final var lSelectedEdge = getSelectedEdge();
-
-		if (lSelectedEdge == null)
-			return;
-
-		if (lSelectedEdge.trackJunction == null || lSelectedEdge.trackJunction.isSignalActive == false)
-			return;
-
-		lSelectedEdge.trackJunction.signalLampWorldX = worldX - mSelectedNodeA.x;
-		lSelectedEdge.trackJunction.signalLampWorldY = worldY - mSelectedNodeA.y;
-
-		updateUpdateCounter();
+		//		final var lSelectedEdge = getSelectedEdge();
+		//
+		//		if (lSelectedEdge == null)
+		//			return;
+		//
+		//		if (lSelectedEdge.trackJunction == null || lSelectedEdge.trackJunction.isSignalActive == false)
+		//			return;
+		//
+		//		lSelectedEdge.trackJunction.signalLampWorldX = worldX - mSelectedNodeA.x;
+		//		lSelectedEdge.trackJunction.signalLampWorldY = worldY - mSelectedNodeA.y;
+		//
+		//		updateUpdateCounter();
 	}
 
 	public void setSelectedJunctionBox(float worldX, float worldY) {
-		final var lSelectedEdge = getSelectedEdge();
-
-		if (lSelectedEdge == null)
-			return;
-
-		if (lSelectedEdge.trackJunction == null || lSelectedEdge.trackJunction.isSignalActive == false)
-			return;
-
-		lSelectedEdge.trackJunction.signalBoxWorldX = worldX - mSelectedNodeA.x;
-		lSelectedEdge.trackJunction.signalBoxWorldY = worldY - mSelectedNodeA.y;
-
-		updateUpdateCounter();
+		//		final var lSelectedEdge = getSelectedEdge();
+		//
+		//		if (lSelectedEdge == null)
+		//			return;
+		//
+		//		if (lSelectedEdge.trackJunction == null || lSelectedEdge.trackJunction.isSignalActive == false)
+		//			return;
+		//
+		//		lSelectedEdge.trackJunction.signalBoxWorldX = worldX - mSelectedNodeA.x;
+		//		lSelectedEdge.trackJunction.signalBoxWorldY = worldY - mSelectedNodeA.y;
+		//
+		//		updateUpdateCounter();
 	}
 
 	// ---------------------------------------------

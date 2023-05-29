@@ -134,7 +134,7 @@ public class GameScreen extends BaseGameScreen {
 		mPlayerTrainController.addPlayerTrain(null);
 
 		// TEST
-		mPlayerTrainController.TESTaddTrainsToMapEdges();
+		// mPlayerTrainController.TESTaddTrainsToMapEdges();
 
 		final int lStartingCredits = 1000;
 		final int lStartingCrew = 10;

@@ -5,8 +5,8 @@ import java.util.List;
 
 import lintfordpickle.mailtrain.renderers.editor.panels.FileInfoPanel;
 import lintfordpickle.mailtrain.renderers.editor.panels.GridPanel;
-import lintfordpickle.mailtrain.renderers.editor.panels.JunctionsPanel;
-import lintfordpickle.mailtrain.renderers.editor.panels.NodePanel;
+import lintfordpickle.mailtrain.renderers.editor.panels.SwitchesPanel;
+import lintfordpickle.mailtrain.renderers.editor.panels.NodesPanel;
 import lintfordpickle.mailtrain.renderers.editor.panels.SegmentPanel;
 import lintfordpickle.mailtrain.renderers.editor.panels.SignalsPanel;
 import lintfordpickle.mailtrain.renderers.editor.panels.TrackInfoPanel;
@@ -136,10 +136,10 @@ public class UiDockedWindow extends UiWindow {
 		mEditorPanels.add(new FileInfoPanel(this, mEntityGroupUid));
 		mEditorPanels.add(new TrackInfoPanel(this, mEntityGroupUid));
 		mEditorPanels.add(new GridPanel(this, mEntityGroupUid));
-		mEditorPanels.add(new NodePanel(this, mEntityGroupUid));
+		mEditorPanels.add(new NodesPanel(this, mEntityGroupUid));
 		mEditorPanels.add(new SegmentPanel(this, mEntityGroupUid));
 		mEditorPanels.add(new SignalsPanel(this, mEntityGroupUid));
-		mEditorPanels.add(new JunctionsPanel(this, mEntityGroupUid));
+		mEditorPanels.add(new SwitchesPanel(this, mEntityGroupUid));
 	}
 
 	private void arrangePanels(LintfordCore core) {
