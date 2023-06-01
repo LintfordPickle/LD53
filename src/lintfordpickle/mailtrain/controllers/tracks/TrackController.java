@@ -93,6 +93,9 @@ public class TrackController extends BaseController implements IInputProcessor {
 	@Override
 	public void update(LintfordCore core) {
 		super.update(core);
+
+		// rebuildTrackSignalBlocks(core, track());
+
 		if (track().areSignalsDirty) {
 			rebuildTrackSignalBlocks(core, track());
 		} else {
@@ -119,7 +122,8 @@ public class TrackController extends BaseController implements IInputProcessor {
 		final int lNumTrains = lTrainManager.numInstances();
 		for (int i = 0; i < lNumTrains; i++) {
 			final var lTrain = lTrainManager.activeTrains().get(i);
-			for (int j = 0; j < lTrain.getNumberOfCarsInTrain(); j++) {
+			final var lNumTrainCars = lTrain.getNumberOfCarsInTrain();
+			for (int j = 0; j < lNumTrainCars; j++) {
 				final var lCar = lTrain.getCarByIndex(j);
 
 				updateSignalSegment(core, trackInstance, lCar.frontAxle);
@@ -127,6 +131,7 @@ public class TrackController extends BaseController implements IInputProcessor {
 
 			}
 		}
+
 		// iterate over the signal blocks and update the warning and danger segments
 		final int lNumSegments = trackInstance.getNumberTrackSegments();
 		for (int i = 0; i < lNumSegments; i++) {
@@ -179,6 +184,9 @@ public class TrackController extends BaseController implements IInputProcessor {
 					lDestinationNodeUid = lCurrentTrackSegment.getOtherNodeUid(lDestinationNodeUid);
 					lSignalSegments = lCurrentTrackSegment.getSignalsList(lDestinationNodeUid);
 					lOurSignalSegment = lSignalSegments.getSignal(0.f);
+					
+					// return null to set target speed to 0.0f
+					return -1;
 
 				} else {
 					lOurSignalSegment = null; // end
@@ -253,6 +261,7 @@ public class TrackController extends BaseController implements IInputProcessor {
 
 		// unassign all blocks
 		trackInstance.trackSignalBlocks.resetSignalSegments();
+		trackInstance.trackSignalBlocks.clearInstances();
 
 		// Rebuild the track signal blocks.
 		final var lTrackSegments = trackInstance.segments();
@@ -283,35 +292,34 @@ public class TrackController extends BaseController implements IInputProcessor {
 		}
 		trackInstance.areSignalsDirty = false;
 
-		//		final var lBlockInstances = pTrack.trackSignalBlocks.instances();
-		//		final int lNumBlocks = lBlockInstances.size();
-		//		for (int i = 0; i < lNumBlocks; i++) {
-		//			final var lSignalBlock = lBlockInstances.get(i);
-		//
-		//			System.out.println("Track Signal Block: " + lSignalBlock.poolUid);
-		//
-		//			final var lSignalSegments = lSignalBlock.signalSegments();
-		//
-		//			if (lSignalSegments == null)
-		//				return; // TODO : free and return block
-		//
-		//			final int lNumSignalSegments = lSignalSegments.size();
-		//			for (int j = 0; j < lNumSignalSegments; j++) {
-		//				final var lSignal = lSignalSegments.get(j);
-		//				System.out.println("   signalsegment: " + lSignal.poolUid + "(" + lSignal.trackSegmentUid + ")");
-		//
-		//			}
-		//		}
+		final var lBlockInstances = trackInstance.trackSignalBlocks.instances();
+		final int lNumBlocks = lBlockInstances.size();
+		for (int i = 0; i < lNumBlocks; i++) {
+			final var lSignalBlock = lBlockInstances.get(i);
+
+			System.out.println("Track Signal Block: " + lSignalBlock.uid);
+
+			final var lSignalSegments = lSignalBlock.signalSegments();
+
+			if (lSignalSegments == null)
+				return; // TODO : free and return block
+
+			final int lNumSignalSegments = lSignalSegments.size();
+			for (int j = 0; j < lNumSignalSegments; j++) {
+				final var lSignal = lSignalSegments.get(j);
+			}
+		}
 	}
 
 	private void updateBuildSignalBlock(LintfordCore core, RailTrackInstance trackInstance, RailTrackSegment trackSegment, SegmentSignalsCollection segmentSignals, int pLUCounter) {
 		// -------- Get the ball rolling
 
-		var lCurrentSignal = segmentSignals.getSignal(0.0f);
+		var lCurrentSignalSegment = segmentSignals.getSignal(0.0f);
 		var lCurrentSignalBlock = trackInstance.trackSignalBlocks.getFreePooledItem();
+		// TODO: Uid on SignalBlock is massive - there're not being reused
 
-		lCurrentSignalBlock.signalSegments().add(lCurrentSignal);
-		lCurrentSignal.signalBlock = lCurrentSignalBlock;
+		lCurrentSignalBlock.signalSegments().add(lCurrentSignalSegment);
+		lCurrentSignalSegment.signalBlock = lCurrentSignalBlock;
 
 		// -------- Link to prev segment(s)
 
@@ -341,7 +349,7 @@ public class TrackController extends BaseController implements IInputProcessor {
 		}
 		// -------- Iterate this track segment
 
-		final var lNextSignal = segmentSignals.getNextSignal(lCurrentSignal);
+		final var lNextSignal = segmentSignals.getNextSignal(lCurrentSignalSegment);
 		if (lNextSignal != null) {
 			if (lNextSignal.isSignalHead()) {
 				lCurrentSignalBlock = trackInstance.trackSignalBlocks.getFreePooledItem();

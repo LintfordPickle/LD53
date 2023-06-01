@@ -10,6 +10,10 @@ import lintfordpickle.mailtrain.data.scene.track.signals.RailTrackSignalSegment;
 
 public class RailTrackSegment extends TrackSegment {
 
+	// This is hopefully only temporary, but in order to limit the complexity of the signal blocks, this flag can
+	// be set to true to limit each signal collect to a single signal (to be placed at 0.5 distance).
+	public static final boolean DEBUG_SINGLE_SIGNAL_PER_SEGMENT = true;
+
 	// |---------- Track Segment --------------|
 	// |-SS-||-----Signal Segment -----||--SS--|
 
@@ -38,6 +42,10 @@ public class RailTrackSegment extends TrackSegment {
 		// ---------------------------------------------
 		// Properties
 		// ---------------------------------------------
+
+		public int numSignalsInCollection() {
+			return mSignals.size();
+		}
 
 		public void logicalUpdateCounter(int newCounterState) {
 			mLogicalUpdateCounter = newCounterState;
@@ -103,8 +111,13 @@ public class RailTrackSegment extends TrackSegment {
 				lSignal.updateLength(lDist);
 				lRemainingDist = lSignal.startDistance();
 			}
+		}
 
-			// update the parentage ...
+		public void reset() {
+			mDestinationUid = RailTrackNode.NO_NODE_UID;
+			mSignals.clear();
+
+			mLogicalUpdateCounter = 0;
 		}
 
 		// ---------------------------------------------
@@ -148,16 +161,18 @@ public class RailTrackSegment extends TrackSegment {
 	// Constants
 	// ---------------------------------------------
 
+	public static final int NO_SEGMENT = -1;
+
 	public static final int SEGMENT_TYPE_NONE = -1;
 	public static final int SEGMENT_TYPE_STRAIGHT = 0;
 	public static final int SEGMENT_TYPE_CURVE = 1;
 
-	public static final int SEGMENT_SPECIAL_TYPE_UNASSIGNED = 0; 	// nothing
-	public static final int SEGMENT_SPECIAL_TYPE_MAP_SPAWN = 1; 	// player map spawn (Segment needs name)
-	public static final int SEGMENT_SPECIAL_TYPE_MAP_EXIT = 2; 		// player map exit point (edge needs special name)
-	public static final int SEGMENT_SPECIAL_TYPE_MAP_EDGE = 4; 		// edge of map (enemy spawn / leave)
-	public static final int SEGMENT_SPECIAL_TYPE_STATION = 8; 		// station / town for trading
-	public static final int SEGMENT_SPECIAL_TYPE_ENEMY_SPAWN = 16; 	// station / town for trading
+	public static final int SEGMENT_SPECIAL_TYPE_UNASSIGNED = 0; // nothing
+	public static final int SEGMENT_SPECIAL_TYPE_MAP_SPAWN = 1; // player map spawn (Segment needs name)
+	public static final int SEGMENT_SPECIAL_TYPE_MAP_EXIT = 2; // player map exit point (edge needs special name)
+	public static final int SEGMENT_SPECIAL_TYPE_MAP_EDGE = 4; // edge of map (enemy spawn / leave)
+	public static final int SEGMENT_SPECIAL_TYPE_STATION = 8; // station / town for trading
+	public static final int SEGMENT_SPECIAL_TYPE_ENEMY_SPAWN = 16; // station / town for trading
 
 	public static String getSegmentTypeName(int segmentType) {
 		switch (segmentType) {
@@ -313,6 +328,16 @@ public class RailTrackSegment extends TrackSegment {
 	// Methods
 	// ---------------------------------------------
 
+	public void reset() {
+		signalsA.reset();
+		signalsB.reset();
+
+		segmentLengthInMeters = 0;
+		segmentAngle = (float) Math.PI * 2.f;
+		segmentName = null;
+		specialName = null;
+	}
+
 	public int getOtherNodeUid(int nodeUid) {
 		if (nodeAUid == nodeUid) {
 			return nodeBUid;
@@ -361,6 +386,9 @@ public class RailTrackSegment extends TrackSegment {
 	public void addTrackSignal(RailTrackInstance trackInstance, float dist, int destinationNodeUid) {
 		final var lSegmentSignalCollection = getSignalsList(destinationNodeUid);
 		if (lSegmentSignalCollection == null)
+			return;
+
+		if (DEBUG_SINGLE_SIGNAL_PER_SEGMENT && lSegmentSignalCollection.numSignalsInCollection() >= 2)
 			return;
 
 		lSegmentSignalCollection.addSignalSegment(trackInstance.trackSignalSegments.getFreePooledItem(), true, dist);

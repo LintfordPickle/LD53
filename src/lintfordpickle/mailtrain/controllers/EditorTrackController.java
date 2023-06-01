@@ -143,6 +143,7 @@ public class EditorTrackController extends BaseController {
 	private void deleteSegment(RailTrackSegment segment) {
 		if (segment == null)
 			return;
+		
 		final int lNodeCount = mTrackInstace.nodes().size();
 		for (int i = 0; i < lNodeCount; i++) {
 			final var lNode = mTrackInstace.nodes().get(i);
@@ -150,17 +151,8 @@ public class EditorTrackController extends BaseController {
 				lNode.removeSegmentByUid(segment.uid);
 			}
 		}
-		RailTrackSegment lSegmentToDelete = null;
-		final int lSegmentCount = mTrackInstace.segments().size();
-		for (int i = 0; i < lSegmentCount; i++) {
-			final var lSegment = mTrackInstace.segments().get(i);
-			if (lSegment.nodeAUid == segment.nodeAUid || lSegment.nodeAUid == segment.nodeBUid) {
-				if (lSegment.nodeBUid == segment.nodeAUid || lSegment.nodeBUid == segment.nodeBUid) {
-					lSegmentToDelete = lSegment;
-				}
-			}
-		}
-		mTrackInstace.segments().remove(lSegmentToDelete);
+		segment.reset();
+		mTrackInstace.segments().remove(segment);
 		segment = null;
 	}
 

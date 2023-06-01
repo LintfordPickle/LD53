@@ -38,6 +38,9 @@ public class RailTrackInstance {
 			for (int i = 0; i < lNumSignalSegments; i++) {
 				mInstances.get(i).reset();
 			}
+			
+			
+			
 		}
 
 		@Override

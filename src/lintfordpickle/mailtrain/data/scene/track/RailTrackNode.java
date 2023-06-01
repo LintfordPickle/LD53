@@ -6,6 +6,12 @@ import lintfordpickle.mailtrain.data.scene.track.savedefinition.RailTrackNodeSav
 public class RailTrackNode extends MapEntity {
 
 	// ---------------------------------------------
+	// Constants
+	// ---------------------------------------------
+
+	public static final int NO_NODE_UID = -1;
+
+	// ---------------------------------------------
 	// Variables
 	// ---------------------------------------------
 

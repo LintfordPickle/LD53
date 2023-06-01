@@ -400,7 +400,7 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 
 		// Check for signal creation
 		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_Q, this)) {
-			lActiveSegment.addTrackSignal(mTrackEditorController.track(), /* RandomNumbers.random(0.f, 1.f) */ .5f, lActiveSegment.getOtherNodeUid(lSelectedNodeA.uid));
+			lActiveSegment.addTrackSignal(mTrackEditorController.track(), .5f, lActiveSegment.getOtherNodeUid(lSelectedNodeA.uid));
 
 			mTrackEditorController.track().areSignalsDirty = true;
 

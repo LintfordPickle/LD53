@@ -192,7 +192,6 @@ public class TrainController extends BaseController implements ITrainWhisperer, 
 
 		lNewTrain.addFollowSegment(spawnSegment, spawnSegment.nodeAUid);
 
-		mTrainManager.activeTrains().add(lNewTrain);
 		if (ConstantsGame.SOUNDS_ENABLED) {
 			// mTrainSoundManager.play("SOUND_HORN", lNewTrain.worldPositionX(), lNewTrain.worldPositionY(), 0.f, 0.f);
 

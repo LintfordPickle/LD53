@@ -112,9 +112,15 @@ public class PlayerTrainController extends BaseController implements IInputProce
 			final var lCurrentSegment = playerLocomotive().leadCar.frontAxle.currentSegment;
 			final var lSignalSegments = lCurrentSegment.getSignalsList(lDestNodeUid);
 
+			// TODO: This needs work - either we can see if there is some sane/logical stop target, or else we just set the brakes.
+
 			final var lDistanceToNextSignalBlock = mTrainController.getDistanceToNextSignalBlock(lSignalSegments, playerLocomotive());
 
-			playerLocomotive().brakeAtPosition(lDistanceToNextSignalBlock);
+			if (lDistanceToNextSignalBlock == -1) {
+				// set brakes to 
+			} else {
+				playerLocomotive().brakeAtPosition(lDistanceToNextSignalBlock);
+			}
 
 		}
 

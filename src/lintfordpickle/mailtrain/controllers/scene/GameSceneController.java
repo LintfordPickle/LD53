@@ -74,7 +74,7 @@ public class GameSceneController extends BaseController {
 	// ---------------------------------------------
 
 	public void createEmptyScene() {
-		// mGameScene.loadGameScene(createNewEmptyGameSceneDefinition());
+		mGameScene.createNewScene();
 
 		mIsGameLoaded = true;
 	}

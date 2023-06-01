@@ -86,8 +86,13 @@ public class RailTrackSignalBlock extends ClosedPooledBaseData {
 
 	public void reset() {
 		mSignalState = SignalState.Open;
-		if (mSignalSegments != null)
+		if (mSignalSegments != null) {
+//			final int lSignalSegmentCount = mSignalSegments.size();
+//			for (int i = 0; i < lSignalSegmentCount; i++) {
+//				mSignalSegments.get(i).resetSignalBlock();
+//			}
 			mSignalSegments.clear();
+		}
 
 		if (mSignalSegmentIndices != null)
 			mSignalSegmentIndices.clear();
