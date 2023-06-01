@@ -81,7 +81,7 @@ public class GameSceneInstance {
 	// ---------------------------------------------
 
 	public void createNewScene() {
-
+		mHashGridManager.createNewHashGrid(1000, 1000, 5, 5);
 	}
 
 	public GameSceneSaveDefinition getSceneSaveDefinition() {
