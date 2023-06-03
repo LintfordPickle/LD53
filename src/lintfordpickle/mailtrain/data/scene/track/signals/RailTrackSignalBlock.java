@@ -105,7 +105,6 @@ public class RailTrackSignalBlock extends ClosedPooledBaseData {
 		final int lNumSignals = mSignalSegments.size();
 		for (int i = 0; i < lNumSignals; i++) {
 			mSignalSegments.get(i).signalBlock = this;
-
 		}
 	}
 }

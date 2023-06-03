@@ -140,7 +140,9 @@ public class EditorScreen extends MenuScreen implements EntryInteractions {
 		createControllers(lControllerManager);
 		createRenderers(lCore);
 
-		if (mSceneHeader.sceneFilename() != null) {
+		final var lSceneDataFilename = mSceneHeader.sceneFilename();
+
+		if (lSceneDataFilename != null && mGameSceneController.isGameDataFileAvailable(lSceneDataFilename)) {
 			mGameSceneController.loadGameScene(mSceneHeader.sceneFilename());
 		} else {
 			mGameSceneController.createEmptyScene();
@@ -196,14 +198,11 @@ public class EditorScreen extends MenuScreen implements EntryInteractions {
 				return;
 			}
 
-			// otherwise check for changes to the map before exiting
-
-			// otherwise, exit
-
 			if (lScreenManager.getTopScreen() instanceof SaveTrackDialog) {
 				lScreenManager.removeScreen(mSaveTrackDialog);
 				return;
 			}
+
 			lScreenManager.createLoadingScreen(new LoadingScreen(lScreenManager, false, new MenuBackgroundScreen(lScreenManager), new MainMenu(lScreenManager)));
 			return;
 		}

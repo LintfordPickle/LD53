@@ -1,5 +1,6 @@
 package lintfordpickle.mailtrain.controllers.scene;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
@@ -92,26 +93,31 @@ public class GameSceneController extends BaseController {
 		return;
 	}
 
+	public boolean isGameDataFileAvailable(String filename) {
+		var lSaveDataFile = new File(filename);
+		return lSaveDataFile.exists();
+	}
+
 	public void loadGameScene(String filename) {
 		final var lGson = new GsonBuilder().create();
 
 		String lTrackRawFileContents = null;
-		GameSceneSaveDefinition lTrackDefinition = null;
+		GameSceneSaveDefinition lGameSceneSaveDefinition = null;
 
 		try {
 			lTrackRawFileContents = FileUtils.loadString(filename);
-			lTrackDefinition = lGson.fromJson(lTrackRawFileContents, GameSceneSaveDefinition.class);
+			lGameSceneSaveDefinition = lGson.fromJson(lTrackRawFileContents, GameSceneSaveDefinition.class);
 
 		} catch (JsonSyntaxException ex) {
 			Debug.debugManager().logger().printException(getClass().getSimpleName(), ex);
 		}
 
-		if (lTrackDefinition == null) {
+		if (lGameSceneSaveDefinition == null) {
 			Debug.debugManager().logger().e(getClass().getSimpleName(), "There was an error reading the scene data from file (" + filename + ")");
 			return;
 		}
 
-		mGameScene.loadGameScene(lTrackDefinition);
+		mGameScene.loadGameScene(lGameSceneSaveDefinition);
 		mGameScene.finalizeAfterLoading();
 	}
 }

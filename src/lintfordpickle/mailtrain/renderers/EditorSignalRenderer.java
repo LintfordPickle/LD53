@@ -117,7 +117,10 @@ public class EditorSignalRenderer extends BaseRenderer {
 		final int lNumSignals = lSignalList.size();
 		for (int i = 0; i < lNumSignals; i++) {
 			final var lSignal = lSignalList.get(i);
-
+			
+			if(lSignal.length() == 0 || lSignal.length() == 1)
+				continue; // not active
+			
 			if (!lSignal.isSignalHead())
 				continue; // don't render the segments
 

@@ -11,7 +11,6 @@ import net.lintford.library.core.LintfordCore;
 import net.lintford.library.core.input.InputManager;
 import net.lintford.library.renderers.windows.UiWindow;
 import net.lintford.library.renderers.windows.components.UiButton;
-import net.lintford.library.renderers.windows.components.UiHorizontalEntryGroup;
 import net.lintford.library.renderers.windows.components.UiLabelledInt;
 import net.lintford.library.renderers.windows.components.UifSlider;
 
@@ -37,9 +36,8 @@ public class SignalsPanel extends UiPanel {
 	private EditorTrackRenderer mEditorTrackRenderer;
 
 	private UiLabelledInt mSelectedSegmentLabel;
-	private UiHorizontalEntryGroup mHorizonalSegment;
-	private UiLabelledInt mNodeStartUid;
-	private UiLabelledInt mNodeEndUid;
+	private UiLabelledInt mSignalsADestinationNodeLabel;
+	private UiLabelledInt mSignalsBDestinationNodeLabel;
 
 	private UifSlider mDistanceA;
 	private UifSlider mDistanceB;
@@ -74,18 +72,13 @@ public class SignalsPanel extends UiPanel {
 		mSelectedSegmentLabel.labelText("Segment: ");
 		mSelectedSegmentLabel.value(-1);
 
-		mHorizonalSegment = new UiHorizontalEntryGroup(parentWindow);
+		mSignalsADestinationNodeLabel = new UiLabelledInt(parentWindow);
+		mSignalsADestinationNodeLabel.labelText("A Destination: ");
+		mSignalsADestinationNodeLabel.value(2);
 
-		mNodeStartUid = new UiLabelledInt(parentWindow);
-		mNodeStartUid.labelText("s: ");
-		mNodeStartUid.value(2);
-
-		mNodeEndUid = new UiLabelledInt(parentWindow);
-		mNodeEndUid.labelText("e: ");
-		mNodeEndUid.value(3);
-
-		mHorizonalSegment.widgets().add(mNodeStartUid);
-		mHorizonalSegment.widgets().add(mNodeEndUid);
+		mSignalsBDestinationNodeLabel = new UiLabelledInt(parentWindow);
+		mSignalsBDestinationNodeLabel.labelText("B Destination: ");
+		mSignalsBDestinationNodeLabel.value(3);
 
 		mDistanceA = new UifSlider(parentWindow);
 		mDistanceA.sliderLabel("Dist A:");
@@ -98,18 +91,19 @@ public class SignalsPanel extends UiPanel {
 		mCreateSignalA = new UiButton(parentWindow, "Create A");
 		mCreateSignalA.setClickListener(this, BUTTON_CREATE_SIGNAL_A);
 		mCreateSignalB = new UiButton(parentWindow, "Create B");
-		mCreateSignalA.setClickListener(this, BUTTON_CREATE_SIGNAL_B);
+		mCreateSignalB.setClickListener(this, BUTTON_CREATE_SIGNAL_B);
 
 		mDeleteSignalA = new UiButton(parentWindow, "Delete A");
-		mCreateSignalA.setClickListener(this, BUTTON_DELETE_SIGNAL_A);
+		mDeleteSignalA.setClickListener(this, BUTTON_DELETE_SIGNAL_A);
 		mDeleteSignalB = new UiButton(parentWindow, "Delete B");
-		mCreateSignalA.setClickListener(this, BUTTON_DELETE_SIGNAL_B);
+		mDeleteSignalB.setClickListener(this, BUTTON_DELETE_SIGNAL_B);
 
 		addWidget(mSelectedSegmentLabel);
-		addWidget(mHorizonalSegment);
+		addWidget(mSignalsADestinationNodeLabel);
 		addWidget(mCreateSignalA);
 		addWidget(mDistanceA);
 		addWidget(mDeleteSignalA);
+		addWidget(mSignalsBDestinationNodeLabel);
 		addWidget(mCreateSignalB);
 		addWidget(mDistanceB);
 		addWidget(mDeleteSignalB);
@@ -150,6 +144,8 @@ public class SignalsPanel extends UiPanel {
 
 			if (mSelectedNodeA == null)
 				lPrimarySegmentDeselected = true;
+			else
+				mActiveSegmentLocalIndex = -1; // force re-select of segment on node change
 		}
 
 		if (mTrackEditorController.selectedNodeB() != mSelectedNodeB) {
@@ -157,6 +153,9 @@ public class SignalsPanel extends UiPanel {
 
 			if (mSelectedNodeB == null)
 				lPrimarySegmentDeselected = true;
+			else
+				mActiveSegmentLocalIndex = -1; // force re-select of segment on node change
+
 		}
 
 		if (mSelectedNodeA != null || mSelectedNodeB != null) {
@@ -175,19 +174,65 @@ public class SignalsPanel extends UiPanel {
 
 					mCreateSignalB.isEnabled(false);
 					mDeleteSignalB.isEnabled(false);
+
+					mSignalsADestinationNodeLabel.value(-1);
+					mSignalsBDestinationNodeLabel.value(-1);
+
 				} else {
 					final var lSignalsA = mSelectedRailTrackSegment.signalsA;
-					if (lSignalsA.numSignalsInCollection() < 2) {
-						mCreateSignalA.isEnabled(true);
+					mSignalsADestinationNodeLabel.value(lSignalsA.destinationNodeUid());
+					if (lSignalsA.isAuxiliarySignalSegmentActive()) {
+						mCreateSignalA.isEnabled(false);
 						mDeleteSignalA.isEnabled(true);
+
+						final var lPrimarySignalSegment = lSignalsA.primarySignalSegment();
+						final float roundedValueA = round2(lPrimarySignalSegment.length(), 2);
+						mDistanceA.currentValue(roundedValueA);
+
+					} else {
+						mCreateSignalA.isEnabled(true);
+						mDeleteSignalA.isEnabled(false);
+						mDistanceA.currentValue(1.f);
 					}
 
 					final var lSignalsB = mSelectedRailTrackSegment.signalsB;
-					if (lSignalsB.numSignalsInCollection() < 2) {
-						mCreateSignalB.isEnabled(true);
+					mSignalsBDestinationNodeLabel.value(lSignalsB.destinationNodeUid());
+					if (lSignalsB.isAuxiliarySignalSegmentActive()) {
+						mCreateSignalB.isEnabled(false);
 						mDeleteSignalB.isEnabled(true);
+
+						final var lPrimarySignalSegment = lSignalsB.primarySignalSegment();
+						final float roundedValueA = round2(lPrimarySignalSegment.length(), 2);
+						mDistanceB.currentValue(roundedValueA);
+					} else {
+						mCreateSignalB.isEnabled(true);
+						mDeleteSignalB.isEnabled(false);
+
+						mDistanceB.currentValue(1.f);
 					}
 				}
+			}
+		}
+
+		if (mSelectedRailTrackSegment != null) {
+			final var lSignalsA = mSelectedRailTrackSegment.signalsA;
+			final var lPrimarySignalSegmentA = lSignalsA.primarySignalSegment();
+
+			final float roundedValueA = round2(mDistanceA.currentValue(), 2);
+
+			if (lPrimarySignalSegmentA.length() != roundedValueA) {
+				lPrimarySignalSegmentA.updateSignalSegmentLength(roundedValueA);
+				lSignalsA.updateSignalLengths();
+			}
+
+			final var lSignalsB = mSelectedRailTrackSegment.signalsB;
+			final var lPrimarySignalSegmentB = lSignalsB.primarySignalSegment();
+
+			final float roundedValueB = round2(mDistanceB.currentValue(), 2);
+
+			if (lPrimarySignalSegmentB.length() != roundedValueB) {
+				lPrimarySignalSegmentB.updateSignalSegmentLength(roundedValueB);
+				lSignalsB.updateSignalLengths();
 			}
 		}
 
@@ -200,7 +245,20 @@ public class SignalsPanel extends UiPanel {
 
 			mSelectedSegmentLabel.value(-1);
 			mSelectedRailTrackSegment = null;
+
+			mSignalsADestinationNodeLabel.value(-1);
+			mSignalsBDestinationNodeLabel.value(-1);
+
+			mActiveSegmentLocalIndex = -1;
 		}
+	}
+
+	public static float round2(float number, int scale) {
+		int pow = 10;
+		for (int i = 1; i < scale; i++)
+			pow *= 10;
+		float tmp = number * pow;
+		return ((float) ((int) ((tmp - (int) tmp) >= 0.5f ? tmp + 1 : tmp))) / pow;
 	}
 
 	// --------------------------------------
@@ -218,15 +276,30 @@ public class SignalsPanel extends UiPanel {
 		final var lIsLayerActive = mEditorBrushController.isLayerActive(mEditorLayer);
 
 		switch (entryUid) {
-		case BUTTON_CREATE_SIGNAL_A:
+		case BUTTON_CREATE_SIGNAL_A: {
 			if (lIsLayerActive == false)
 				return;
 
-			if (mSelectedRailTrackSegment != null) {
+			if (mSelectedRailTrackSegment == null)
 				return;
-			}
-			mSelectedRailTrackSegment.addTrackSignal(mTrackEditorController.track(), .5f, mSelectedRailTrackSegment.getOtherNodeUid(mSelectedRailTrackSegment.uid));
+
+			final var lSignalsDestinationNodeUid = mSelectedRailTrackSegment.signalsA.destinationNodeUid();
+			mSelectedRailTrackSegment.setSegmentSignalAtDistance(0.5f, lSignalsDestinationNodeUid);
+		}
 			return;
+
+		case BUTTON_CREATE_SIGNAL_B: {
+			if (lIsLayerActive == false)
+				return;
+
+			if (mSelectedRailTrackSegment == null)
+				return;
+
+			final var lSignalsDestinationNodeUid = mSelectedRailTrackSegment.signalsB.destinationNodeUid();
+			mSelectedRailTrackSegment.setSegmentSignalAtDistance(0.5f, lSignalsDestinationNodeUid);
+			return;
+		}
+
 		}
 	}
 

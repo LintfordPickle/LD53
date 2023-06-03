@@ -1,9 +1,6 @@
 package lintfordpickle.mailtrain.data.scene.track;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
+import lintfordpickle.mailtrain.data.scene.track.RailTrackInstance.RailTrackSignalSegmentManager;
 import lintfordpickle.mailtrain.data.scene.track.savedefinition.RailTrackSegmentSaveDefinition;
 import lintfordpickle.mailtrain.data.scene.track.signals.RailTrackSignalBlock.SignalState;
 import lintfordpickle.mailtrain.data.scene.track.signals.RailTrackSignalSegment;
@@ -33,8 +30,11 @@ public class RailTrackSegment extends TrackSegment {
 		private int mParentTrackSegmentUid;
 		private transient RailTrackSegment mParentTrackSegment;
 
-		private final List<Integer> mSignalSegmentUids = new ArrayList<>();
-		private transient List<RailTrackSignalSegment> mSignals;
+		private int mPrimarySignalSegmentUid;
+		private transient RailTrackSignalSegment mPrimarySignalSegment;
+
+		private int mAuxiliarySignalSegmentUid;
+		private transient RailTrackSignalSegment mAuxiliarySignalSegment;
 
 		private int mLogicalUpdateCounter;
 		private int mDestinationUid;
@@ -43,8 +43,12 @@ public class RailTrackSegment extends TrackSegment {
 		// Properties
 		// ---------------------------------------------
 
-		public int numSignalsInCollection() {
-			return mSignals.size();
+		public RailTrackSignalSegment primarySignalSegment() {
+			return mPrimarySignalSegment;
+		}
+
+		public RailTrackSignalSegment auxiliarySignalSegment() {
+			return mAuxiliarySignalSegment;
 		}
 
 		public void logicalUpdateCounter(int newCounterState) {
@@ -59,6 +63,10 @@ public class RailTrackSegment extends TrackSegment {
 			return mDestinationUid;
 		}
 
+		public boolean isAuxiliarySignalSegmentActive() {
+			return mPrimarySignalSegment.length() < 1.f;
+		}
+
 		// ---------------------------------------------
 		// Constructor
 		// ---------------------------------------------
@@ -66,94 +74,82 @@ public class RailTrackSegment extends TrackSegment {
 		public SegmentSignalsCollection(RailTrackSegment parentTrackSegment) {
 			mParentTrackSegmentUid = parentTrackSegment.uid;
 			mParentTrackSegment = parentTrackSegment;
-			mSignals = new ArrayList<>();
 		}
 
 		// ---------------------------------------------
 		// Core-Methods
 		// ---------------------------------------------
 
-		public void initialize(RailTrackInstance railTrackInstance) {
-			mSignals = new ArrayList<>();
-
-			mParentTrackSegment = railTrackInstance.getSegmentByUid(mParentTrackSegmentUid);
-
-			// Need to resolve the trackSignalSegment uid references
-			final int lNumSignalSegmentReferences = mSignalSegmentUids.size();
-			for (int i = 0; i < lNumSignalSegmentReferences; i++) {
-				var lNextUid = mSignalSegmentUids.get(i);
-				final var lSignalSegment = railTrackInstance.trackSignalSegments.getInstanceByUid(lNextUid);
-				lSignalSegment.trackSegment = mParentTrackSegment;
-
-				mSignals.add(lSignalSegment);
-			}
-		}
+		
 
 		// ---------------------------------------------
 		// Methods
 		// ---------------------------------------------
 
-		public void addSignalSegment(RailTrackSignalSegment newSignalSegment, boolean isSignalHead, float distIntoSegment) {
-			newSignalSegment.init(mParentTrackSegment, isSignalHead, distIntoSegment, mDestinationUid);
+		public void setSignalAtDistance(float distanceIntoSegment) {
+			if (distanceIntoSegment < 0 || distanceIntoSegment > 1)
+				return;
 
-			mSignalSegmentUids.add(newSignalSegment.uid);
-			mSignals.add(newSignalSegment);
+			mPrimarySignalSegment.updateSignalSegmentLength(distanceIntoSegment);
+			updateSignalLengths();
+		}
 
-			Collections.sort(mSignals);
+		public void createSignalSegments(RailTrackSignalSegmentManager sigSegmentManager) {
+			mPrimarySignalSegment = sigSegmentManager.getFreePooledItem();
+			mPrimarySignalSegmentUid = mPrimarySignalSegment.uid;
+			mPrimarySignalSegment.init(mParentTrackSegment, false, 0, mDestinationUid);
 
-			// update the segment lengths
-			final int lNumSegments = mSignals.size();
-			float lRemainingDist = 1.f;
-			for (int i = lNumSegments - 1; i >= 0; i--) {
-				final var lSignal = mSignals.get(i);
+			mAuxiliarySignalSegment = sigSegmentManager.getFreePooledItem();
+			mAuxiliarySignalSegmentUid = mAuxiliarySignalSegment.uid;
+			mAuxiliarySignalSegment.init(mParentTrackSegment, true, 1, mDestinationUid);
 
-				float lDist = lRemainingDist - lSignal.startDistance();
-				lSignal.updateLength(lDist);
-				lRemainingDist = lSignal.startDistance();
-			}
+			updateSignalLengths();
+		}
+
+		public void updateSignalLengths() {
+			mAuxiliarySignalSegment.updateStartDistance(mPrimarySignalSegment.length());
+			mAuxiliarySignalSegment.updateSignalSegmentLength(1.f - mPrimarySignalSegment.length());
 		}
 
 		public void reset() {
 			mDestinationUid = RailTrackNode.NO_NODE_UID;
-			mSignals.clear();
+			mPrimarySignalSegmentUid = -1;
+			mAuxiliarySignalSegmentUid = -1;
+
+			mPrimarySignalSegment = null;
+			mAuxiliarySignalSegment = null;
 
 			mLogicalUpdateCounter = 0;
 		}
 
-		// ---------------------------------------------
+		public RailTrackSignalSegment getSignal(float distIntoSegment) {
+			if (distIntoSegment < mPrimarySignalSegment.length())
+				return mPrimarySignalSegment;
 
-		public RailTrackSignalSegment getSignal(float pDistIntoSegment) {
-			final int lNumSignals = mSignals.size();
-			if (lNumSignals == 1)
-				return mSignals.get(0);
-
-			var lSignalSegment = mSignals.get(0);
-			for (int i = 0; i < lNumSignals; i++) {
-				final var lSignalToCheck = mSignals.get(i);
-				if (lSignalToCheck.startDistance() <= pDistIntoSegment && pDistIntoSegment <= lSignalToCheck.startDistance() + lSignalToCheck.length())
-					return lSignalToCheck; // return last valid find
-
-				lSignalSegment = lSignalToCheck;
-			}
-			return lSignalSegment;
+			return mAuxiliarySignalSegment;
 		}
 
-		public RailTrackSignalSegment getNextSignal(RailTrackSignalSegment pSignalSegment) {
-			final int lNumSignals = mSignals.size();
-			if (lNumSignals == 1)
-				return null;
+		public RailTrackSignalSegment getNextSignal(RailTrackSignalSegment currentSignalSegment) {
+			if (currentSignalSegment == mPrimarySignalSegment)
+				return mAuxiliarySignalSegment;
 
-			final float lDistAfter = pSignalSegment.startDistance() + pSignalSegment.length();
-			if (lDistAfter > 1)
-				return null;
-			for (int i = 0; i < lNumSignals; i++) {
-				final var lSignal = mSignals.get(i);
-				if (lSignal.startDistance() >= lDistAfter) {
-					return lSignal;
-
-				}
-			}
 			return null;
+		}
+		
+		public void finalizeAfterLoading(RailTrackInstance railTrackInstance) {
+			mParentTrackSegment = railTrackInstance.getSegmentByUid(mParentTrackSegmentUid);
+
+			mPrimarySignalSegment = railTrackInstance.trackSignalSegments.getInstanceByUid(mPrimarySignalSegmentUid);
+			if(mPrimarySignalSegment != null) 
+				mPrimarySignalSegment.finalizeAfterLoading(railTrackInstance);
+			
+			mAuxiliarySignalSegment = railTrackInstance.trackSignalSegments.getInstanceByUid(mAuxiliarySignalSegmentUid);
+			if(mAuxiliarySignalSegment != null) 
+				mAuxiliarySignalSegment.finalizeAfterLoading(railTrackInstance);
+			
+			if(mPrimarySignalSegmentUid == mAuxiliarySignalSegmentUid)
+				throw new RuntimeException("Corrupt save file");
+			
 		}
 	}
 
@@ -230,10 +226,10 @@ public class RailTrackSegment extends TrackSegment {
 		this.segmentAngle = segmentAngle;
 
 		signalsA.mDestinationUid = nodeAUid;
-		signalsA.addSignalSegment(trackInstance.trackSignalSegments.getFreePooledItem(), false, 0);
+		signalsA.createSignalSegments(trackInstance.trackSignalSegments);
 
 		signalsB.mDestinationUid = nodeBUid;
-		signalsB.addSignalSegment(trackInstance.trackSignalSegments.getFreePooledItem(), false, 0);
+		signalsB.createSignalSegments(trackInstance.trackSignalSegments);
 	}
 
 	public RailTrackSegment(RailTrackSegmentSaveDefinition saveDef) {
@@ -251,9 +247,12 @@ public class RailTrackSegment extends TrackSegment {
 		segmentLengthInMeters = saveDef.segmentLengthInMeters;
 		segmentType = saveDef.segmentType;
 
-		signalsA.mSignalSegmentUids.addAll(saveDef.signalsA.signalSegmentUids);
+		signalsA.mPrimarySignalSegmentUid = saveDef.signalsA.primarySignalSegmentUid;
+		signalsA.mAuxiliarySignalSegmentUid = saveDef.signalsA.auxiliarySignalSegmentUid;
 		signalsA.mDestinationUid = saveDef.signalsA.destinationUid;
-		signalsB.mSignalSegmentUids.addAll(saveDef.signalsB.signalSegmentUids);
+
+		signalsB.mPrimarySignalSegmentUid = saveDef.signalsB.primarySignalSegmentUid;
+		signalsB.mAuxiliarySignalSegmentUid = saveDef.signalsB.auxiliarySignalSegmentUid;
 		signalsB.mDestinationUid = saveDef.signalsB.destinationUid;
 	}
 
@@ -310,18 +309,22 @@ public class RailTrackSegment extends TrackSegment {
 		saveDef.segmentName = segmentName;
 		saveDef.specialName = specialName;
 
-		saveDef.signalsA.signalSegmentUids.addAll(signalsA.mSignalSegmentUids);
-		saveDef.signalsA.destinationUid = signalsA.destinationNodeUid();
-		saveDef.signalsB.signalSegmentUids.addAll(signalsB.mSignalSegmentUids);
-		saveDef.signalsB.destinationUid = signalsB.destinationNodeUid();
+		saveDef.signalsA.primarySignalSegmentUid = signalsA.mPrimarySignalSegmentUid;
+		saveDef.signalsA.auxiliarySignalSegmentUid = signalsA.mAuxiliarySignalSegmentUid;
+		saveDef.signalsA.destinationUid = signalsA.mDestinationUid;
+
+		saveDef.signalsB.primarySignalSegmentUid = signalsB.mPrimarySignalSegmentUid;
+		saveDef.signalsB.auxiliarySignalSegmentUid = signalsB.mAuxiliarySignalSegmentUid;
+		saveDef.signalsB.destinationUid = signalsB.mDestinationUid;
+
 	}
 
 	public void finalizeAfterLoading(RailTrackInstance trackInstance) {
 		signalsA.mParentTrackSegment = this;
-		signalsA.initialize(trackInstance);
+		signalsA.finalizeAfterLoading(trackInstance);
 
 		signalsB.mParentTrackSegment = this;
-		signalsB.initialize(trackInstance);
+		signalsB.finalizeAfterLoading(trackInstance);
 	}
 
 	// ---------------------------------------------
@@ -383,14 +386,11 @@ public class RailTrackSegment extends TrackSegment {
 		return null;
 	}
 
-	public void addTrackSignal(RailTrackInstance trackInstance, float dist, int destinationNodeUid) {
+	public void setSegmentSignalAtDistance(float dist, int destinationNodeUid) {
 		final var lSegmentSignalCollection = getSignalsList(destinationNodeUid);
 		if (lSegmentSignalCollection == null)
 			return;
 
-		if (DEBUG_SINGLE_SIGNAL_PER_SEGMENT && lSegmentSignalCollection.numSignalsInCollection() >= 2)
-			return;
-
-		lSegmentSignalCollection.addSignalSegment(trackInstance.trackSignalSegments.getFreePooledItem(), true, dist);
+		lSegmentSignalCollection.setSignalAtDistance(dist);
 	}
 }

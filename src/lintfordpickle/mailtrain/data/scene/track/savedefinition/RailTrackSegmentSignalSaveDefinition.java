@@ -1,8 +1,6 @@
 package lintfordpickle.mailtrain.data.scene.track.savedefinition;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 public class RailTrackSegmentSignalSaveDefinition implements Serializable {
 
@@ -16,7 +14,9 @@ public class RailTrackSegmentSignalSaveDefinition implements Serializable {
 	// Variables
 	// ---------------------------------------------
 
-	public final List<Integer> signalSegmentUids = new ArrayList<>();
+	public int primarySignalSegmentUid;
+	public int auxiliarySignalSegmentUid;
+	
 	public int destinationUid;
 
 }

@@ -199,9 +199,6 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 
 			if (handleSegmentSpecialCases(core))
 				return true;
-
-			if (handleSignalBlockControls(core))
-				return true;
 		}
 
 		if (handleBrushActions(core))
@@ -383,30 +380,6 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 			lActiveSegment.setSegmentBitFlag(0);
 			return true;
 		}
-		return false;
-	}
-
-	private boolean handleSignalBlockControls(LintfordCore pCore) {
-		// Need to get the active segment
-		if (mTrackEditorController.editorPrimarySegmentLocalIndex() == -1)
-			return false;
-
-		// Need to get the active node (A)
-		if (mTrackEditorController.selectedNodeA() == null)
-			return false;
-
-		final var lSelectedNodeA = mTrackEditorController.selectedNodeA();
-		final var lActiveSegment = lSelectedNodeA.trackSwitch.getConnectedSegmentByIndex(mTrackEditorController.editorPrimarySegmentLocalIndex());
-
-		// Check for signal creation
-		if (pCore.input().keyboard().isKeyDownTimed(GLFW.GLFW_KEY_Q, this)) {
-			lActiveSegment.addTrackSignal(mTrackEditorController.track(), .5f, lActiveSegment.getOtherNodeUid(lSelectedNodeA.uid));
-
-			mTrackEditorController.track().areSignalsDirty = true;
-
-			// mScreenManager.toastManager().addMessage("", "Added signal to track segment " + lActiveEdge.uid, 1500);
-		}
-
 		return false;
 	}
 
@@ -615,8 +588,6 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 			final float lWorldPositionX = (lNodeA.x + lNodeB.x) / 2.f;
 			final float lWorldPositionY = (lNodeA.y + lNodeB.y) / 2.f;
 
-			debugDrawSegmentSignal(core, lTrack, lSegment);
-
 			mGameTextFont.drawText("E:" + lSegment.uid, lWorldPositionX, lWorldPositionY, -0.1f, ColorConstants.WHITE, .4f, -1);
 
 			drawSegmentInformation(core, mRendererManager.uiSpriteBatch(), lTrack, lSegment);
@@ -625,48 +596,6 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 		mGameTextFont.end();
 
 		Debug.debugManager().drawers().endLineRenderer();
-	}
-
-	private void debugDrawSegmentSignal(LintfordCore core, RailTrackInstance trackInstance, RailTrackSegment segment) {
-		//		if (segment.trackJunction != null && segment.trackJunction.isSignalActive) {
-		//			{
-		//				final var lLeftEdgeUid = segment.trackJunction.leftEdgeUid;
-		//				final var lLeftEdge = pTrack.getEdgeByUid(lLeftEdgeUid);
-		//
-		//				final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(segment, lLeftEdge);
-		//
-		//				final var lActiveNode = pTrack.getNodeByUid(pCommonNodeUid);
-		//				final var lOtherNodeUid = lLeftEdge.getOtherNodeUid(lActiveNode.uid);
-		//				final var lOtherNode = pTrack.getNodeByUid(lOtherNodeUid);
-		//				final float lVectorX = lOtherNode.x - lActiveNode.x;
-		//				final float lVectorY = lOtherNode.y - lActiveNode.y;
-		//
-		//				var ll = new Vector2f(lVectorX, lVectorY);
-		//				ll.nor();
-		//
-		//				Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lActiveNode.x + ll.x * 20.f, lActiveNode.y + ll.y * 20.f, 5.f);
-		//			}
-		//
-		//			{
-		//				final var lRightEdgeUid = segment.trackJunction.rightEdgeUid;
-		//				final var lRightEdge = pTrack.getEdgeByUid(lRightEdgeUid);
-		//				if (lRightEdge == null) {
-		//					return;
-		//				}
-		//				final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(segment, lRightEdge);
-		//
-		//				final var lActiveNode = pTrack.getNodeByUid(pCommonNodeUid);
-		//				final var lOtherNodeUid = lRightEdge.getOtherNodeUid(lActiveNode.uid);
-		//				final var lOtherNode = pTrack.getNodeByUid(lOtherNodeUid);
-		//				final float lVectorX = lOtherNode.x - lActiveNode.x;
-		//				final float lVectorY = lOtherNode.y - lActiveNode.y;
-		//
-		//				var ll = new Vector2f(lVectorX, lVectorY);
-		//				ll.nor();
-		//
-		//				Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lActiveNode.x + ll.x * 20.f, lActiveNode.y + ll.y * 20.f, 3.f);
-		//			}
-		//		}
 	}
 
 	public void drawTrackInfo(LintfordCore pCore) {
@@ -687,6 +616,48 @@ public class EditorTrackRenderer extends TrackMeshRenderer {
 
 	private void drawTrackSignalBlocks(LintfordCore pCore, TextureBatchPCT pTextureBatch, RailTrackInstance pTrack) {
 		// TODO:
+	}
+	
+	private void debugDrawEdgeSignal(LintfordCore pCore, RailTrackInstance pTrack, RailTrackSegment pEdge) {
+		//		if (pEdge.trackJunction != null && pEdge.trackJunction.isSignalActive) {
+		//			{
+		//				final var lLeftEdgeUid = pEdge.trackJunction.leftEdgeUid;
+		//				final var lLeftEdge = pTrack.getEdgeByUid(lLeftEdgeUid);
+		//
+		//				final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(pEdge, lLeftEdge);
+		//
+		//				final var lActiveNode = pTrack.getNodeByUid(pCommonNodeUid);
+		//				final var lOtherNodeUid = lLeftEdge.getOtherNodeUid(lActiveNode.uid);
+		//				final var lOtherNode = pTrack.getNodeByUid(lOtherNodeUid);
+		//				final float lVectorX = lOtherNode.x - lActiveNode.x;
+		//				final float lVectorY = lOtherNode.y - lActiveNode.y;
+		//
+		//				var ll = new Vector2f(lVectorX, lVectorY);
+		//				ll.nor();
+		//
+		//				Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lActiveNode.x + ll.x * 20.f, lActiveNode.y + ll.y * 20.f, 5.f);
+		//			}
+		//
+		//			{
+		//				final var lRightEdgeUid = pEdge.trackJunction.rightEdgeUid;
+		//				final var lRightEdge = pTrack.getEdgeByUid(lRightEdgeUid);
+		//				if (lRightEdge == null) {
+		//					return;
+		//				}
+		//				final int pCommonNodeUid = RailTrackSegment.getCommonNodeUid(pEdge, lRightEdge);
+		//
+		//				final var lActiveNode = pTrack.getNodeByUid(pCommonNodeUid);
+		//				final var lOtherNodeUid = lRightEdge.getOtherNodeUid(lActiveNode.uid);
+		//				final var lOtherNode = pTrack.getNodeByUid(lOtherNodeUid);
+		//				final float lVectorX = lOtherNode.x - lActiveNode.x;
+		//				final float lVectorY = lOtherNode.y - lActiveNode.y;
+		//
+		//				var ll = new Vector2f(lVectorX, lVectorY);
+		//				ll.nor();
+		//
+		//				Debug.debugManager().drawers().drawCircleImmediate(pCore.gameCamera(), lActiveNode.x + ll.x * 20.f, lActiveNode.y + ll.y * 20.f, 3.f);
+		//			}
+		//		}
 	}
 
 	private void drawSwitchBox(LintfordCore core, TextureBatchPCT textureBatch, RailTrackInstance trackInstance, RailTrackNode activeNode) {

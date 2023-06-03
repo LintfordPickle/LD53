@@ -1,5 +1,6 @@
 package lintfordpickle.mailtrain.data.scene.track.signals;
 
+import lintfordpickle.mailtrain.data.scene.track.RailTrackInstance;
 import lintfordpickle.mailtrain.data.scene.track.RailTrackSegment;
 import lintfordpickle.mailtrain.data.scene.track.savedefinition.RailTrackSignalSegmentSaveDefinition;
 import net.lintford.library.core.entities.instances.ClosedPooledBaseData;
@@ -98,8 +99,18 @@ public class RailTrackSignalSegment extends ClosedPooledBaseData implements Comp
 		mDestinationNodeUid = destinationNodeUid;
 	}
 
-	public void updateLength(float length) {
-		mLength = length;
+	public void updateStartDistance(float startDistance) {
+		if (startDistance < 0 || startDistance > 1)
+			return;
+
+		mStartDistance = startDistance;
+	}
+
+	public void updateSignalSegmentLength(float newLength) {
+		if (newLength < 0 || newLength > 1)
+			return;
+
+		mLength = newLength;
 	}
 
 	// ---------------------------------------------
@@ -121,6 +132,10 @@ public class RailTrackSignalSegment extends ClosedPooledBaseData implements Comp
 		saveDef.destinationNodeUid = mDestinationNodeUid;
 		saveDef.startDistance = mStartDistance;
 		saveDef.length = mLength;
+	}
+
+	public void finalizeAfterLoading(RailTrackInstance railTrackInstance) {
+		trackSegment = railTrackInstance.getSegmentByUid(mTrackSegmentUid);
 	}
 
 	// ---------------------------------------------

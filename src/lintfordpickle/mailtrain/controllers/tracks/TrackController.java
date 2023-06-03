@@ -184,7 +184,7 @@ public class TrackController extends BaseController implements IInputProcessor {
 					lDestinationNodeUid = lCurrentTrackSegment.getOtherNodeUid(lDestinationNodeUid);
 					lSignalSegments = lCurrentTrackSegment.getSignalsList(lDestinationNodeUid);
 					lOurSignalSegment = lSignalSegments.getSignal(0.f);
-					
+
 					// return null to set target speed to 0.0f
 					return -1;
 
@@ -314,7 +314,7 @@ public class TrackController extends BaseController implements IInputProcessor {
 	private void updateBuildSignalBlock(LintfordCore core, RailTrackInstance trackInstance, RailTrackSegment trackSegment, SegmentSignalsCollection segmentSignals, int pLUCounter) {
 		// -------- Get the ball rolling
 
-		var lCurrentSignalSegment = segmentSignals.getSignal(0.0f);
+		var lCurrentSignalSegment = segmentSignals.primarySignalSegment();
 		var lCurrentSignalBlock = trackInstance.trackSignalBlocks.getFreePooledItem();
 		// TODO: Uid on SignalBlock is massive - there're not being reused
 
@@ -347,18 +347,17 @@ public class TrackController extends BaseController implements IInputProcessor {
 				}
 			}
 		}
+
 		// -------- Iterate this track segment
 
-		final var lNextSignal = segmentSignals.getNextSignal(lCurrentSignalSegment);
-		if (lNextSignal != null) {
-			if (lNextSignal.isSignalHead()) {
-				lCurrentSignalBlock = trackInstance.trackSignalBlocks.getFreePooledItem();
+		if (segmentSignals.isAuxiliarySignalSegmentActive()) {
+			final var lNextSignal = segmentSignals.auxiliarySignalSegment();
+			lCurrentSignalBlock = trackInstance.trackSignalBlocks.getFreePooledItem();
 
-			}
 			lCurrentSignalBlock.signalSegments().add(lNextSignal);
 			lNextSignal.signalBlock = lCurrentSignalBlock;
-
 		}
+
 		// -------- Link to next segment(s)
 
 		int pDestinationUid = segmentSignals.destinationNodeUid();

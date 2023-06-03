@@ -66,7 +66,6 @@ public class TrackManager extends BaseInstanceManager {
 		final var lNumSignalSegments = lSignalSegmentsToLoad.size();
 		for (int i = 0; i < lNumSignalSegments; i++) {
 			final var lSignalSegmentToLoad = lSignalSegmentsToLoad.get(i);
-			// TODO: Pooluid being restored look janky af!
 			final var lNewSignalSegment = new RailTrackSignalSegment(lSignalSegmentToLoad);
 			mTrack.trackSignalSegments.addSignalSegment(lNewSignalSegment);
 		}
