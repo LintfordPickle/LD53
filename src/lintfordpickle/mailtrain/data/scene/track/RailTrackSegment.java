@@ -64,7 +64,7 @@ public class RailTrackSegment extends TrackSegment {
 		}
 
 		public boolean isAuxiliarySignalSegmentActive() {
-			return mPrimarySignalSegment.length() < 1.f;
+			return mPrimarySignalSegment.length() > 0.f && mPrimarySignalSegment.length() < 1.f;
 		}
 
 		// ---------------------------------------------

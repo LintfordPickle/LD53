@@ -128,16 +128,7 @@ public class TrackController extends BaseController implements IInputProcessor {
 
 				updateSignalSegment(core, trackInstance, lCar.frontAxle);
 				updateSignalSegment(core, trackInstance, lCar.rearAxle);
-
 			}
-		}
-
-		// iterate over the signal blocks and update the warning and danger segments
-		final int lNumSegments = trackInstance.getNumberTrackSegments();
-		for (int i = 0; i < lNumSegments; i++) {
-			// iterate the whole track and update the signal blocks
-			// TODO:
-
 		}
 	}
 
@@ -148,7 +139,6 @@ public class TrackController extends BaseController implements IInputProcessor {
 
 		if (lAxleTrackSegment != null) {
 			lAxleTrackSegment.setBothSignalStates(lDestinationNodeUid, lDistanceIntoSegment, SignalState.Occupied);
-
 		}
 	}
 
@@ -296,9 +286,6 @@ public class TrackController extends BaseController implements IInputProcessor {
 		final int lNumBlocks = lBlockInstances.size();
 		for (int i = 0; i < lNumBlocks; i++) {
 			final var lSignalBlock = lBlockInstances.get(i);
-
-			System.out.println("Track Signal Block: " + lSignalBlock.uid);
-
 			final var lSignalSegments = lSignalBlock.signalSegments();
 
 			if (lSignalSegments == null)

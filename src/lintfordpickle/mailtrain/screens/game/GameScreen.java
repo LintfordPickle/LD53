@@ -134,9 +134,6 @@ public class GameScreen extends BaseGameScreen {
 
 		mPlayerTrainController.addPlayerTrain(lPlayerSpawnSegment);
 
-		// TEST
-		// mPlayerTrainController.TESTaddTrainsToMapSegments();
-
 		final int lStartingCredits = 1000;
 		final int lStartingCrew = 10;
 		final float lStartingFuel = 10;
